@@ -69,11 +69,11 @@ def main(mp3_path: str, manifest_path: str, sounds_dir: str, chunks_dir: str):
         return
 
     # Sound clip filenames must match build-episode.sh
-    intro_song   = os.path.join(sounds_dir, "The Morning Cup - Song.wav")
+    intro_song   = os.path.join(sounds_dir, "The Morning Cup - Weekly Rewind - Song.wav")
     coffee_pour  = os.path.join(sounds_dir, "Coffee Pour.wav")
     cream_or_sug = os.path.join(sounds_dir, "Cream or sugar, hon?.mp3")
     intro_sting  = os.path.join(sounds_dir, "intro-sting.wav")
-    section_st   = os.path.join(sounds_dir, "morning-cup-sting.wav")
+    section_st   = os.path.join(sounds_dir, "weekly-rewind-sting.wav")
 
     intro_song_ms   = ffprobe_duration_ms(intro_song)
     coffee_pour_ms  = ffprobe_duration_ms(coffee_pour)

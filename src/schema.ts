@@ -2,7 +2,7 @@
 // Mirrors the EpisodeJson shape defined in types.ts.
 
 export const EPISODE_JSON_SCHEMA = {
-  name: "morning_cup_episode",
+  name: "weekly_rewind_episode",
   strict: true,
   schema: {
     type: "object",
@@ -16,6 +16,8 @@ export const EPISODE_JSON_SCHEMA = {
       "riddle_question",
       "riddle_answer",
       "social_copy",
+      "short_social_post",
+      "social_image_concept",
       "source_notes",
       "self_validation",
       "chapters",
@@ -48,6 +50,8 @@ export const EPISODE_JSON_SCHEMA = {
           },
         },
       },
+      short_social_post: { type: "string" },
+      social_image_concept: { type: "string" },
       source_notes: {
         type: "array",
         items: {

@@ -22,16 +22,16 @@ To swap: edit `wrangler.toml`, push to main. The `temperature` parameter is auto
 Drives the validator and the prompt's instruction.
 
 ```toml
-MIN_SCRIPT_WORDS = "3300"
-TARGET_SCRIPT_WORDS_MIN = "3300"
-TARGET_SCRIPT_WORDS_MAX = "3700"
-MAX_SCRIPT_WORDS = "3900"
+MIN_SCRIPT_WORDS = "6400"
+TARGET_SCRIPT_WORDS_MIN = "6400"
+TARGET_SCRIPT_WORDS_MAX = "7200"
+MAX_SCRIPT_WORDS = "7500"
 WORDS_PER_MINUTE = "145"
 ```
 
-A script with 3300 words at 145 WPM ≈ 22.7 minutes spoken. The repair pass triggers if validation fails, and tries once to fix length issues without breaking content.
+A script with 6800 words at 145 WPM ≈ 47 minutes spoken. The repair pass triggers if validation fails, and tries once to fix length issues without breaking content.
 
-To change target runtime, change all of these together. Going below ~2200 words risks the prompt's "must be at least 20 minutes" hard rule and you may need to soften that in `src/prompt.ts` (`MASTER_PROMPT`).
+To change target runtime, change all of these together. Going below ~2200 words risks the prompt's "must be at least 40 minutes" hard rule and you may need to soften that in `src/prompt.ts` (`MASTER_PROMPT`).
 
 ## Repair pass
 
@@ -94,7 +94,7 @@ To **disable web search entirely** (rely on RSS/NewsAPI only) you'd need to modi
 ## Editorial lens
 
 Lives in `src/prompt.ts` as `MASTER_PROMPT`. ~250 lines of editorial direction covering:
-- Required runtime (20-25 min)
+- Required runtime (40-50 min)
 - Date opening rule
 - Editorial perspective ("explicitly leftist, anti-capitalist, working-class-centered")
 - Topic flow (25 sections in order)
@@ -123,13 +123,13 @@ WORKER_TIMEZONE = "America/New_York"     # default
 # WORKER_TIMEZONE = "Europe/London"
 ```
 
-If you change the daily hour, also widen the cron's UTC range to cover that hour ± DST.
+If you change the weekly run hour, also widen the cron's UTC range to cover that hour ± DST.
 
 ## Email notifications
 
 ```toml
 ENABLE_EMAIL = "false"
-EMAIL_FROM = "The Penny Tribune <morningcup@yourdomain.com>"
+EMAIL_FROM = "The Penny Tribune <weeklyrewind@yourdomain.com>"
 EMAIL_TO = "your-email@example.com"
 ```
 
@@ -201,7 +201,7 @@ After any worker-side change, deploy: `wrangler deploy` (or push to main if you 
 
 After any local-script change, also re-copy from `Generator/scripts/` to `Scripts/`:
 ```bash
-cp "$HOME/Documents/The Morning Cup/Generator/scripts/"*.sh \
-   "$HOME/Documents/The Morning Cup/Scripts/"
-chmod +x "$HOME/Documents/The Morning Cup/Scripts/"*.sh
+cp "$HOME/Documents/The Morning Cup - Weekly Rewind/Generator/scripts/"*.sh \
+   "$HOME/Documents/The Morning Cup - Weekly Rewind/Scripts/"
+chmod +x "$HOME/Documents/The Morning Cup - Weekly Rewind/Scripts/"*.sh
 ```

@@ -1,10 +1,10 @@
 # Worked Example — Generating One Full Episode End-to-End
 
 Real worked example: generating, assembling, tagging, and verifying The
-Morning Cup episode for **May 1, 2026** from a fresh boot. This is the
+Morning Cup: Weekly Rewind episode for **May 3, 2026** from a fresh boot. This is the
 complete happy-path everyone should follow on day one.
 
-> Already done first-time setup? Skip to **Daily run, condensed** at the
+> Already done first-time setup? Skip to **Sunday run, condensed** at the
 > bottom for the two-command version.
 
 If you haven't done first-time setup yet, do
@@ -20,14 +20,14 @@ The repo is the source of truth — your working `Scripts/` folder is just a
 copy. Pull the latest before each run so you have the newest pipeline.
 
 ```bash
-cd "$HOME/Documents/The Morning Cup/Generator" && git pull origin main
-cp "$HOME/Documents/The Morning Cup/Generator/scripts/build-episode.sh" \
-   "$HOME/Documents/The Morning Cup/Scripts/build-episode.sh"
-cp "$HOME/Documents/The Morning Cup/Generator/scripts/fetch-chunks.sh" \
-   "$HOME/Documents/The Morning Cup/Scripts/fetch-chunks.sh"
-cp "$HOME/Documents/The Morning Cup/Generator/scripts/write-chapters.py" \
-   "$HOME/Documents/The Morning Cup/Scripts/write-chapters.py"
-chmod +x "$HOME/Documents/The Morning Cup/Scripts/"*.sh
+cd "$HOME/Documents/The Morning Cup - Weekly Rewind/Generator" && git pull origin main
+cp "$HOME/Documents/The Morning Cup - Weekly Rewind/Generator/scripts/build-episode.sh" \
+   "$HOME/Documents/The Morning Cup - Weekly Rewind/Scripts/build-episode.sh"
+cp "$HOME/Documents/The Morning Cup - Weekly Rewind/Generator/scripts/fetch-chunks.sh" \
+   "$HOME/Documents/The Morning Cup - Weekly Rewind/Scripts/fetch-chunks.sh"
+cp "$HOME/Documents/The Morning Cup - Weekly Rewind/Generator/scripts/write-chapters.py" \
+   "$HOME/Documents/The Morning Cup - Weekly Rewind/Scripts/write-chapters.py"
+chmod +x "$HOME/Documents/The Morning Cup - Weekly Rewind/Scripts/"*.sh
 ```
 
 ### 2. Trigger the worker (or skip and let cron do it)
@@ -38,7 +38,7 @@ date:
 
 In one terminal, watch the worker logs:
 ```bash
-wrangler tail themorningcupgenerator --format pretty
+wrangler tail weeklycupgenerator --format pretty
 ```
 
 In another, fire the run:
@@ -47,7 +47,7 @@ RUN_SECRET="<your run secret>"
 DATE="2026-05-01"
 curl --max-time 1500 -X POST \
   -H "Authorization: Bearer $RUN_SECRET" \
-  "https://themorningcupgenerator.<your-subdomain>.workers.dev/run?date=$DATE&force=true"
+  "https://weeklycupgenerator.<your-subdomain>.workers.dev/run?date=$DATE&force=true"
 ```
 
 Expected timeline of log lines:
@@ -68,21 +68,21 @@ wall time ~3–9 minutes depending on which fallbacks were needed.
 ### 3. Pull chunks + manifest from R2
 
 ```bash
-"$HOME/Documents/The Morning Cup/Scripts/fetch-chunks.sh" 2026-05-01
+"$HOME/Documents/The Morning Cup - Weekly Rewind/Scripts/fetch-chunks.sh" 2026-05-01
 ```
 
-This populates `~/Documents/The Morning Cup/Chunks/2026-05-01/` with the
+This populates `~/Documents/The Morning Cup - Weekly Rewind/Chunks/2026-05-01/` with the
 ordered MP3 chunks + the canonical manifest.
 
 To see what arrived:
 ```bash
-ls -la "$HOME/Documents/The Morning Cup/Chunks/2026-05-01/"
+ls -la "$HOME/Documents/The Morning Cup - Weekly Rewind/Chunks/2026-05-01/"
 ```
 
 ### 4. Assemble the final episode
 
 ```bash
-"$HOME/Documents/The Morning Cup/Scripts/build-episode.sh" 2026-05-01
+"$HOME/Documents/The Morning Cup - Weekly Rewind/Scripts/build-episode.sh" 2026-05-01
 ```
 
 What it does, in order:
@@ -98,14 +98,14 @@ You'll see something like:
 ```
 Auto-detected date: 2026-05-01
 Normalizing 41 input clips...
-Concatenating to: /Users/.../Episodes/The Morning Cup - 2026-05-01.mp3
+Concatenating to: /Users/.../Episodes/The Morning Cup - Weekly Rewind - 2026-05-01.mp3
 
 Done.
-  File:     /Users/.../Episodes/The Morning Cup - 2026-05-01.mp3
+  File:     /Users/.../Episodes/The Morning Cup - Weekly Rewind - 2026-05-01.mp3
   Size:     45M
   Duration: 32:57
 ID3 tags: ...
-Wrote 28 chapter markers to /Users/.../Episodes/The Morning Cup - 2026-05-01.mp3
+Wrote 28 chapter markers to /Users/.../Episodes/The Morning Cup - Weekly Rewind - 2026-05-01.mp3
 ```
 
 ### 5. Verify the chapters
@@ -114,7 +114,7 @@ Embedded ID3 chapters come through to ffprobe with `-show_chapters`:
 
 ```bash
 ffprobe -v error -show_chapters -of json \
-  "$HOME/Documents/The Morning Cup/Episodes/The Morning Cup - 2026-05-01.mp3" \
+  "$HOME/Documents/The Morning Cup - Weekly Rewind/Episodes/The Morning Cup - Weekly Rewind - 2026-05-01.mp3" \
   | python3 -m json.tool | head -120
 ```
 
@@ -140,7 +140,7 @@ Expected (truncated):
 ### 6. Listen / spot-check
 
 ```bash
-open "$HOME/Documents/The Morning Cup/Episodes/The Morning Cup - 2026-05-01.mp3"
+open "$HOME/Documents/The Morning Cup - Weekly Rewind/Episodes/The Morning Cup - Weekly Rewind - 2026-05-01.mp3"
 ```
 
 This opens in macOS Music. Music itself doesn't show chapter UI, but the
@@ -148,7 +148,7 @@ file is correct — chapter UI will appear in any modern podcast app.
 
 For a quick visual check of all metadata at once:
 ```bash
-mdls "$HOME/Documents/The Morning Cup/Episodes/The Morning Cup - 2026-05-01.mp3" \
+mdls "$HOME/Documents/The Morning Cup - Weekly Rewind/Episodes/The Morning Cup - Weekly Rewind - 2026-05-01.mp3" \
   | grep -iE 'title|author|copyright|year|artist|album|publisher'
 ```
 
@@ -171,13 +171,13 @@ The MP3 is self-contained. Most platforms read the embedded ID3 tags
 
 ---
 
-## Daily run, condensed
+## Sunday run, condensed
 
-After first-time setup is done, your two-command morning is:
+After first-time setup is done, your two-command Sunday is:
 
 ```bash
-"$HOME/Documents/The Morning Cup/Scripts/fetch-chunks.sh" --latest
-"$HOME/Documents/The Morning Cup/Scripts/build-episode.sh"
+"$HOME/Documents/The Morning Cup - Weekly Rewind/Scripts/fetch-chunks.sh" --latest
+"$HOME/Documents/The Morning Cup - Weekly Rewind/Scripts/build-episode.sh"
 ```
 
 That's it. The cron already generated the script + chunks at 5 AM ET.
@@ -200,7 +200,7 @@ You pull, you assemble, you upload.
 ## What each piece of the pipeline produces
 
 ```
-~/Documents/The Morning Cup/
+~/Documents/The Morning Cup - Weekly Rewind/
 ├── Sounds/                                           ← reusable, 6 files
 ├── Scripts/                                          ← runtime helpers
 │   ├── build-episode.sh
@@ -208,20 +208,20 @@ You pull, you assemble, you upload.
 │   └── write-chapters.py
 ├── Chunks/2026-05-01/                                ← STEP 3 output
 │   ├── 001.mp3 ... NNN.mp3
-│   └── The Morning Cup - 2026-05-01 - manifest.json
+│   └── The Morning Cup - Weekly Rewind - 2026-05-01 - manifest.json
 └── Episodes/                                         ← STEP 4 output
-    └── The Morning Cup - 2026-05-01.mp3              ← upload this
+    └── The Morning Cup - Weekly Rewind - 2026-05-01.mp3              ← upload this
 ```
 
 And in the cloud:
 ```
-Cloudflare R2 bucket "morning-cup":
-└── morning-cup/2026-05-01/
+Cloudflare R2 bucket "weekly-cup":
+└── weekly-cup/2026-05-01/
     ├── chunks/                                       ← raw TTS output
-    ├── The Morning Cup - 2026-05-01.txt              ← clean script
-    ├── The Morning Cup - 2026-05-01.html             ← rendered HTML
-    ├── The Morning Cup - 2026-05-01.json             ← full episode JSON
-    ├── The Morning Cup - 2026-05-01 - manifest.json  ← canonical metadata
-    ├── The Morning Cup - 2026-05-01 - files.txt      ← ffmpeg concat list
+    ├── The Morning Cup - Weekly Rewind - 2026-05-01.txt              ← clean script
+    ├── The Morning Cup - Weekly Rewind - 2026-05-01.html             ← rendered HTML
+    ├── The Morning Cup - Weekly Rewind - 2026-05-01.json             ← full episode JSON
+    ├── The Morning Cup - Weekly Rewind - 2026-05-01 - manifest.json  ← canonical metadata
+    ├── The Morning Cup - Weekly Rewind - 2026-05-01 - files.txt      ← ffmpeg concat list
     └── run.json                                      ← run status record
 ```

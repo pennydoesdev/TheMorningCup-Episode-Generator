@@ -171,7 +171,7 @@ function inferSource(feedUrl: string): string {
 
 async function fetchRss(feedUrl: string, signal: AbortSignal): Promise<FetchedItem[]> {
   const res = await fetch(feedUrl, {
-    headers: { "User-Agent": "MorningCupBot/1.0 (+The Penny Tribune)" },
+    headers: { "User-Agent": "WeeklyRewindBot/1.0 (+The Penny Tribune)" },
     signal,
   });
   if (!res.ok) {
@@ -214,26 +214,31 @@ async function fetchNewsApi(env: Env, signal: AbortSignal): Promise<FetchedItem[
   }
 }
 
-function withinSourceDay(item: FetchedItem, sourceIsoDate: string): boolean {
+function withinSourceWindow(
+  item: FetchedItem,
+  windowStartIso: string,
+  windowEndIso: string,
+): boolean {
   if (!item.published) return true; // some feeds don't include dates; allow.
   const t = Date.parse(item.published);
   if (Number.isNaN(t)) return true;
-  const d = new Date(t);
-  const yyyymmdd = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
-  // Allow source day or items from <= 36h ago to absorb timezones.
-  const sourceTs = Date.parse(`${sourceIsoDate}T00:00:00Z`);
-  if (Number.isNaN(sourceTs)) return yyyymmdd === sourceIsoDate;
-  const dayDiff = Math.abs(t - sourceTs) / 86400000;
-  return dayDiff <= 1.5;
+  // Allow a half-day buffer on each end of the window to absorb timezones.
+  const startTs = Date.parse(`${windowStartIso}T00:00:00Z`);
+  const endTs = Date.parse(`${windowEndIso}T23:59:59Z`);
+  if (Number.isNaN(startTs) || Number.isNaN(endTs)) return true;
+  const buffer = 12 * 60 * 60 * 1000; // 12 hours
+  return t >= startTs - buffer && t <= endTs + buffer;
 }
 
 export async function buildSourceDigest(
   env: Env,
-  sourceIsoDate: string,
+  sourceWindowStartIso: string,
+  sourceWindowEndIso: string,
   enabled: boolean,
 ): Promise<SourceDigest> {
   const empty: SourceDigest = {
-    source_date: sourceIsoDate,
+    source_date: sourceWindowStartIso,
+    source_window_end: sourceWindowEndIso,
     generated_at: new Date().toISOString(),
     available: false,
     categories: {},
@@ -265,15 +270,20 @@ export async function buildSourceDigest(
       return { ...empty, notes: "No source providers returned items." };
     }
 
-    const filtered = items.filter((i) => withinSourceDay(i, sourceIsoDate));
+    const filtered = items.filter((i) =>
+      withinSourceWindow(i, sourceWindowStartIso, sourceWindowEndIso),
+    );
 
     const buckets: Record<string, SourceItem[]> = {};
+    // Allow a deeper bucket cap for the weekly show so a 7-day digest carries
+    // more substantive context than a daily one.
+    const PER_CATEGORY_CAP = 20;
     for (const cat of DIGEST_CATEGORIES) buckets[cat] = [];
     for (const item of filtered) {
       const cats = categorize(item.title, item.summary);
       if (cats.length === 0) continue;
       for (const cat of cats) {
-        if (buckets[cat].length < 8) {
+        if (buckets[cat].length < PER_CATEGORY_CAP) {
           buckets[cat].push({
             title: item.title,
             source: item.source,
@@ -287,7 +297,8 @@ export async function buildSourceDigest(
 
     const total = Object.values(buckets).reduce((n, arr) => n + arr.length, 0);
     return {
-      source_date: sourceIsoDate,
+      source_date: sourceWindowStartIso,
+      source_window_end: sourceWindowEndIso,
       generated_at: new Date().toISOString(),
       available: total > 0,
       categories: buckets,

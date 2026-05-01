@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 #
-# build-episode.sh - Assemble a Morning Cup episode with ffmpeg.
+# build-episode.sh - Assemble a Weekly Rewind episode with ffmpeg.
 #
 # Concatenates Sounds/Song.wav -> Coffee Pour -> "Cream or sugar, hon?" ->
-# intro-sting -> 001.mp3 -> morning-cup-sting -> 002.mp3 -> ... -> Thank You.wav
+# intro-sting -> 001.mp3 -> weekly-rewind-sting -> 002.mp3 -> ... -> Thank You.wav
 # into one MP3, writes ID3 tags from the manifest, saves to:
-#     ~/Documents/The Morning Cup/Episodes/The Morning Cup - <DATE>.mp3
+#     ~/Documents/The Morning Cup - Weekly Rewind/Episodes/The Morning Cup - Weekly Rewind - <DATE>.mp3
 #
 # Usage:
 #     scripts/build-episode.sh                # auto-detects newest date in Chunks/
@@ -17,7 +17,7 @@
 
 set -euo pipefail
 
-ROOT="$HOME/Documents/The Morning Cup"
+ROOT="$HOME/Documents/The Morning Cup - Weekly Rewind"
 SOUNDS="$ROOT/Sounds"
 CHUNKS_BASE="$ROOT/Chunks"
 EPISODES="$ROOT/Episodes"
@@ -60,12 +60,12 @@ fi
 
 # --- assets ------------------------------------------------------------------
 
-INTRO_SONG="$SOUNDS/The Morning Cup - Song.wav"
+INTRO_SONG="$SOUNDS/The Morning Cup - Weekly Rewind - Song.wav"
 COFFEE_POUR="$SOUNDS/Coffee Pour.wav"
 CREAM_OR_SUGAR="$SOUNDS/Cream or sugar, hon?.mp3"
 INTRO_STING="$SOUNDS/intro-sting.wav"
-SECTION_STING="$SOUNDS/morning-cup-sting.wav"
-OUTRO="$SOUNDS/The Morning Cup - Thank You.wav"
+SECTION_STING="$SOUNDS/weekly-rewind-sting.wav"
+OUTRO="$SOUNDS/The Morning Cup - Weekly Rewind - Thank You.wav"
 
 REQUIRED=("$INTRO_SONG" "$COFFEE_POUR" "$CREAM_OR_SUGAR" "$SECTION_STING" "$OUTRO")
 for f in "${REQUIRED[@]}"; do
@@ -84,7 +84,7 @@ CHUNK_COUNT=${#CHUNKS_LIST[@]}
 
 # --- read tags from manifest -------------------------------------------------
 
-MANIFEST="$CHUNKS/The Morning Cup - $DATE - manifest.json"
+MANIFEST="$CHUNKS/The Morning Cup - Weekly Rewind - $DATE - manifest.json"
 read_manifest() {
   local key="$1"
   local default="$2"
@@ -97,8 +97,8 @@ read_manifest() {
 }
 
 YEAR="${DATE:0:4}"
-TITLE=$(read_manifest title "The Morning Cup - $DATE")
-SHOW=$(read_manifest show_name "The Morning Cup")
+TITLE=$(read_manifest title "The Morning Cup - Weekly Rewind - $DATE")
+SHOW=$(read_manifest show_name "The Morning Cup - Weekly Rewind")
 PUBLISHER=$(read_manifest publisher "The Penny Tribune")
 COPYRIGHT=$(read_manifest copyright "Copyright $YEAR - The Penny Tribune")
 GENRE=$(read_manifest genre "News")
@@ -155,7 +155,7 @@ for f in "$NORM_DIR"/*.mp3; do
   printf "file '%s'\n" "$esc" >> "$LIST"
 done
 
-OUTPUT="$EPISODES/The Morning Cup - $DATE.mp3"
+OUTPUT="$EPISODES/The Morning Cup - Weekly Rewind - $DATE.mp3"
 echo "Concatenating to: $OUTPUT"
 
 ffmpeg -y -loglevel error -f concat -safe 0 -i "$LIST" \
