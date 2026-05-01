@@ -76,9 +76,25 @@ const MONTH_NAMES = [
   "December",
 ];
 
+function ordinal(n: number): string {
+  // 11/12/13 are always "th" (not "11st"/"12nd"/"13rd"); the rest follow last digit.
+  const lastTwo = n % 100;
+  if (lastTwo >= 11 && lastTwo <= 13) return `${n}th`;
+  switch (n % 10) {
+    case 1:
+      return `${n}st`;
+    case 2:
+      return `${n}nd`;
+    case 3:
+      return `${n}rd`;
+    default:
+      return `${n}th`;
+  }
+}
+
 export function spokenDate(yyyymmdd: string): string {
   const [y, m, d] = yyyymmdd.split("-").map((s) => Number(s));
-  return `${MONTH_NAMES[m - 1]} ${d}, ${y}`;
+  return `${MONTH_NAMES[m - 1]} ${ordinal(d)}, ${y}`;
 }
 
 export function isValidIsoDate(value: string): boolean {
