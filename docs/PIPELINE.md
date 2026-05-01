@@ -50,7 +50,7 @@ flowchart TD
     FF --> UploadAudio[upload-audio.py]
   end
   PushDrive --> Drive2[(Google Drive — same dated folder)]
-  UploadAudio --> R2A[(R2 audio bucket — Apollo plugin)]
+  UploadAudio --> S3A[(S3 audio bucket — Apollo plugin)]
   UploadAudio --> WP2[WP draft updated with _ep_audio_url + meta]
 
   WP2 --> Reviewer{Penelope reviews + clicks Publish}
@@ -164,7 +164,7 @@ sequenceDiagram
   participant PD as push-final-to-drive.py
   participant UA as upload-audio.py
   participant GD as Google Drive
-  participant R2A as R2 (audio bucket)
+  participant S3A as S3 (audio bucket)
   participant WP as WordPress REST
 
   U->>FC: fetch-chunks.sh <DATE>
@@ -178,7 +178,7 @@ sequenceDiagram
   BE->>PD: push-final-to-drive.py
   PD->>GD: upload final MP3 into <DATE>/
   BE->>UA: upload-audio.py <DATE>
-  UA->>R2A: PUT podcast/YYYY/MM/the-morning-cup-<DATE>-<ts>.mp3
+  UA->>S3A: PUT audio/YYYY/MM/the-morning-cup-<DATE>-<ts>.mp3
   UA->>WP: search serve_episode draft by title
   WP-->>UA: { id }
   UA->>WP: POST .../serve_episode/<id> with _ep_audio_url + meta
@@ -206,8 +206,8 @@ these meta fields exposed to the REST API:
 | `_ep_podcast_id` | Worker | `2616` (parent serve_podcast: The Morning Cup) |
 | `_ep_episode_type` | Worker | `"full"` |
 | `_ep_explicit` | Worker | `false` |
-| `_ep_audio_url` | Local upload-audio.py | `https://serve.pennycdn.com/podcast/2026/05/...mp3` |
-| `_ep_audio_r2_key` | Local upload-audio.py | `podcast/2026/05/the-morning-cup-2026-05-01-…mp3` |
+| `_ep_audio_url` | Local upload-audio.py | `https://<cf>.cloudfront.net/audio/2026/05/...mp3` |
+| `_ep_audio_r2_key` | Local upload-audio.py | `audio/2026/05/the-morning-cup-2026-05-01-…mp3` (key name is legacy in the Apollo plugin) |
 | `_ep_file_size` | Local upload-audio.py | bytes |
 | `_ep_mime_type` | Local upload-audio.py | `audio/mpeg` |
 | `_ep_duration_sec` | Local upload-audio.py | seconds (ffprobe) |
@@ -285,11 +285,12 @@ flowchart TB
 | `RUN_SECRET` | Same value as Cloudflare; used by `morning-cup.sh` to fire the worker manually |
 | `GOOGLE_DRIVE_FOLDER_ID` | Same value as Cloudflare; used by `push-final-to-drive.py` |
 | `GOOGLE_DRIVE_KEY_PATH` | Path to the service-account JSON locally |
-| `R2_ACCOUNT_ID` | Cloudflare account ID for R2 audio bucket |
-| `R2_AUDIO_ACCESS_KEY_ID` | R2 access key with PutObject on the audio bucket |
-| `R2_AUDIO_SECRET_ACCESS_KEY` | matching secret |
-| `R2_AUDIO_BUCKET` | Audio R2 bucket name (the one the Apollo plugin reads) |
-| `R2_AUDIO_PUBLIC_URL` | e.g. `https://serve.pennycdn.com` |
+| `R2_ACCOUNT_ID` | Cloudflare account ID (for the `morning-cup` chunks bucket, used by the worker; not needed for audio upload) |
+| `S3_ACCESS_KEY` | AWS access key with PutObject on the audio bucket |
+| `S3_SECRET_KEY` | matching AWS secret |
+| `S3_REGION` | e.g. `us-east-1` |
+| `S3_BUCKET` | Audio bucket name (same as `APOLLO_S3_BUCKET` in wp-config) |
+| `S3_CF_URL` | CloudFront URL (e.g. `https://d1abc.cloudfront.net`) — falls back to direct S3 URL if empty |
 | `WP_URL` | `https://thepennytribune.com` |
 | `WP_USERNAME` | `systems` |
 | `WP_APP_PASSWORD` | Application Password (same value as the worker secret) |

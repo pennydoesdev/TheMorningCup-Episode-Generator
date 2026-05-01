@@ -206,8 +206,8 @@ if [ -f "$UPLOAD_AUDIO_PY" ] && [ -f "$ROOT/.env" ]; then
   # shellcheck disable=SC1091
   source "$ROOT/.env"
   set +o allexport
-  if [ -n "${R2_AUDIO_BUCKET:-}" ] && [ -n "${WP_URL:-}" ]; then
-    echo "Uploading audio + attaching to WP draft..."
+  if [ -n "${S3_BUCKET:-}" ] && [ -n "${WP_URL:-}" ]; then
+    echo "Uploading audio to S3 + attaching to WP draft..."
     python3 "$UPLOAD_AUDIO_PY" "$DATE" || \
       echo "Warning: audio upload / WP attach failed; episode is still saved locally." >&2
   fi

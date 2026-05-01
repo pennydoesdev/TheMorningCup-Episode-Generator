@@ -1,23 +1,27 @@
 #!/usr/bin/env python3
 """
-Upload the final rendered MP3 to the R2 audio bucket and update the
+Upload the final rendered MP3 to the S3 audio bucket and update the
 matching WordPress serve_episode draft with Apollo plugin meta keys
 (_ep_audio_url, _ep_audio_r2_key, _ep_file_size, _ep_mime_type,
 _ep_duration_sec, _ep_duration). After this runs, the draft is fully
 populated — open it in WP admin, review, hit publish.
 
+(The meta key is named _ep_audio_r2_key for legacy reasons in the Apollo
+plugin; it stores whatever object key was used, R2 or S3.)
+
 Usage:
     upload-audio.py <YYYY-MM-DD>
 
 Required env vars (read from ~/Documents/The Morning Cup/.env):
-    R2_ACCOUNT_ID
-    R2_AUDIO_ACCESS_KEY_ID
-    R2_AUDIO_SECRET_ACCESS_KEY
-    R2_AUDIO_BUCKET
-    R2_AUDIO_PUBLIC_URL          (e.g. https://serve.pennycdn.com)
-    WP_URL                       (e.g. https://thepennytribune.com)
-    WP_USERNAME                  (e.g. systems)
-    WP_APP_PASSWORD              (with or without spaces)
+    S3_ACCESS_KEY                AWS access key with PutObject on the bucket
+    S3_SECRET_KEY                matching AWS secret
+    S3_REGION                    e.g. us-east-1
+    S3_BUCKET                    same as APOLLO_S3_BUCKET in wp-config
+    S3_CF_URL                    CloudFront URL (e.g. https://d1abc.cloudfront.net)
+                                 If empty, falls back to the direct S3 URL
+    WP_URL                       e.g. https://thepennytribune.com
+    WP_USERNAME                  e.g. systems
+    WP_APP_PASSWORD              with or without spaces
 
 Required Python deps:
     python3 -m pip install --user --break-system-packages boto3 requests
@@ -195,22 +199,24 @@ def get_boto3():
         )
 
 
-def upload_to_r2(env: dict, mp3_path: str, key: str) -> str:
+def upload_to_s3(env: dict, mp3_path: str, key: str) -> str:
     boto3 = get_boto3()
     s3 = boto3.client(
         "s3",
-        endpoint_url=f"https://{env['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com",
-        aws_access_key_id=env["R2_AUDIO_ACCESS_KEY_ID"],
-        aws_secret_access_key=env["R2_AUDIO_SECRET_ACCESS_KEY"],
-        region_name="auto",
+        aws_access_key_id=env["S3_ACCESS_KEY"],
+        aws_secret_access_key=env["S3_SECRET_KEY"],
+        region_name=env["S3_REGION"],
     )
     s3.upload_file(
         mp3_path,
-        env["R2_AUDIO_BUCKET"],
+        env["S3_BUCKET"],
         key,
         ExtraArgs={"ContentType": "audio/mpeg"},
     )
-    return f"{env['R2_AUDIO_PUBLIC_URL'].rstrip('/')}/{key}"
+    cf = (env.get("S3_CF_URL") or "").rstrip("/")
+    if cf:
+        return f"{cf}/{key}"
+    return f"https://{env['S3_BUCKET']}.s3.{env['S3_REGION']}.amazonaws.com/{key}"
 
 
 # ---------------------------------------------------------------------------
@@ -227,8 +233,7 @@ def main():
     env_file = os.path.expanduser("~/Documents/The Morning Cup/.env")
     env = load_env(env_file)
     required = (
-        "R2_ACCOUNT_ID", "R2_AUDIO_ACCESS_KEY_ID", "R2_AUDIO_SECRET_ACCESS_KEY",
-        "R2_AUDIO_BUCKET", "R2_AUDIO_PUBLIC_URL",
+        "S3_ACCESS_KEY", "S3_SECRET_KEY", "S3_REGION", "S3_BUCKET",
         "WP_URL", "WP_USERNAME", "WP_APP_PASSWORD",
     )
     for k in required:
@@ -245,15 +250,15 @@ def main():
     duration_str = format_duration(duration_sec)
 
     yyyy, mm, _ = date.split("-")
-    key = f"podcast/{yyyy}/{mm}/the-morning-cup-{date}-{int(time.time())}.mp3"
+    key = f"audio/{yyyy}/{mm}/the-morning-cup-{date}-{int(time.time())}.mp3"
 
     print(f"→ Finding WP serve_episode draft for {date}...")
     post_id = find_wp_post_id(env, date)
     print(f"  WP post ID: {post_id}")
 
     print(f"→ Uploading {mp3_path}")
-    print(f"     ({file_size:,} bytes, {duration_str}) to R2...")
-    public_url = upload_to_r2(env, mp3_path, key)
+    print(f"     ({file_size:,} bytes, {duration_str}) to S3...")
+    public_url = upload_to_s3(env, mp3_path, key)
     print(f"  Public URL: {public_url}")
 
     print(f"→ Updating Apollo meta on post {post_id}...")

@@ -71,20 +71,20 @@ signing for Drive), `boto3` (R2 audio upload), and `requests` (WP REST):
 python3 -m pip install --user --break-system-packages cryptography boto3 requests
 ```
 
-### 2b. R2 audio bucket credentials (for upload-audio.py)
+### 2b. S3 audio bucket credentials (for upload-audio.py)
 
-`upload-audio.py` uploads the final MP3 to the R2 audio bucket the
+`upload-audio.py` uploads the final MP3 to the S3 audio bucket the
 Apollo plugin reads from, then PATCHes the WP draft's `_ep_audio_url`
-and related meta. It needs R2 credentials with `s3:PutObject` on the
+and related meta. It needs AWS credentials with `s3:PutObject` on the
 audio bucket. Add these to `~/Documents/The Morning Cup/.env`:
 
 ```bash
 cat >> "$HOME/Documents/The Morning Cup/.env" <<'ENVEOF'
-R2_ACCOUNT_ID="<your Cloudflare account id>"
-R2_AUDIO_ACCESS_KEY_ID="<R2 access key with PutObject on audio bucket>"
-R2_AUDIO_SECRET_ACCESS_KEY="<matching R2 secret>"
-R2_AUDIO_BUCKET="<audio bucket name, same as APOLLO_AUDIO_BUCKET in wp-config>"
-R2_AUDIO_PUBLIC_URL="https://serve.pennycdn.com"
+S3_ACCESS_KEY="<AWS access key with PutObject on the audio bucket>"
+S3_SECRET_KEY="<matching AWS secret>"
+S3_REGION="us-east-1"
+S3_BUCKET="<bucket name, same as APOLLO_S3_BUCKET in wp-config>"
+S3_CF_URL="<CloudFront URL, e.g. https://d1abc.cloudfront.net>"
 WP_URL="https://thepennytribune.com"
 WP_USERNAME="systems"
 WP_APP_PASSWORD="<same value as the Cloudflare WP_APP_PASSWORD secret>"
@@ -92,10 +92,14 @@ ENVEOF
 chmod 600 "$HOME/Documents/The Morning Cup/.env"
 ```
 
-These mirror what's already in your wp-config.php for the Apollo
-plugin's `SVH_R2_*` / `APOLLO_AUDIO_*` constants. Same Cloudflare
-account, same bucket. You can reuse the existing R2 access key, or
-create a separate one scoped to just the audio bucket.
+These mirror the Apollo plugin's `APOLLO_S3_*` constants in your
+wp-config.php — same AWS account, same bucket, same CloudFront
+distribution. You can reuse the existing access key, or create a new
+IAM user scoped to just `s3:PutObject` on this bucket.
+
+If `S3_CF_URL` is empty, the script falls back to the direct S3 URL
+(`https://<bucket>.s3.<region>.amazonaws.com/<key>`) — but for
+production you'll want CloudFront for caching and HTTPS.
 
 ### 3. Set the Cloudflare worker secrets
 
