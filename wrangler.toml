@@ -17,7 +17,7 @@ binding = "MORNING_CUP_KV"
 id = "b7de93b7b4354feda82968f7fa76a297"
 
 [vars]
-OPENAI_MODEL = "gpt-5"
+OPENAI_MODEL = "gpt-5-mini"
 ELEVENLABS_MODEL_ID = "eleven_multilingual_v2"
 ELEVENLABS_OUTPUT_FORMAT = "mp3_44100_128"
 WORKER_TIMEZONE = "America/New_York"

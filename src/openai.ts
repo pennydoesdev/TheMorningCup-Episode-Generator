@@ -45,6 +45,17 @@ interface CallOptions {
 // the run record can move to "failed" instead of being stranded.
 const ATTEMPT_TIMEOUT_MS = 8 * 60 * 1000;
 
+function isReasoningModel(model: string): boolean {
+  // gpt-5 family and the o-series are reasoning models that reject the
+  // `temperature` parameter on the Responses API.
+  return (
+    model.startsWith("gpt-5") ||
+    model.startsWith("o1") ||
+    model.startsWith("o3") ||
+    model.startsWith("o4")
+  );
+}
+
 async function callResponses(
   env: Env,
   config: Config,
@@ -68,7 +79,6 @@ async function callResponses(
         content: [{ type: "input_text", text: opts.userInput }],
       },
     ],
-    temperature: opts.temperature ?? 0.4,
     max_output_tokens: opts.maxOutputTokens ?? 16000,
     text: {
       format: {
@@ -80,6 +90,10 @@ async function callResponses(
     },
     stream: true,
   };
+
+  if (!isReasoningModel(config.openaiModel)) {
+    body.temperature = opts.temperature ?? 0.4;
+  }
 
   let lastErr: unknown;
   for (let attempt = 0; attempt < 3; attempt++) {

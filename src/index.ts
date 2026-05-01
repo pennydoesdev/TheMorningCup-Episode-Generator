@@ -284,40 +284,71 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       throw new Error("Chunker produced 0 chunks");
     }
 
-    const completedChunks: ChunkPiece[] = [];
-    for (const chunk of chunks) {
-      try {
-        const tts = await synthesizeChunk(env, config, { text: chunk.text });
-        await putArrayBuffer(env, chunk.r2_key, tts.audio, {
-          contentType: tts.contentType || "audio/mpeg",
-          metadata: {
-            episode: episodeIso,
-            order: String(chunk.order),
-            characters: String(chunk.character_count),
-          },
-        });
-        const publicUrl = getPublicUrl(config, chunk.r2_key);
-        completedChunks.push({ ...chunk, public_url: publicUrl });
-      } catch (err) {
-        logger.error("chunk synth failed", { err: String(err), order: chunk.order });
-        // Save partial progress and email failure alert, then abort.
-        await updateRunStage(env, episodeIso, {
-          status: "failed",
-          error: `TTS failed at chunk ${chunk.order}: ${String(err)}`,
-          chunk_count: completedChunks.length,
-        });
-        try {
-          await sendFailureEmail(env, config, {
-            episodeIso,
-            stage: "tts",
-            error: `TTS failed at chunk ${chunk.order}: ${String(err)}`,
-          });
-        } catch (e) {
-          logger.error("failure email failed", { err: String(e) });
+    // Synthesize chunks in parallel with bounded concurrency. ElevenLabs
+    // tolerates a handful of concurrent requests fine, and the wall-time
+    // saving is significant (~4x for ~12 chunks vs sequential).
+    const TTS_CONCURRENCY = 4;
+    const slots: (ChunkPiece | undefined)[] = new Array(chunks.length);
+    type ChunkFailure = { order: number; err: unknown };
+    // Wrapped in an object so TS doesn't narrow the variable to null after
+    // declaration — closures mutate it and we need the union type to survive.
+    const failureState: { value: ChunkFailure | null } = { value: null };
+    let nextChunkIdx = 0;
+
+    const workers = Array.from(
+      { length: Math.min(TTS_CONCURRENCY, chunks.length) },
+      async () => {
+        while (true) {
+          const i = nextChunkIdx++;
+          if (i >= chunks.length) return;
+          if (failureState.value) return;
+          const chunk = chunks[i];
+          try {
+            const tts = await synthesizeChunk(env, config, { text: chunk.text });
+            await putArrayBuffer(env, chunk.r2_key, tts.audio, {
+              contentType: tts.contentType || "audio/mpeg",
+              metadata: {
+                episode: episodeIso,
+                order: String(chunk.order),
+                characters: String(chunk.character_count),
+              },
+            });
+            const publicUrl = getPublicUrl(config, chunk.r2_key);
+            slots[i] = { ...chunk, public_url: publicUrl };
+          } catch (err) {
+            if (!failureState.value) failureState.value = { order: chunk.order, err };
+          }
         }
-        return;
+      },
+    );
+    await Promise.all(workers);
+
+    const failure = failureState.value;
+    if (failure) {
+      const partialCount = slots.filter((c) => c !== undefined).length;
+      const errMsg = `TTS failed at chunk ${failure.order}: ${String(failure.err)}`;
+      logger.error("chunk synth failed", {
+        err: String(failure.err),
+        order: failure.order,
+      });
+      await updateRunStage(env, episodeIso, {
+        status: "failed",
+        error: errMsg,
+        chunk_count: partialCount,
+      });
+      try {
+        await sendFailureEmail(env, config, {
+          episodeIso,
+          stage: "tts",
+          error: errMsg,
+        });
+      } catch (e) {
+        logger.error("failure email failed", { err: String(e) });
       }
+      return;
     }
+
+    const completedChunks: ChunkPiece[] = slots as ChunkPiece[];
 
     // 6. Manifest + files.txt
     const manifest = buildManifest({
