@@ -12,17 +12,114 @@ In Claude Code, in a clone of the Auto-Episode repo:
 
 ## What this command does
 
-When the user runs `/create-show`, follow this flow exactly:
+When the user runs `/create-show`, follow this two-step flow:
 
-### Step 1 — Show the user the variables template
+### Step 1 — List existing podcasts and ask which one to set up
 
-Read `scripts/new-show-template.txt` from the repo and print its contents
-inside a fenced code block. Tell the user:
+Read the WordPress credentials from the user's local `.env` (path:
+`~/.auto-episode/.env` or wherever they configured) — `WP_URL`,
+`WP_USERNAME`, `WP_APP_PASSWORD`.
 
-> Copy the block below into a text editor, fill in every value, then paste
-> the entire filled-in file back to me in this chat. I'll generate the
-> show's config files, prompt module, wrangler config, and update the
-> registry.
+Call:
+
+```
+GET {WP_URL}/wp-json/wp/v2/serve_podcast?per_page=50&status=publish,draft,private
+```
+
+with Basic auth. Print a numbered list to the user:
+
+```
+Existing podcasts in WordPress:
+
+  ID    Title                              Status
+  ----  ---------------------------------  -------
+  2616  The Morning Cup                    publish
+  2811  The Tribune Weekly Rewind          draft
+  2945  Tribune Election Briefing          publish
+
+Type the post ID of the show you want to set up, OR
+"new" if you haven't created the serve_podcast post yet.
+```
+
+If the user types "new":
+
+> Create the show in WordPress first (Apollo plugin → Podcasts → Add
+> New). Set the title, _pod_author, _pod_category, _pod_copyright fields,
+> and the serve_podcast_category term. Save it as draft or publish.
+> Then re-run /create-show.
+
+Stop. Don't continue.
+
+If the user types a numeric ID, proceed to Step 1a.
+
+### Step 1a — Pull metadata from WordPress automatically
+
+Once the user replies with a post ID, fetch the show's metadata via the
+REST API. The `WP_URL`, `WP_USERNAME`, and `WP_APP_PASSWORD` are stored
+in the user's `~/.auto-episode/.env` file (or whatever config the local
+pipeline uses). Read them and call:
+
+```
+GET {WP_URL}/wp-json/wp/v2/serve_podcast/{post_id}
+```
+
+with Basic auth.
+
+From the response, extract and pre-fill:
+- `WP_PARENT_PODCAST_ID` = the post ID the user gave
+- `SHOW_TITLE` = `title.rendered`
+- `SHOW_KEY` = suggested from `slug` (lowercase, dashes only); the user
+  can still override
+- `HOST_NAME` = `meta._pod_author` (or `meta._pod_owner_name` if author
+  is empty)
+- `PODCAST_GENRE` = `meta._pod_category`
+- `COPYRIGHT_HOLDER` = `meta._pod_copyright` if non-empty, else default
+  to "The Penny Tribune"
+- `WP_PODCAST_SHOW_TERM` = the first term name in
+  `serve_podcast_category` for this post (do a second REST call to
+  resolve the term ID → name)
+
+If any field is missing on the WP side, leave the slot blank in the
+template you'll print next so the user can fill it in.
+
+### Step 1b — Print a SHORT variables template
+
+Print only the values that couldn't be discovered from WP:
+
+```
+SHOW_KEY=<suggested-from-slug>     # confirm or override
+ELEVENLABS_VOICE_ID=
+GOOGLE_DRIVE_FOLDER_ID=
+WORKER_NAME=<show-key>generator    # or override
+KV_NAMESPACE_ID=
+R2_BUCKET=auto-episode             # or per-show bucket
+CRON=0 9-11 * * *                  # default daily 5 AM ET; override for weekly etc.
+LOCAL_FIRE_HOUR=5
+TOPIC_FLOW=Positive Opening,Top Story,Headlines,Closing
+INTRO_SOUNDS=intro.wav,intro-sting.wav
+SECTION_STING=section-sting.wav
+OUTRO_SOUNDS=outro.wav
+
+# --- Auto-pulled from WordPress (verify and edit if needed) ---
+SHOW_TITLE=<from WP>
+HOST_NAME=<from WP>
+PODCAST_GENRE=<from WP>
+COPYRIGHT_HOLDER=<from WP>
+WP_PARENT_PODCAST_ID=<from WP>
+WP_PODCAST_SHOW_TERM=<from WP>
+PUBLISHER=The Penny Tribune
+
+MASTER_PROMPT_BEGIN
+(replace with the full master prompt for this show)
+MASTER_PROMPT_END
+```
+
+Tell the user:
+
+> I pulled what I could from the serve_podcast post you created. Verify
+> the auto-filled values look right, fill in the missing ones, paste your
+> master prompt between the BEGIN/END markers, and paste the whole block
+> back to me.
 
 ### Step 2 — Wait for the user to paste the filled-in file
 

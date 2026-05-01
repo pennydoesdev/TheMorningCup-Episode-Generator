@@ -57,15 +57,18 @@ import {
   stripSpacerMarker,
 } from "./utils/text";
 
-const BASE_TITLE = "The Morning Cup";
-
 export default {
   async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const config = loadConfig(env);
     const url = new URL(req.url);
 
     if (req.method === "GET" && url.pathname === "/health") {
-      return json({ ok: true, service: "morning-cup-generator", time: new Date().toISOString() });
+      return json({
+        ok: true,
+        service: `auto-episode-${config.showKey}`,
+        show: config.showTitle,
+        time: new Date().toISOString(),
+      });
     }
 
     if (req.method === "GET" && url.pathname === "/status") {
@@ -157,9 +160,15 @@ interface RunInputs {
 async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<void> {
   const { episodeIso, force } = inputs;
   const sourceIso = previousIsoDate(episodeIso);
-  const baseTitle = BASE_TITLE;
+  const baseTitle = config.showTitle;
 
-  logger.info("run start", { episodeIso, sourceIso, force, trigger: inputs.trigger });
+  logger.info("run start", {
+    showKey: config.showKey,
+    episodeIso,
+    sourceIso,
+    force,
+    trigger: inputs.trigger,
+  });
 
   const existing = await readRunRecord(env, episodeIso);
   if (isCompleted(existing) && !force) {
@@ -186,11 +195,14 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
 
     // 2. Build prompt + call OpenAI
     const userPrompt = buildUserPrompt({
+      masterPrompt: config.prompt,
+      showTitle: config.showTitle,
+      hostName: config.hostName,
+      publisher: config.publisher,
       episodeDateSpoken: spokenDate(episodeIso),
       sourceDateSpoken: spokenDate(sourceIso),
       sourceDigestText: digestText,
       sourceLimited: !digest.available,
-      hostName: config.hostName,
     });
 
     const generated = await generateEpisode(env, config, userPrompt);
@@ -221,7 +233,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
 
     if (!validation.ok) {
       // Save rejected raw and email failure alert.
-      const rejectedKey = `morning-cup/rejected/${episodeIso}-${Date.now()}.json`;
+      const rejectedKey = `${config.showKey}/rejected/${episodeIso}-${Date.now()}.json`;
       await putJson(env, rejectedKey, {
         episode_iso: episodeIso,
         validation,
@@ -251,7 +263,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
     }
 
     // 4. Write TXT, HTML, JSON
-    const baseDir = `morning-cup/${episodeIso}/`;
+    const baseDir = `${config.showKey}/${episodeIso}/`;
     const txtKey = `${baseDir}${baseTitle} - ${episodeIso}.txt`;
     const htmlKey = `${baseDir}${baseTitle} - ${episodeIso}.html`;
     const jsonKey = `${baseDir}${baseTitle} - ${episodeIso}.json`;
@@ -490,13 +502,13 @@ interface PublishInputs {
 }
 
 async function r2GetBytes(env: Env, key: string): Promise<ArrayBuffer> {
-  const obj = await env.MORNING_CUP_BUCKET.get(key);
+  const obj = await env.EPISODE_BUCKET.get(key);
   if (!obj) throw new Error(`R2 object not found: ${key}`);
   return obj.arrayBuffer();
 }
 
 async function r2GetText(env: Env, key: string): Promise<string> {
-  const obj = await env.MORNING_CUP_BUCKET.get(key);
+  const obj = await env.EPISODE_BUCKET.get(key);
   if (!obj) throw new Error(`R2 object not found: ${key}`);
   return obj.text();
 }

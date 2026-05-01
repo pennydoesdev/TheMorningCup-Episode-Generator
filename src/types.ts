@@ -1,28 +1,28 @@
-// Shared types for The Morning Cup generator.
+// Shared types for the Auto-Episode podcast generator.
+//
+// Multi-show: every show is registered in src/show.ts; SHOW_KEY in
+// wrangler.<show>.toml selects which show this worker instance runs.
 
 export interface Env {
-  // Bindings
-  MORNING_CUP_BUCKET: R2Bucket;
-  MORNING_CUP_KV?: KVNamespace;
+  // Bindings — generic so the same code runs for any show.
+  EPISODE_BUCKET: R2Bucket;
+  EPISODE_KV?: KVNamespace;
 
-  // Secrets
+  // Show selector
+  SHOW_KEY: string;
+
+  // Secrets (set per-worker via `wrangler secret put --config wrangler.<show>.toml`)
   OPENAI_API_KEY: string;
   ELEVENLABS_API_KEY: string;
   ELEVENLABS_VOICE_ID: string;
-  RESEND_API_KEY: string;
+  RESEND_API_KEY?: string;
   RUN_SECRET: string;
 
-  // Vars
+  // Worker-wide vars (typically the same value across shows)
   OPENAI_MODEL?: string;
   ELEVENLABS_MODEL_ID?: string;
   ELEVENLABS_OUTPUT_FORMAT?: string;
   WORKER_TIMEZONE?: string;
-  MIN_SCRIPT_WORDS?: string;
-  TARGET_SCRIPT_WORDS_MIN?: string;
-  TARGET_SCRIPT_WORDS_MAX?: string;
-  MAX_SCRIPT_WORDS?: string;
-  WORDS_PER_MINUTE?: string;
-  MAX_TTS_CHARS_PER_CHUNK?: string;
   ENABLE_EMAIL?: string;
   ENABLE_SOURCE_DIGEST?: string;
   ENABLE_REPAIR_PASS?: string;
@@ -33,22 +33,15 @@ export interface Env {
   EMAIL_TO?: string;
   R2_PUBLIC_BASE_URL?: string;
 
-  PUBLISHER?: string;
-  COPYRIGHT_HOLDER?: string;
-  PODCAST_GENRE?: string;
-  HOST_NAME?: string;
-
-  // Publishing pipeline
+  // Publishing pipeline (shared across shows; per-show overrides come from
+  // the show config in shows/<show-key>/config.ts)
   ENABLE_PUBLISHING?: string;
-  GOOGLE_DRIVE_FOLDER_ID?: string;
   GOOGLE_SERVICE_ACCOUNT_KEY?: string; // secret: full JSON contents
   WP_URL?: string;
   WP_USERNAME?: string;
   WP_APP_PASSWORD?: string; // secret
   WP_CPT_SLUG?: string;
   WP_PODCAST_SHOW_TAXONOMY?: string;
-  WP_PODCAST_SHOW_TERM?: string;
-  WP_PARENT_PODCAST_ID?: string;
 
   VOICE_STABILITY?: string;
   VOICE_SIMILARITY_BOOST?: string;

@@ -1,0 +1,77 @@
+# wrangler.example.toml
+#
+# Reference template for adding a new show. /create-show writes a real
+# wrangler.<show-key>.toml from your variables file using this shape.
+#
+# Each show in this repo deploys as its own Cloudflare Worker, sharing
+# the same source code but pointing at its own R2 bucket / KV namespace
+# / WordPress show / Drive folder.
+
+# === Identity =================================================================
+name = "yourshowgenerator"                        # unique CF worker name
+main = "src/index.ts"
+compatibility_date = "2026-04-30"
+compatibility_flags = ["nodejs_compat"]
+
+# === Schedule =================================================================
+# Standard cron in UTC. Use the WORKER_TIMEZONE var below + LOCAL_FIRE_HOUR
+# logic in src/index.ts to pick a single local-hour bucket out of this range.
+[triggers]
+crons = ["0 9-11 * * *"]                          # daily 9-11 UTC, fires at local 5 AM ET
+
+# === R2 bucket for chunks =====================================================
+# Either share one bucket across all shows (objects are namespaced by
+# <SHOW_KEY>/...) or dedicate one bucket per show.
+[[r2_buckets]]
+binding = "EPISODE_BUCKET"
+bucket_name = "auto-episode"
+
+# === KV for run records (per worker) ==========================================
+[[kv_namespaces]]
+binding = "EPISODE_KV"
+id = "<KV namespace id from CF dashboard>"
+
+# === Vars =====================================================================
+[vars]
+# --- selects which show this worker runs ---
+SHOW_KEY = "your-show-key"
+
+# --- model + voice + i18n ---
+OPENAI_MODEL = "gpt-5-mini"
+ELEVENLABS_MODEL_ID = "eleven_multilingual_v2"
+ELEVENLABS_OUTPUT_FORMAT = "mp3_44100_128"
+WORKER_TIMEZONE = "America/New_York"
+
+# --- pipeline behavior ---
+ENABLE_EMAIL = "false"
+ENABLE_SOURCE_DIGEST = "true"
+ENABLE_REPAIR_PASS = "true"
+STRIP_PACING_TAGS_FOR_TTS = "true"
+STATUS_PUBLIC = "false"
+
+# --- email + R2 public access ---
+EMAIL_FROM = ""
+EMAIL_TO = ""
+R2_PUBLIC_BASE_URL = ""
+
+# --- voice tuning ---
+VOICE_STABILITY = "0.35"
+VOICE_SIMILARITY_BOOST = "0.85"
+VOICE_STYLE = "0.7"
+VOICE_USE_SPEAKER_BOOST = "true"
+
+# --- publishing pipeline (org-wide values) ---
+ENABLE_PUBLISHING = "true"
+WP_URL = "https://thepennytribune.com"
+WP_USERNAME = "systems"
+WP_CPT_SLUG = "serve_episode"
+WP_PODCAST_SHOW_TAXONOMY = "serve_podcast_category"
+
+# === Secrets (set per-worker via wrangler secret put --config wrangler.<show>.toml) ===
+#   OPENAI_API_KEY               same value across shows
+#   ELEVENLABS_API_KEY           same value across shows
+#   ELEVENLABS_VOICE_ID          UNIQUE per show (one voice clone per host)
+#   RESEND_API_KEY               same value (optional)
+#   RUN_SECRET                   recommend UNIQUE per show
+#   GOOGLE_SERVICE_ACCOUNT_KEY   same JSON across shows (full file contents)
+#   WP_APP_PASSWORD              same value across shows (for the systems user)
