@@ -1,4 +1,11 @@
 // OpenAI Responses API client using structured JSON output.
+//
+// Long structured generations (3300-3700 word scripts) take ~60-120s. A
+// non-streaming fetch buffers the entire response server-side before any
+// bytes are sent, so the Cloudflare Workers runtime can drop the subrequest
+// for inactivity, leaving the run stuck mid-flight. Streaming the SSE
+// response keeps bytes flowing continuously and lets us fail fast via
+// AbortController if the call genuinely hangs.
 
 import type { Env, EpisodeJson } from "./types";
 import type { Config } from "./config";
@@ -33,6 +40,11 @@ interface CallOptions {
   maxOutputTokens?: number;
 }
 
+// Per-attempt hard timeout. Generations should never legitimately take this
+// long; if they do, abort and let the retry loop run again or fail cleanly so
+// the run record can move to "failed" instead of being stranded.
+const ATTEMPT_TIMEOUT_MS = 8 * 60 * 1000;
+
 async function callResponses(
   env: Env,
   config: Config,
@@ -66,18 +78,23 @@ async function callResponses(
         schema: EPISODE_JSON_SCHEMA.schema,
       },
     },
+    stream: true,
   };
 
   let lastErr: unknown;
   for (let attempt = 0; attempt < 3; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), ATTEMPT_TIMEOUT_MS);
     try {
       const res = await fetch(url, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${env.OPENAI_API_KEY}`,
           "Content-Type": "application/json",
+          Accept: "text/event-stream",
         },
         body: JSON.stringify(body),
+        signal: controller.signal,
       });
 
       if (res.status === 429 || res.status >= 500) {
@@ -85,13 +102,13 @@ async function callResponses(
         const wait = Number.isFinite(retryAfter) && retryAfter > 0
           ? retryAfter * 1000
           : 1000 * Math.pow(2, attempt);
-        const body = await res.text().catch(() => "");
-        lastErr = new Error(`OpenAI ${res.status}: ${body.slice(0, 500)}`);
+        const errBody = await res.text().catch(() => "");
+        lastErr = new Error(`OpenAI ${res.status}: ${errBody.slice(0, 500)}`);
         logger.warn("openai retry", {
           status: res.status,
           attempt,
           wait,
-          body: body.slice(0, 500),
+          body: errBody.slice(0, 500),
         });
         await sleep(wait);
         continue;
@@ -102,21 +119,98 @@ async function callResponses(
         throw new Error(`OpenAI ${res.status}: ${text.slice(0, 500)}`);
       }
 
-      const payload = (await res.json()) as ResponsesPayload;
-      if (payload.error?.message) {
-        throw new Error(`OpenAI error: ${payload.error.message}`);
+      if (!res.body) {
+        throw new Error("OpenAI returned empty response body");
       }
 
-      const raw = extractText(payload);
+      const raw = await readResponsesStream(res.body);
       if (!raw) throw new Error("OpenAI returned empty output_text");
       return { raw };
     } catch (err) {
       lastErr = err;
       logger.warn("openai call failed", { attempt, err: String(err) });
       await sleep(1000 * Math.pow(2, attempt));
+    } finally {
+      clearTimeout(timeout);
     }
   }
   throw new Error(`OpenAI call failed after 3 attempts: ${String(lastErr)}`);
+}
+
+interface SseEvent {
+  type?: string;
+  delta?: string;
+  text?: string;
+  response?: ResponsesPayload;
+  error?: { message?: string };
+  message?: string;
+}
+
+async function readResponsesStream(body: ReadableStream<Uint8Array>): Promise<string> {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+  let accumulated = "";
+  let finalText: string | null = null;
+  let failureMsg: string | null = null;
+
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+
+      let idx: number;
+      while ((idx = buf.indexOf("\n\n")) !== -1) {
+        const block = buf.slice(0, idx);
+        buf = buf.slice(idx + 2);
+        const data = parseSseDataLines(block);
+        if (data === null) continue;
+        if (data === "[DONE]") continue;
+        let evt: SseEvent;
+        try {
+          evt = JSON.parse(data) as SseEvent;
+        } catch {
+          continue;
+        }
+        const t = evt.type;
+        if (t === "response.output_text.delta" && typeof evt.delta === "string") {
+          accumulated += evt.delta;
+        } else if (t === "response.output_text.done" && typeof evt.text === "string") {
+          finalText = evt.text;
+        } else if (t === "response.completed" && evt.response) {
+          const candidate = extractText(evt.response);
+          if (candidate) finalText = candidate;
+        } else if (
+          t === "response.failed" ||
+          t === "response.error" ||
+          t === "error"
+        ) {
+          failureMsg = evt.error?.message || evt.message || "stream error";
+        }
+      }
+    }
+  } finally {
+    try {
+      reader.releaseLock();
+    } catch {
+      // ignore
+    }
+  }
+  if (failureMsg) throw new Error(`OpenAI stream error: ${failureMsg}`);
+  return finalText ?? accumulated;
+}
+
+function parseSseDataLines(block: string): string | null {
+  const lines = block.split("\n");
+  const dataLines: string[] = [];
+  for (const line of lines) {
+    if (line.startsWith("data:")) {
+      dataLines.push(line.slice(5).replace(/^ /, ""));
+    }
+  }
+  if (dataLines.length === 0) return null;
+  return dataLines.join("\n");
 }
 
 function extractText(payload: ResponsesPayload): string {
