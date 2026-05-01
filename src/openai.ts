@@ -85,7 +85,14 @@ async function callResponses(
         const wait = Number.isFinite(retryAfter) && retryAfter > 0
           ? retryAfter * 1000
           : 1000 * Math.pow(2, attempt);
-        logger.warn("openai retry", { status: res.status, attempt, wait });
+        const body = await res.text().catch(() => "");
+        lastErr = new Error(`OpenAI ${res.status}: ${body.slice(0, 500)}`);
+        logger.warn("openai retry", {
+          status: res.status,
+          attempt,
+          wait,
+          body: body.slice(0, 500),
+        });
         await sleep(wait);
         continue;
       }
