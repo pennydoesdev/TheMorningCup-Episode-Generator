@@ -317,6 +317,58 @@ ${JSON.stringify(prior)}`;
   return { json, raw };
 }
 
+// Aggressive length-extension pass. Use this when the script is too short and
+// the standard repair pass didn't get it over the floor. Tells the model
+// exactly which sections to deepen and forbids deletion of existing content.
+export async function extendEpisode(
+  env: Env,
+  config: Config,
+  prior: EpisodeJson,
+  validation: { word_count: number; estimated_runtime_minutes: number; errors: string[] },
+  minWords: number,
+  userPrompt: string,
+): Promise<OpenAiResult> {
+  const wordsNeeded = Math.max(minWords - validation.word_count, 400);
+
+  const extendInput = `${userPrompt}
+
+LENGTH-EXTEND PASS (mandatory).
+
+Your previous draft is too short. It is ${validation.word_count} spoken words and ~${validation.estimated_runtime_minutes} minutes of speech. The hard floor is ${minWords} words and 20 minutes. You MUST add at least ${wordsNeeded} more spoken words to the elevenlabs_script.
+
+DO NOT shorten or remove anything that is already in the script. ADD substantial new content to the underweight sections. Preserve the existing structure (positive opening, weather, politics, political trends, crime, immigration, California governor's race, House/Senate primaries, business/economy, trade, technology, healthcare, environment/climate, positive science, international, Iran, Gaza, social/culture, riddle, positive closing, closing summary, outro, riddle answer) and the [TEN-SECOND SECTION SPACER] markers between every major section.
+
+Use the web_search tool to find more substantive yesterday's-news material to deepen these sections specifically:
+- U.S. politics + political trends (target combined ≥ 800 words; expand on power, who pays, policy effect)
+- Business/economy + trade (target combined ≥ 500 words; expand on labor impact, who benefits)
+- Healthcare + environment/climate (target combined ≥ 500 words; expand on patient/community impact)
+- International + Iran + Gaza (target combined ≥ 800 words; expand on civilian impact and policy stakes)
+- Closing summary (extend to a fuller wrap-up that revisits the day's through-lines)
+
+Stay strictly factual — verify any new claims with web_search. Do not invent. Apply the same leftist, working-class-centered editorial lens.
+
+Return strict JSON only — same schema. The elevenlabs_script must be at least ${minWords} spoken words and 20 minutes of speech. Update self_validation accordingly.
+
+PREVIOUS VALIDATION ERRORS:
+${validation.errors.map((e) => `- ${e}`).join("\n")}
+
+PREVIOUS JSON OUTPUT:
+${JSON.stringify(prior)}`;
+
+  const { raw } = await callResponses(env, config, {
+    systemInstruction:
+      "You are extending a structured JSON podcast script that is too short. Preserve every line of existing content. ADD new substantive material to the listed sections until the script clears the word-count floor. Use web_search to ground new content in real reporting. Return strict JSON only.",
+    userInput: extendInput,
+    temperature: 0.4,
+    maxOutputTokens: 16000,
+  });
+  const json = safeParseEpisodeJson(raw);
+  if (!json) {
+    throw Object.assign(new Error("Failed to parse extend JSON response"), { raw });
+  }
+  return { json, raw };
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }

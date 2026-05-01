@@ -6,6 +6,17 @@ Tribune’s “The Morning Cup,”** validates and (if needed) repairs it, conve
 it to ordered ElevenLabs MP3 chunks using your custom voice, stores everything
 in Cloudflare R2, and emails you the script, metadata, and chunk links.
 
+## Documentation
+
+| Doc | What's in it |
+|-----|--------------|
+| [docs/SETUP.md](./docs/SETUP.md) | First-time setup — folders, secrets, sound assets, Wrangler |
+| [docs/DAILY-WORKFLOW.md](./docs/DAILY-WORKFLOW.md) | The two commands you run each morning |
+| [docs/EDITING.md](./docs/EDITING.md) | How `build-episode.sh` (and the optional Resolve script) assembles the final MP3 |
+| [docs/PROMPTS.md](./docs/PROMPTS.md) | ElevenLabs prompts that have worked (stings, voice lines) |
+| [docs/TUNING.md](./docs/TUNING.md) | All the config knobs and what's safe to change |
+| [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) | Real issues we hit + the fixes that worked |
+
 ---
 
 ## 1. Overview
