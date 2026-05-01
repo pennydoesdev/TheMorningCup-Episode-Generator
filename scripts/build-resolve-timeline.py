@@ -19,6 +19,8 @@ Folder layout the script expects (under ~/Documents/The Morning Cup/):
         intro-sting.wav
         morning-cup-sting.wav
         The Morning Cup - Thank You.wav
+    Scripts/                           ← this script lives here as build-morning-cup.py
+        build-morning-cup.py
     episodes/<YYYY-MM-DD>/             ← chunk MP3s + manifest for one episode
         001.mp3 ... NNN.mp3
         The Morning Cup - <YYYY-MM-DD> - manifest.json
@@ -39,11 +41,12 @@ A) From inside Resolve (easiest):
    4. Paste the whole file into the console and hit Enter.
 
 B) As a Resolve menu item (one-click):
-   Symlink this file into Resolve's user-scripts folder so it appears under
+   Keep the working copy in ~/Documents/The Morning Cup/Scripts/ and symlink
+   it into Resolve's user-scripts folder so it appears under
    Workspace > Scripts. On macOS:
 
        mkdir -p "$HOME/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Edit"
-       ln -sf "$PWD/scripts/build-resolve-timeline.py" \\
+       ln -sf "$HOME/Documents/The Morning Cup/Scripts/build-morning-cup.py" \\
            "$HOME/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Edit/build-morning-cup.py"
 
    Restart Resolve. The script will then appear at:
@@ -52,7 +55,7 @@ B) As a Resolve menu item (one-click):
    Customization > Workspace > Scripts.
 
 C) From a terminal (Resolve must be running):
-       python3 build-resolve-timeline.py [EPISODE_DATE]
+       python3 "$HOME/Documents/The Morning Cup/Scripts/build-morning-cup.py" [EPISODE_DATE]
 
 Notes:
 - Free Resolve 18+ supports the scripting API; no Studio license needed.
