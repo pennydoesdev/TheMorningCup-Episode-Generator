@@ -198,6 +198,21 @@ else
   echo "Warning: write-chapters.py not found alongside build-episode.sh; skipping chapter markers." >&2
 fi
 
+# --- upload audio to R2 + attach to WP draft (optional) ----------------------
+
+UPLOAD_AUDIO_PY="$(dirname "$0")/upload-audio.py"
+if [ -f "$UPLOAD_AUDIO_PY" ] && [ -f "$ROOT/.env" ]; then
+  set -o allexport
+  # shellcheck disable=SC1091
+  source "$ROOT/.env"
+  set +o allexport
+  if [ -n "${R2_AUDIO_BUCKET:-}" ] && [ -n "${WP_URL:-}" ]; then
+    echo "Uploading audio + attaching to WP draft..."
+    python3 "$UPLOAD_AUDIO_PY" "$DATE" || \
+      echo "Warning: audio upload / WP attach failed; episode is still saved locally." >&2
+  fi
+fi
+
 # --- summary -----------------------------------------------------------------
 
 SIZE=$(du -h "$OUTPUT" | cut -f1)

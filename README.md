@@ -10,6 +10,7 @@ in Cloudflare R2, and emails you the script, metadata, and chunk links.
 
 | Doc | What's in it |
 |-----|--------------|
+| [docs/PIPELINE.md](./docs/PIPELINE.md) | Full pipeline diagram + every component, end-to-end |
 | [docs/SETUP.md](./docs/SETUP.md) | First-time setup — folders, secrets, sound assets, Wrangler |
 | [docs/WALKTHROUGH.md](./docs/WALKTHROUGH.md) | Worked example: generate one full episode end-to-end (with chapters) |
 | [docs/DAILY-WORKFLOW.md](./docs/DAILY-WORKFLOW.md) | The two commands you run each morning |

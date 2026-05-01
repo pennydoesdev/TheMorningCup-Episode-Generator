@@ -11,7 +11,16 @@ Once a worker run completes, the publishing pipeline:
    "Podcast Show" taxonomy with term *The Morning Cup*.
 
 The final stitched MP3 is rendered locally by `build-episode.sh` and
-auto-pushed to the same Drive folder by `push-final-to-drive.py`.
+then:
+- pushed to the same Drive folder by `push-final-to-drive.py`
+- uploaded to the R2 audio bucket and attached to the WP draft (with
+  Apollo `_ep_*` meta) by `upload-audio.py`
+
+After both steps, the draft in WordPress has the audio URL plus full
+runtime/file-size/MIME metadata, ready for review and one-click publish.
+
+For the bird's-eye view of the whole pipeline including the planned
+Publer auto-social plugin, see [PIPELINE.md](./PIPELINE.md).
 
 The publishing step is **best-effort** — if any of the three sub-steps
 fails (Drive auth, WP credentials, OpenAI rate-limit), the worker run
@@ -55,12 +64,38 @@ ENVEOF
 chmod 600 "$HOME/Documents/The Morning Cup/.env"
 ```
 
-The local Python helper needs the `cryptography` package to sign the
-JWT:
+The local Python helpers need three packages — `cryptography` (JWT
+signing for Drive), `boto3` (R2 audio upload), and `requests` (WP REST):
 
 ```bash
-python3 -m pip install --user --break-system-packages cryptography
+python3 -m pip install --user --break-system-packages cryptography boto3 requests
 ```
+
+### 2b. R2 audio bucket credentials (for upload-audio.py)
+
+`upload-audio.py` uploads the final MP3 to the R2 audio bucket the
+Apollo plugin reads from, then PATCHes the WP draft's `_ep_audio_url`
+and related meta. It needs R2 credentials with `s3:PutObject` on the
+audio bucket. Add these to `~/Documents/The Morning Cup/.env`:
+
+```bash
+cat >> "$HOME/Documents/The Morning Cup/.env" <<'ENVEOF'
+R2_ACCOUNT_ID="<your Cloudflare account id>"
+R2_AUDIO_ACCESS_KEY_ID="<R2 access key with PutObject on audio bucket>"
+R2_AUDIO_SECRET_ACCESS_KEY="<matching R2 secret>"
+R2_AUDIO_BUCKET="<audio bucket name, same as APOLLO_AUDIO_BUCKET in wp-config>"
+R2_AUDIO_PUBLIC_URL="https://serve.pennycdn.com"
+WP_URL="https://thepennytribune.com"
+WP_USERNAME="systems"
+WP_APP_PASSWORD="<same value as the Cloudflare WP_APP_PASSWORD secret>"
+ENVEOF
+chmod 600 "$HOME/Documents/The Morning Cup/.env"
+```
+
+These mirror what's already in your wp-config.php for the Apollo
+plugin's `SVH_R2_*` / `APOLLO_AUDIO_*` constants. Same Cloudflare
+account, same bucket. You can reuse the existing R2 access key, or
+create a separate one scoped to just the audio bucket.
 
 ### 3. Set the Cloudflare worker secrets
 
