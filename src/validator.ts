@@ -8,6 +8,19 @@ const FORBIDDEN_PATTERNS: { name: string; regex: RegExp }[] = [
   { name: "music cue", regex: /music\s*cue/i },
   { name: "production note", regex: /production\s*note/i },
   { name: "voice description", regex: /voice\s*description/i },
+  // The production word "Outro" must never be voiced — the outro CONTENT
+  // (sign-off) plays, but the host signs off with natural language like
+  // "Thanks for joining me on The Morning Cup."
+  { name: "spoken outro word", regex: /\boutro\b/i },
+  // Section labels written as standalone heading lines (the model treating
+  // labels as headings instead of speaking them as natural intros after
+  // each sting). "Power Map" inside a sentence is fine; "Power Map" alone
+  // on a line is not.
+  {
+    name: "section heading line",
+    regex:
+      /^\s*(closing summary|power map|cost of living check|what comes next|positive opening|positive closing|riddle answer|section spacer)\s*[:.]?\s*$/im,
+  },
 ];
 
 const MARKDOWN_TABLE = /\|.*\|.*\n[\s-:]*\|[\s-:]*\|/m;

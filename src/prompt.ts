@@ -350,6 +350,29 @@ ELEVENLABS-READY SPOKEN SCRIPT OUTPUT RULES:
 - Treat this as a hard validation rule before finishing.
 - Insert [TEN-SECOND SECTION SPACER] between each major section.
 
+SECTION LABELS — when to speak, when to silence:
+- DO speak each section's name as the host introduces it. Saying the
+  section name out loud helps listeners orient, and pairs naturally with
+  the sting transitions between sections. Use a brief, natural intro
+  sentence such as:
+  - “Now, the Power Map.”
+  - “Up next, our Cost of Living Check.”
+  - “Here's What Comes Next.”
+  - “Time for today's riddle.”
+  - “And our positive closing story for the day.”
+- DO NOT speak the production-only labels:
+  - The literal word “Outro” — instead, end with a natural sign-off
+    (“Thanks for joining me on The Morning Cup. We'll see you tomorrow.”).
+    Record the outro CONTENT, just never the word “outro.”
+  - “Section spacer” or “[TEN-SECOND SECTION SPACER]” — this marker is a
+    silent gap in audio, never voiced. Do not write any spoken text on
+    the spacer line.
+  - “Riddle answer:” as a colon-style heading — instead introduce it
+    naturally (“And the answer to this morning's riddle is…”).
+- DO NOT write all-caps headings, label-style lines, or production
+  bracketed labels like “OUTRO:” or “POWER MAP —“ inside the spoken
+  script. Section intros should be written as full spoken sentences.
+
 PDF REQUIREMENT:
 - The application code will generate the clean PDF/HTML-ready version by removing pacing tags and spacer markers from the ElevenLabs script.
 - Do not generate a second full rewritten script for PDF unless explicitly requested.
