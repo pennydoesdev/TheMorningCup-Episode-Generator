@@ -1,0 +1,146 @@
+# =============================================================================
+# Auto-Episode — New Show variables
+#
+# Fill in every value below the "=" sign, then paste the entire file back to
+# Claude in chat. Claude will scaffold:
+#
+#   shows/<show-key>/config.ts
+#   shows/<show-key>/prompt.ts
+#   wrangler.<show-key>.toml
+#   src/show.ts (registry update)
+#
+# Lines starting with "#" are comments and ignored.
+# Strings do NOT need quotes.
+# =============================================================================
+
+# --- Identity ----------------------------------------------------------------
+
+# Short slug used in URLs, file paths, and config keys. Lowercase, dashes only.
+SHOW_KEY=
+
+# Human-readable show name as it should appear in titles and the WordPress UI.
+SHOW_TITLE=
+
+# Full host name spoken in the intro and outro.
+HOST_NAME=
+
+# Usually the same across all shows in this org. Edit only if this show has a
+# different publisher or rights holder.
+PUBLISHER=The Penny Tribune
+COPYRIGHT_HOLDER=The Penny Tribune
+
+# iTunes / Apple Podcasts category — see https://podcasters.apple.com/support/categories
+PODCAST_GENRE=News
+
+# --- Schedule ----------------------------------------------------------------
+
+# Cron schedule for the worker. Standard cron syntax in UTC.
+# Examples:
+#   "0 9-11 * * *"   = hourly between 09:00 and 11:00 UTC
+#                       (with WORKER_TIMEZONE check, fires once at 5 AM ET)
+#   "0 14 * * 6"     = 14:00 UTC every Saturday (10 AM ET in summer)
+#   "0 0,12 * * *"   = midnight and noon UTC daily
+CRON=0 9-11 * * *
+
+# The time zone the worker uses to decide which local hour to fire on.
+WORKER_TIMEZONE=America/New_York
+
+# The local hour the worker should fire (0-23). Used by the handler to pick
+# one local-hour bucket out of the cron's UTC range.
+LOCAL_FIRE_HOUR=5
+
+# --- Length targets ----------------------------------------------------------
+
+MIN_SCRIPT_WORDS=3300
+TARGET_SCRIPT_WORDS_MIN=3300
+TARGET_SCRIPT_WORDS_MAX=3700
+MAX_SCRIPT_WORDS=3900
+WORDS_PER_MINUTE=145
+MAX_TTS_CHARS_PER_CHUNK=2500
+
+# --- WordPress / Apollo plugin (per-show) -----------------------------------
+
+# The post ID of the parent serve_podcast on the WordPress site. Find it by
+# editing the Show in WP admin and looking at the URL: ?post=<id>.
+WP_PARENT_PODCAST_ID=
+
+# The serve_podcast_category taxonomy term name for this show. Must already
+# exist in WordPress.
+WP_PODCAST_SHOW_TERM=
+
+# --- Cloudflare worker (per-show) -------------------------------------------
+
+# Cloudflare worker name. Must be unique across the account.
+WORKER_NAME=
+
+# Cloudflare KV namespace for run records. Create one in the CF dashboard:
+#   Workers & Pages → KV → Create namespace.
+# Then paste the ID here.
+KV_NAMESPACE_ID=
+
+# Cloudflare R2 bucket name for chunks. Either create a dedicated bucket
+# (e.g. "show-key-chunks") or share an existing bucket — the worker namespaces
+# everything under "<SHOW_KEY>/<DATE>/" so sharing is safe.
+R2_BUCKET=
+
+# --- Google Drive (per-show) ------------------------------------------------
+
+# Drive folder ID where this show's archive lives.
+# Take the destination folder URL and copy the long ID at the end.
+# Then SHARE that folder with the service account email as Editor.
+GOOGLE_DRIVE_FOLDER_ID=
+
+# --- ElevenLabs (per-show) --------------------------------------------------
+
+# The cloned voice ID for this show's host.
+ELEVENLABS_VOICE_ID=
+
+# --- Sound assets (per-show) ------------------------------------------------
+#
+# Sound files for THIS show live under:
+#
+#   ~/Documents/Auto-Episode/Sounds/<SHOW_KEY>/
+#
+# Filenames are STANDARDIZED across shows — every show uses the same names,
+# scoped by its own subfolder. After /create-show finishes, drop your audio
+# files into that folder using these exact filenames:
+#
+#   intro.wav            (or .mp3)  intro music bed
+#   intro-sting.wav      (or .mp3)  "now the news begins" transition
+#   section-sting.wav    (or .mp3)  plays between every two news sections
+#   outro.wav            (or .mp3)  outro music / thank-you bed
+#
+# If your show needs ADDITIONAL intro or outro elements (e.g. a signature
+# foley or a voiced greeting like "Cream or sugar?"), list every filename
+# in the order they should play. /create-show will write them into the
+# show's config.ts so the assembler picks them up.
+
+# Comma-separated list of intro sound filenames in playback order. These
+# play before chunk-001. All resolved relative to Sounds/<SHOW_KEY>/.
+# Default (most shows): intro.wav,intro-sting.wav
+INTRO_SOUNDS=intro.wav,intro-sting.wav
+
+# The sting that plays between every two news chunks.
+SECTION_STING=section-sting.wav
+
+# Comma-separated list of outro sound filenames in playback order. These
+# play after the last chunk.
+# Default (most shows): outro.wav
+OUTRO_SOUNDS=outro.wav
+
+# --- Topic flow (per-show) --------------------------------------------------
+
+# Comma-separated list of section names in the order they appear in the
+# script. One [TEN-SECOND SECTION SPACER] is inserted before each, and one
+# chapter marker is generated per section. Use Title Case, keep names short.
+TOPIC_FLOW=Positive Opening,Top Story,Headlines,Politics,Economy,International,Closing Thoughts
+
+# --- Editorial brief (per-show) ---------------------------------------------
+
+# Paste your full master prompt for this show below the BEGIN line and above
+# the END line. Use [HOST NAME], [SHOW TITLE], [CURRENT DATE], [PUBLISHER]
+# placeholders where you want runtime substitution.
+
+MASTER_PROMPT_BEGIN
+(replace with the full master prompt for this show)
+MASTER_PROMPT_END
