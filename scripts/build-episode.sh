@@ -172,6 +172,16 @@ ffmpeg -y -loglevel error -f concat -safe 0 -i "$LIST" \
   -metadata comment="$COMMENT" \
   "$OUTPUT"
 
+# --- chapter markers (CTOC + CHAP ID3 frames) --------------------------------
+
+WRITE_CHAPTERS_PY="$(dirname "$0")/write-chapters.py"
+if [ -f "$WRITE_CHAPTERS_PY" ]; then
+  python3 "$WRITE_CHAPTERS_PY" "$OUTPUT" "$MANIFEST" "$SOUNDS" "$CHUNKS" || \
+    echo "Warning: chapter-marker writing failed; episode is still rendered." >&2
+else
+  echo "Warning: write-chapters.py not found alongside build-episode.sh; skipping chapter markers." >&2
+fi
+
 # --- summary -----------------------------------------------------------------
 
 SIZE=$(du -h "$OUTPUT" | cut -f1)

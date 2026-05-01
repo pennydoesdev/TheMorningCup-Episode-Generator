@@ -18,6 +18,7 @@ export const EPISODE_JSON_SCHEMA = {
       "social_copy",
       "source_notes",
       "self_validation",
+      "chapters",
     ],
     properties: {
       show_title: { type: "string" },
@@ -80,6 +81,17 @@ export const EPISODE_JSON_SCHEMA = {
           riddle_answer_at_end: { type: "boolean" },
           no_music_cues: { type: "boolean" },
           no_production_notes: { type: "boolean" },
+        },
+      },
+      chapters: {
+        type: "array",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          required: ["title"],
+          properties: {
+            title: { type: "string" },
+          },
         },
       },
     },

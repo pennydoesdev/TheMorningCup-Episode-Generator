@@ -12,6 +12,10 @@ import {
 interface PreparedSegment {
   text: string;
   isFinal: boolean;
+  // Indices (0-based, in the order spacers appear) of the sections that BEGIN
+  // in this segment. Empty array means this is a continuation piece of a
+  // previously-split long section.
+  startsSectionIndices: number[];
 }
 
 const MIN_MERGE_CHARS = 600;
@@ -44,6 +48,7 @@ export function buildChunks(inputs: ChunkInputs): ChunkPiece[] {
       r2_key,
       character_count: text.length,
       text,
+      starts_section_indices: seg.startsSectionIndices,
     });
     order++;
   }
@@ -53,10 +58,18 @@ export function buildChunks(inputs: ChunkInputs): ChunkPiece[] {
 function splitBySpacer(script: string): PreparedSegment[] {
   const parts = script.split(SPACER_MARKER);
   const out: PreparedSegment[] = [];
+  // Track section index from the original script — every non-empty part is
+  // one major section, in order.
+  let sectionIndex = 0;
   for (let i = 0; i < parts.length; i++) {
     const text = parts[i].trim();
     if (text.length === 0) continue;
-    out.push({ text, isFinal: i === parts.length - 1 });
+    out.push({
+      text,
+      isFinal: i === parts.length - 1,
+      startsSectionIndices: [sectionIndex],
+    });
+    sectionIndex++;
   }
   return out;
 }
@@ -78,8 +91,17 @@ function mergeShortSegments(
     ) {
       last.text = `${last.text}\n\n${seg.text}`;
       last.isFinal = seg.isFinal;
+      // Both sections now begin in this merged chunk — preserve indices.
+      last.startsSectionIndices = [
+        ...last.startsSectionIndices,
+        ...seg.startsSectionIndices,
+      ];
     } else {
-      out.push({ text: seg.text, isFinal: seg.isFinal });
+      out.push({
+        text: seg.text,
+        isFinal: seg.isFinal,
+        startsSectionIndices: [...seg.startsSectionIndices],
+      });
     }
   }
   return out;
@@ -97,9 +119,12 @@ function enforceMaxSize(
     }
     const pieces = sentenceSplit(seg.text, maxChars);
     for (let i = 0; i < pieces.length; i++) {
+      // Only the FIRST split piece begins the section(s). Continuation
+      // pieces don't start a new section.
       out.push({
         text: pieces[i],
         isFinal: seg.isFinal && i === pieces.length - 1,
+        startsSectionIndices: i === 0 ? [...seg.startsSectionIndices] : [],
       });
     }
   }

@@ -75,6 +75,10 @@ export interface SelfValidation {
   no_production_notes: boolean;
 }
 
+export interface ChapterEntry {
+  title: string;
+}
+
 export interface EpisodeJson {
   show_title: string;
   episode_date: string;
@@ -86,6 +90,7 @@ export interface EpisodeJson {
   social_copy: SocialCopy;
   source_notes: SourceNote[];
   self_validation: SelfValidation;
+  chapters: ChapterEntry[];
   source_limited?: boolean;
 }
 
@@ -105,6 +110,10 @@ export interface ChunkPiece {
   public_url?: string;
   character_count: number;
   text: string;
+  // Indices (0-based) of the spacer-separated sections that BEGIN in this
+  // chunk. Most chunks have one entry; merged chunks have several; chunks
+  // that are continuations of a long split section have an empty array.
+  starts_section_indices: number[];
 }
 
 export interface ManifestChunk {
@@ -113,6 +122,7 @@ export interface ManifestChunk {
   r2_key: string;
   public_url?: string;
   character_count: number;
+  starts_section_indices: number[];
 }
 
 export interface Manifest {
@@ -128,6 +138,7 @@ export interface Manifest {
   estimated_runtime_minutes: number;
   chunk_count: number;
   chunks: ManifestChunk[];
+  chapters: ChapterEntry[];
   generated_at: string;
   validation: {
     ok: boolean;

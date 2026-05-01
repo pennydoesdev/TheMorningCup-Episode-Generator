@@ -359,6 +359,18 @@ SOCIAL COPY REQUIREMENT:
 - Write one tweet-style post for each major section.
 - Keep the posts sharp, clean, platform-ready, and aligned with the leftist, working-class-centered editorial lens.
 
+CHAPTERS REQUIREMENT:
+- Output a chapters array with one entry for every major section that appears in elevenlabs_script.
+- The chapters must be in the same order as the [TEN-SECOND SECTION SPACER] markers — so the count of chapters MUST equal the number of spacer-separated sections.
+- Each chapter has:
+  - title: a short clear name listeners will see in their podcast app (e.g. "Positive Opening", "U.S. Politics", "Power Map", "Crime", "Immigration", "Cost of Living Check", "Healthcare", "Climate", "International", "Riddle", "Closing Story", "What Comes Next", "Closing Summary", "Riddle Answer").
+- Use Title Case for chapter titles.
+- Keep titles under 40 characters.
+- Do NOT include section numbers in the title.
+- Do NOT add chapters that are not in the script.
+- Do NOT skip sections.
+- The build pipeline writes these as MP3 ID3 chapter markers so listeners can jump between sections in Apple Podcasts, Overcast, Spotify, etc.
+
 FINAL REQUIREMENT:
 The full episode should feel like one complete morning briefing with a clear emotional and editorial arc:
 - start warm and welcoming

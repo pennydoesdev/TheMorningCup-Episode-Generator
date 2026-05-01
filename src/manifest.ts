@@ -1,6 +1,7 @@
 // Builds the manifest JSON and the ffmpeg files.txt concat list.
 
 import type {
+  ChapterEntry,
   ChunkPiece,
   Manifest,
   ManifestChunk,
@@ -18,6 +19,7 @@ export interface ManifestInputs {
   estimatedRuntimeMinutes: number;
   validation: ValidationResult;
   chunks: ChunkPiece[];
+  chapters: ChapterEntry[];
   sourceLimited: boolean;
 }
 
@@ -28,6 +30,7 @@ export function buildManifest(inputs: ManifestInputs): Manifest {
     r2_key: c.r2_key,
     public_url: c.public_url,
     character_count: c.character_count,
+    starts_section_indices: c.starts_section_indices,
   }));
 
   const year = Number(inputs.episodeIso.slice(0, 4));
@@ -45,6 +48,7 @@ export function buildManifest(inputs: ManifestInputs): Manifest {
     estimated_runtime_minutes: inputs.estimatedRuntimeMinutes,
     chunk_count: chunks.length,
     chunks,
+    chapters: inputs.chapters,
     generated_at: new Date().toISOString(),
     validation: {
       ok: inputs.validation.ok,

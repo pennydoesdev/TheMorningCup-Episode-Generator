@@ -362,6 +362,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       estimatedRuntimeMinutes: validation.estimated_runtime_minutes,
       validation,
       chunks: completedChunks,
+      chapters: episode.chapters ?? [],
       sourceLimited: !digest.available,
     });
 
