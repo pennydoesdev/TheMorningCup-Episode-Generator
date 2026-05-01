@@ -25,7 +25,7 @@ if [ $# -ge 1 ]; then
   case "$1" in
     --latest)
       # Discover the most recent date by listing the bucket.
-      DATE=$(wrangler r2 object list "$BUCKET" --prefix "morning-cup/" 2>/dev/null \
+      DATE=$(wrangler r2 object list "$BUCKET" --prefix "morning-cup/" --remote 2>/dev/null \
         | grep -oE 'morning-cup/[0-9]{4}-[0-9]{2}-[0-9]{2}/' \
         | sort -u \
         | tail -1 \
@@ -63,9 +63,9 @@ MANIFEST_FILE="$DEST/The Morning Cup - $DATE - manifest.json"
 MANIFEST_KEY="morning-cup/$DATE/The Morning Cup - $DATE - manifest.json"
 
 echo "Fetching manifest from R2..."
-if ! wrangler r2 object get "$BUCKET" "$MANIFEST_KEY" --file "$MANIFEST_FILE"; then
+if ! wrangler r2 object get "$BUCKET/$MANIFEST_KEY" --file "$MANIFEST_FILE" --remote; then
   echo "" >&2
-  echo "Error: could not fetch manifest at $MANIFEST_KEY" >&2
+  echo "Error: could not fetch manifest at $BUCKET/$MANIFEST_KEY" >&2
   echo "Has the episode for $DATE finished generating? Check status with:" >&2
   echo "  curl -H \"Authorization: Bearer \$RUN_SECRET\" \\" >&2
   echo "    \"https://themorningcupgenerator.itsmiarosemathews.workers.dev/status?date=$DATE\"" >&2
@@ -98,7 +98,7 @@ for i in $(seq -f "%03g" 1 "$COUNT"); do
   fi
   KEY="morning-cup/$DATE/chunks/The Morning Cup - $DATE - $i.mp3"
   echo "  $i.mp3"
-  wrangler r2 object get "$BUCKET" "$KEY" --file "$LOCAL"
+  wrangler r2 object get "$BUCKET/$KEY" --file "$LOCAL" --remote
   DOWNLOADED=$((DOWNLOADED+1))
 done
 
