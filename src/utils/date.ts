@@ -50,14 +50,18 @@ export function isoDate(parts: ZonedParts): string {
 }
 
 export function previousIsoDate(yyyymmdd: string): string {
+  return shiftIsoDate(yyyymmdd, -1);
+}
+
+export function shiftIsoDate(yyyymmdd: string, days: number): string {
   const [y, m, d] = yyyymmdd.split("-").map((s) => Number(s));
-  // Construct UTC midnight, subtract one day. Date math at UTC midnight
+  // Construct UTC midnight, shift by N days. Date math at UTC midnight
   // does not get bitten by DST.
   const t = Date.UTC(y, m - 1, d);
-  const prev = new Date(t - 24 * 60 * 60 * 1000);
-  const yy = prev.getUTCFullYear();
-  const mm = String(prev.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(prev.getUTCDate()).padStart(2, "0");
+  const shifted = new Date(t + days * 24 * 60 * 60 * 1000);
+  const yy = shifted.getUTCFullYear();
+  const mm = String(shifted.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(shifted.getUTCDate()).padStart(2, "0");
   return `${yy}-${mm}-${dd}`;
 }
 

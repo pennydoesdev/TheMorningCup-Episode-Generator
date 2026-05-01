@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Assemble a Morning Cup episode in DaVinci Resolve, render to MP3, and tag the
+Assemble a Weekly Rewind episode in DaVinci Resolve, render to MP3, and tag the
 output with proper podcast metadata (title, artist, copyright, etc.).
 
 Pipeline (in order on the timeline):
@@ -11,21 +11,21 @@ Pipeline (in order on the timeline):
     -> chunk-001 -> [section sting] -> chunk-002 -> [section sting] -> ... -> chunk-N
     -> [Thank You.wav]
 
-Folder layout the script expects (under ~/Documents/The Morning Cup/):
+Folder layout the script expects (under ~/Documents/The Morning Cup - Weekly Rewind/):
     Sounds/                            ← all reusable assets live here
-        The Morning Cup - Song.wav
+        The Morning Cup - Weekly Rewind - Song.wav
         Coffee Pour.wav
         Cream or sugar, hon?.mp3
         intro-sting.wav
-        morning-cup-sting.wav
-        The Morning Cup - Thank You.wav
-    Scripts/                           ← this script lives here as build-morning-cup.py
-        build-morning-cup.py
+        weekly-rewind-sting.wav
+        The Morning Cup - Weekly Rewind - Thank You.wav
+    Scripts/                           ← this script lives here as build-weekly-rewind.py
+        build-weekly-rewind.py
     Chunks/<YYYY-MM-DD>/             ← chunk MP3s + manifest for one episode
         001.mp3 ... NNN.mp3
-        The Morning Cup - <YYYY-MM-DD> - manifest.json
+        The Morning Cup - Weekly Rewind - <YYYY-MM-DD> - manifest.json
     Episodes/                          ← rendered + tagged final MP3s
-        The Morning Cup - <YYYY-MM-DD>.mp3
+        The Morning Cup - Weekly Rewind - <YYYY-MM-DD>.mp3
 
 Episode date selection:
 - If EPISODE_DATE is set below, that's used.
@@ -42,21 +42,21 @@ A) From inside Resolve (easiest):
    4. Paste the whole file into the console and hit Enter.
 
 B) As a Resolve menu item (one-click):
-   Keep the working copy in ~/Documents/The Morning Cup/Scripts/ and symlink
+   Keep the working copy in ~/Documents/The Morning Cup - Weekly Rewind/Scripts/ and symlink
    it into Resolve's user-scripts folder so it appears under
    Workspace > Scripts. On macOS:
 
        mkdir -p "$HOME/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Edit"
-       ln -sf "$HOME/Documents/The Morning Cup/Scripts/build-morning-cup.py" \\
-           "$HOME/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Edit/build-morning-cup.py"
+       ln -sf "$HOME/Documents/The Morning Cup - Weekly Rewind/Scripts/build-weekly-rewind.py" \\
+           "$HOME/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Edit/build-weekly-rewind.py"
 
    Restart Resolve. The script will then appear at:
-       Workspace > Scripts > Edit > build-morning-cup
+       Workspace > Scripts > Edit > build-weekly-rewind
    You can also assign a keyboard shortcut via DaVinci Resolve > Keyboard
    Customization > Workspace > Scripts.
 
 C) From a terminal (Resolve must be running):
-       python3 "$HOME/Documents/The Morning Cup/Scripts/build-morning-cup.py" [EPISODE_DATE]
+       python3 "$HOME/Documents/The Morning Cup - Weekly Rewind/Scripts/build-weekly-rewind.py" [EPISODE_DATE]
 
 Notes:
 - Free Resolve 18+ supports the scripting API; no Studio license needed.
@@ -81,18 +81,18 @@ import time
 # Set EPISODE_DATE to None for auto-detect (uses the newest dated folder
 # under Chunks/ that has chunk MP3s).
 EPISODE_DATE = None  # e.g. "2026-04-30"
-ROOT_DIR = os.path.expanduser("~/Documents/The Morning Cup")
+ROOT_DIR = os.path.expanduser("~/Documents/The Morning Cup - Weekly Rewind")
 SOUNDS_DIR = os.path.join(ROOT_DIR, "Sounds")
 CHUNKS_BASE_DIR = os.path.join(ROOT_DIR, "Chunks")
 OUTPUT_DIR = os.path.join(ROOT_DIR, "Episodes")
 # ==============================================================================
 
-INTRO_SONG_FILENAME = "The Morning Cup - Song.wav"
+INTRO_SONG_FILENAME = "The Morning Cup - Weekly Rewind - Song.wav"
 COFFEE_POUR_FILENAME = "Coffee Pour.wav"
 CREAM_OR_SUGAR_FILENAME = "Cream or sugar, hon?.mp3"
 INTRO_STING_FILENAME = "intro-sting.wav"
-SECTION_STING_FILENAME = "morning-cup-sting.wav"
-OUTRO_FILENAME = "The Morning Cup - Thank You.wav"
+SECTION_STING_FILENAME = "weekly-rewind-sting.wav"
+OUTRO_FILENAME = "The Morning Cup - Weekly Rewind - Thank You.wav"
 
 ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -297,8 +297,8 @@ def write_id3_tags(mp3_path, tags):
 def build_tags(manifest, episode_date):
     """Build the ID3 tag dict from manifest if present, else sensible defaults."""
     if manifest:
-        title = manifest.get("title") or f"The Morning Cup - {episode_date}"
-        show = manifest.get("show_name") or "The Morning Cup"
+        title = manifest.get("title") or f"The Morning Cup - Weekly Rewind - {episode_date}"
+        show = manifest.get("show_name") or "The Morning Cup - Weekly Rewind"
         publisher = manifest.get("publisher") or "The Penny Tribune"
         copyright_ = manifest.get("copyright") or f"Copyright {episode_date[:4]} - The Penny Tribune"
         year = manifest.get("year") or int(episode_date[:4])
@@ -315,8 +315,8 @@ def build_tags(manifest, episode_date):
             + (f" — {' / '.join(comment_bits)}" if comment_bits else "")
         )
     else:
-        title = f"The Morning Cup - {episode_date}"
-        show = "The Morning Cup"
+        title = f"The Morning Cup - Weekly Rewind - {episode_date}"
+        show = "The Morning Cup - Weekly Rewind"
         publisher = "The Penny Tribune"
         copyright_ = f"Copyright {episode_date[:4]} - The Penny Tribune"
         year = int(episode_date[:4])
@@ -384,7 +384,7 @@ def assemble(episode_date=None, sounds_dir=None, chunks_base_dir=None, output_di
     if not chunk_items:
         sys.exit("Failed to import chunk audio into the media pool.")
 
-    timeline_name = f"The Morning Cup - {episode_date}"
+    timeline_name = f"The Morning Cup - Weekly Rewind - {episode_date}"
     timeline = media_pool.CreateEmptyTimeline(timeline_name)
     if not timeline:
         sys.exit(f"Failed to create timeline '{timeline_name}'.")
@@ -420,7 +420,7 @@ def assemble(episode_date=None, sounds_dir=None, chunks_base_dir=None, output_di
     except Exception:
         pass
 
-    output_basename = f"The Morning Cup - {episode_date}"
+    output_basename = f"The Morning Cup - Weekly Rewind - {episode_date}"
     expected_path = os.path.join(output_dir, f"{output_basename}.mp3")
     job_id = configure_render(project, output_dir, output_basename)
     rendered = False

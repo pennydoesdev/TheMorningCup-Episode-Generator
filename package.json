@@ -1,8 +1,8 @@
 {
-  "name": "morning-cup-generator",
+  "name": "weekly-cup-generator",
   "version": "1.0.0",
   "private": true,
-  "description": "Cloudflare Worker that generates The Morning Cup daily podcast for The Penny Tribune.",
+  "description": "Cloudflare Worker that generates The Morning Cup: Weekly Rewind weekly podcast for The Penny Tribune.",
   "main": "src/index.ts",
   "scripts": {
     "dev": "wrangler dev",

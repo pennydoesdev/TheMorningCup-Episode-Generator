@@ -1,15 +1,15 @@
-# Optional: stitches the daily Morning Cup chunks with ffmpeg.
-# Triggered manually with the episode date (YYYY-MM-DD) and the public R2
-# base URL. Downloads files.txt + chunks, runs ffmpeg concat, and uploads
-# the stitched MP3 as a workflow artifact.
+# Optional: stitches the weekly Morning Cup: Weekly Rewind chunks with ffmpeg.
+# Triggered manually with the episode date (YYYY-MM-DD, Sunday of publication)
+# and the public R2 base URL. Downloads files.txt + chunks, runs ffmpeg
+# concat, and uploads the stitched MP3 as a workflow artifact.
 #
 # This workflow is OPTIONAL. The Cloudflare Worker does not depend on it.
-name: Stitch Morning Cup
+name: Stitch Weekly Rewind
 on:
   workflow_dispatch:
     inputs:
       episode_date:
-        description: "Episode date (YYYY-MM-DD)"
+        description: "Episode date (YYYY-MM-DD, Sunday of publication)"
         required: true
       r2_public_base_url:
         description: "R2 public base URL (no trailing slash)"
@@ -33,13 +33,13 @@ jobs:
           ENC_DATE=$(urlencode "$DATE")
           BASE_NO_SLASH="${BASE%/}"
           # files.txt
-          FILES_NAME="The Morning Cup - $DATE - files.txt"
-          curl -fSL -o "$FILES_NAME" "$BASE_NO_SLASH/morning-cup/$ENC_DATE/$(urlencode "$FILES_NAME")"
+          FILES_NAME="The Morning Cup - Weekly Rewind - $DATE - files.txt"
+          curl -fSL -o "$FILES_NAME" "$BASE_NO_SLASH/weekly-cup/$ENC_DATE/$(urlencode "$FILES_NAME")"
           # chunks
           while IFS= read -r line; do
             name=$(printf '%s' "$line" | sed -E "s/^file '(.*)'$/\\1/")
             [ -z "$name" ] && continue
-            curl -fSL -o "$name" "$BASE_NO_SLASH/morning-cup/$ENC_DATE/chunks/$(urlencode "$name")"
+            curl -fSL -o "$name" "$BASE_NO_SLASH/weekly-cup/$ENC_DATE/chunks/$(urlencode "$name")"
           done < "$FILES_NAME"
 
       - name: Stitch with ffmpeg
@@ -47,11 +47,11 @@ jobs:
           DATE: ${{ inputs.episode_date }}
         run: |
           cd episode
-          OUT="The Morning Cup - $DATE.mp3"
-          ffmpeg -hide_banner -y -f concat -safe 0 -i "The Morning Cup - $DATE - files.txt" -c copy "$OUT" \
-            || ffmpeg -hide_banner -y -f concat -safe 0 -i "The Morning Cup - $DATE - files.txt" -acodec libmp3lame -b:a 128k "$OUT"
+          OUT="The Morning Cup - Weekly Rewind - $DATE.mp3"
+          ffmpeg -hide_banner -y -f concat -safe 0 -i "The Morning Cup - Weekly Rewind - $DATE - files.txt" -c copy "$OUT" \
+            || ffmpeg -hide_banner -y -f concat -safe 0 -i "The Morning Cup - Weekly Rewind - $DATE - files.txt" -acodec libmp3lame -b:a 128k "$OUT"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: morning-cup-${{ inputs.episode_date }}
-          path: episode/The Morning Cup - ${{ inputs.episode_date }}.mp3
+          name: weekly-rewind-${{ inputs.episode_date }}
+          path: episode/The Morning Cup - Weekly Rewind - ${{ inputs.episode_date }}.mp3

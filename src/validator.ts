@@ -13,6 +13,16 @@ const FORBIDDEN_PATTERNS: { name: string; regex: RegExp }[] = [
 const MARKDOWN_TABLE = /\|.*\|.*\n[\s-:]*\|[\s-:]*\|/m;
 const URL_LIKE = /https?:\/\/\S+/;
 
+// Numeric-ordinal shorthand should never appear in the spoken script per the
+// ENUNCIATION RULE — they must always be spelled out (e.g. "first", "twenty-second").
+const NUMERIC_ORDINAL = /\b\d+(st|nd|rd|th)\b/i;
+
+const REQUIRED_WEEKLY_SECTIONS: { name: string; regex: RegExp }[] = [
+  { name: "What Got Ignored This Week", regex: /what\s+got\s+ignored/i },
+  { name: "Who Won / Who Lost This Week", regex: /who\s+won.*who\s+lost|who\s+won\s*\/\s*who\s+lost/i },
+  { name: "Number of the Week", regex: /number\s+of\s+the\s+week/i },
+];
+
 export function validateEpisode(
   episode: EpisodeJson,
   config: Config,
@@ -48,19 +58,25 @@ export function validateEpisode(
     );
   }
 
-  if (runtime < 20) {
-    errors.push(`Estimated runtime ${runtime.toFixed(1)} min is below 20-minute floor`);
+  if (runtime < config.minRuntimeMinutes) {
+    errors.push(
+      `Estimated runtime ${runtime.toFixed(1)} min is below ${config.minRuntimeMinutes}-minute floor`,
+    );
   }
-  if (runtime > 25) {
+  if (runtime > config.maxRuntimeMinutes) {
     if (wordCount > config.maxScriptWords) {
-      errors.push(`Estimated runtime ${runtime.toFixed(1)} min exceeds 25-minute ceiling`);
+      errors.push(
+        `Estimated runtime ${runtime.toFixed(1)} min exceeds ${config.maxRuntimeMinutes}-minute ceiling`,
+      );
     } else {
-      warnings.push(`Estimated runtime ${runtime.toFixed(1)} min slightly over 25 minutes`);
+      warnings.push(
+        `Estimated runtime ${runtime.toFixed(1)} min slightly over ${config.maxRuntimeMinutes} minutes`,
+      );
     }
   }
 
-  if (!/^Good morning, today is\b/i.test(script.trimStart())) {
-    errors.push('Script must open with "Good morning, today is"');
+  if (!/^Good evening, today is Sunday,/i.test(script.trimStart())) {
+    errors.push('Script must open with "Good evening, today is Sunday,"');
   }
 
   if (!/the morning cup/i.test(script)) {
@@ -69,8 +85,15 @@ export function validateEpisode(
 
   if (!script.includes("[TEN-SECOND SECTION SPACER]")) {
     errors.push("Script is missing [TEN-SECOND SECTION SPACER] markers");
-  } else if (spacerCount < 20) {
-    errors.push(`Found only ${spacerCount} spacer markers; need at least 20`);
+  } else if (spacerCount < 25) {
+    errors.push(`Found only ${spacerCount} spacer markers; need at least 25`);
+  }
+
+  // Required weekly sections.
+  for (const section of REQUIRED_WEEKLY_SECTIONS) {
+    if (!section.regex.test(script)) {
+      errors.push(`Script is missing required section: ${section.name}`);
+    }
   }
 
   // Riddle section before outro, riddle answer at end.
@@ -80,7 +103,6 @@ export function validateEpisode(
   if (riddleIdx === -1) {
     errors.push("Script does not include a riddle section");
   } else if (outroIdx !== -1 && riddleIdx > outroIdx + 200 && lower.indexOf("riddle", outroIdx) === -1) {
-    // Best-effort: riddle question should appear before the outro proper.
     warnings.push("Riddle section appears after outro");
   }
 
@@ -96,6 +118,12 @@ export function validateEpisode(
 
   for (const f of FORBIDDEN_PATTERNS) {
     if (f.regex.test(script)) errors.push(`Spoken script contains "${f.name}"`);
+  }
+
+  if (NUMERIC_ORDINAL.test(script)) {
+    errors.push(
+      'Spoken script contains numeric ordinal shorthand (e.g. "1st", "21st"); spell out as words instead',
+    );
   }
 
   if (MARKDOWN_TABLE.test(script)) {
@@ -116,6 +144,16 @@ export function validateEpisode(
   if (!episode.social_copy?.main_post) errors.push("social_copy.main_post is missing");
   if (!Array.isArray(episode.social_copy?.section_posts)) {
     errors.push("social_copy.section_posts must be an array");
+  }
+  if (!episode.short_social_post) {
+    errors.push("short_social_post is missing");
+  } else if (episode.short_social_post.length > 500) {
+    errors.push(
+      `short_social_post is ${episode.short_social_post.length} characters; must be 500 or fewer`,
+    );
+  }
+  if (!episode.social_image_concept) {
+    errors.push("social_image_concept is missing");
   }
   if (!Array.isArray(episode.source_notes)) {
     errors.push("source_notes must be an array");

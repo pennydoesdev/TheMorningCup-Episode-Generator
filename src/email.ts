@@ -58,7 +58,7 @@ export async function sendCompletionEmail(
     return;
   }
 
-  const subject = `The Morning Cup - ${inputs.episodeIso}`;
+  const subject = `The Morning Cup - Weekly Rewind - ${inputs.episodeIso}`;
   const linkLine = (label: string, val?: string): string =>
     val ? `<li><strong>${label}:</strong> <a href="${val}">${val}</a></li>` : `<li><strong>${label}:</strong> (no public URL — see R2 key)</li>`;
 
@@ -84,11 +84,11 @@ export async function sendCompletionEmail(
 
   const html = `<!doctype html>
 <html><body style="font-family:system-ui,sans-serif;line-height:1.5;">
-<h1>The Morning Cup — ${inputs.episodeIso}</h1>
+<h1>The Morning Cup - Weekly Rewind — ${inputs.episodeIso}</h1>
 ${sourceWarning}
 <ul>
-  <li><strong>Episode date:</strong> ${inputs.episodeIso}</li>
-  <li><strong>Source date:</strong> ${inputs.sourceIso}</li>
+  <li><strong>Episode date (Sunday of publication):</strong> ${inputs.episodeIso}</li>
+  <li><strong>Source window start:</strong> ${inputs.sourceIso}</li>
   <li><strong>Word count:</strong> ${inputs.wordCount.toLocaleString()}</li>
   <li><strong>Estimated runtime:</strong> ${inputs.estimatedRuntimeMinutes.toFixed(1)} min</li>
   <li><strong>Validation:</strong> ${inputs.validationOk ? "OK" : "WITH ERRORS"}</li>
@@ -108,7 +108,7 @@ ${warningsBlock}
 ${chunkRows}
 </ol>
 <p>Chunks are numbered in order. Stitch externally with ffmpeg:<br>
-<code>ffmpeg -f concat -safe 0 -i files.txt -c copy "The Morning Cup - ${inputs.episodeIso}.mp3"</code></p>
+<code>ffmpeg -f concat -safe 0 -i files.txt -c copy "The Morning Cup - Weekly Rewind - ${inputs.episodeIso}.mp3"</code></p>
 </body></html>`;
 
   await sendResend(env, {
@@ -136,7 +136,7 @@ export async function sendFailureEmail(
   if (!config.enableEmail) return;
   if (!config.emailFrom || !config.emailTo) return;
 
-  const subject = `FAILED: The Morning Cup - ${inputs.episodeIso}`;
+  const subject = `FAILED: The Morning Cup - Weekly Rewind - ${inputs.episodeIso}`;
   const validationBlock = inputs.validationErrors?.length
     ? `<p><strong>Validation errors:</strong></p><ul>${inputs.validationErrors
         .map((e) => `<li>${escape(e)}</li>`)
@@ -151,7 +151,7 @@ export async function sendFailureEmail(
 
   const html = `<!doctype html>
 <html><body style="font-family:system-ui,sans-serif;line-height:1.5;">
-<h1>The Morning Cup — Generation failure (${inputs.episodeIso})</h1>
+<h1>The Morning Cup - Weekly Rewind — Generation failure (${inputs.episodeIso})</h1>
 <p><strong>Stage failed:</strong> ${escape(inputs.stage)}</p>
 <p><strong>Error:</strong> <code>${escape(inputs.error)}</code></p>
 ${validationBlock}
