@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+#
+# fetch-chunks.sh - Pull a Morning Cup episode's chunks (and manifest) from R2
+#                   into ~/Documents/The Morning Cup/Chunks/<DATE>/
+#
+# Usage:
+#     scripts/fetch-chunks.sh                # uses today's date in America/New_York
+#     scripts/fetch-chunks.sh 2026-04-30     # specific date
+#     scripts/fetch-chunks.sh --latest       # whatever's most recent in the bucket
+#
+# Requires: wrangler CLI authenticated against the morning-cup R2 bucket
+# (`wrangler login` once if you haven't, then it stays authenticated).
+# Skips chunks that are already on disk so re-running is fast and safe.
+#
+
+set -euo pipefail
+
+ROOT="$HOME/Documents/The Morning Cup"
+BUCKET="morning-cup"
+
+# --- argument parsing --------------------------------------------------------
+
+DATE=""
+if [ $# -ge 1 ]; then
+  case "$1" in
+    --latest)
+      # Discover the most recent date by listing the bucket.
+      DATE=$(wrangler r2 object list "$BUCKET" --prefix "morning-cup/" 2>/dev/null \
+        | grep -oE 'morning-cup/[0-9]{4}-[0-9]{2}-[0-9]{2}/' \
+        | sort -u \
+        | tail -1 \
+        | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')
+      if [ -z "$DATE" ]; then
+        echo "Could not auto-detect a date from R2 listing." >&2
+        exit 1
+      fi
+      echo "Latest episode in R2: $DATE"
+      ;;
+    -h|--help)
+      sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'
+      exit 0
+      ;;
+    *)
+      DATE="$1"
+      ;;
+  esac
+else
+  DATE=$(TZ=America/New_York date +%Y-%m-%d)
+  echo "No date passed — using today (America/New_York): $DATE"
+fi
+
+if ! [[ "$DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+  echo "Error: date '$DATE' must be YYYY-MM-DD." >&2
+  exit 1
+fi
+
+DEST="$ROOT/Chunks/$DATE"
+mkdir -p "$DEST"
+
+# --- pull manifest first; the chunk count comes from it ----------------------
+
+MANIFEST_FILE="$DEST/The Morning Cup - $DATE - manifest.json"
+MANIFEST_KEY="morning-cup/$DATE/The Morning Cup - $DATE - manifest.json"
+
+echo "Fetching manifest from R2..."
+if ! wrangler r2 object get "$BUCKET" "$MANIFEST_KEY" --file "$MANIFEST_FILE"; then
+  echo "" >&2
+  echo "Error: could not fetch manifest at $MANIFEST_KEY" >&2
+  echo "Has the episode for $DATE finished generating? Check status with:" >&2
+  echo "  curl -H \"Authorization: Bearer \$RUN_SECRET\" \\" >&2
+  echo "    \"https://themorningcupgenerator.itsmiarosemathews.workers.dev/status?date=$DATE\"" >&2
+  exit 1
+fi
+
+if [ ! -s "$MANIFEST_FILE" ]; then
+  echo "Manifest file is empty: $MANIFEST_FILE" >&2
+  exit 1
+fi
+
+COUNT=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['chunk_count'])" "$MANIFEST_FILE")
+TITLE=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1])).get('title','(no title)'))" "$MANIFEST_FILE")
+WORDS=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1])).get('word_count','?'))" "$MANIFEST_FILE")
+RUNTIME=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1])).get('estimated_runtime_minutes','?'))" "$MANIFEST_FILE")
+
+echo "Manifest: $TITLE — $WORDS words, ~$RUNTIME min, $COUNT chunks"
+echo "Destination: $DEST"
+echo ""
+
+# --- pull each chunk; skip ones already present ------------------------------
+
+DOWNLOADED=0
+SKIPPED=0
+for i in $(seq -f "%03g" 1 "$COUNT"); do
+  LOCAL="$DEST/$i.mp3"
+  if [ -s "$LOCAL" ]; then
+    SKIPPED=$((SKIPPED+1))
+    continue
+  fi
+  KEY="morning-cup/$DATE/chunks/The Morning Cup - $DATE - $i.mp3"
+  echo "  $i.mp3"
+  wrangler r2 object get "$BUCKET" "$KEY" --file "$LOCAL"
+  DOWNLOADED=$((DOWNLOADED+1))
+done
+
+echo ""
+echo "Done: $DOWNLOADED downloaded, $SKIPPED already present."
+echo ""
+ls -la "$DEST"
+echo ""
+echo "Next: open DaVinci Resolve, then Workspace > Scripts > Edit > build-morning-cup"

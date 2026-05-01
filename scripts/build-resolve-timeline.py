@@ -21,7 +21,7 @@ Folder layout the script expects (under ~/Documents/The Morning Cup/):
         The Morning Cup - Thank You.wav
     Scripts/                           ← this script lives here as build-morning-cup.py
         build-morning-cup.py
-    episodes/<YYYY-MM-DD>/             ← chunk MP3s + manifest for one episode
+    Chunks/<YYYY-MM-DD>/             ← chunk MP3s + manifest for one episode
         001.mp3 ... NNN.mp3
         The Morning Cup - <YYYY-MM-DD> - manifest.json
     The Morning Cup - <YYYY-MM-DD>.mp3  ← rendered output
@@ -29,7 +29,7 @@ Folder layout the script expects (under ~/Documents/The Morning Cup/):
 Episode date selection:
 - If EPISODE_DATE is set below, that's used.
 - Otherwise the script picks the most recent YYYY-MM-DD subfolder under
-  episodes/ that contains chunks.
+  Chunks/ that contains chunks.
 
 Two ways to run this:
 
@@ -78,11 +78,11 @@ import time
 
 # === CONFIG: edit for the "paste into Resolve console" workflow ===============
 # Set EPISODE_DATE to None for auto-detect (uses the newest dated folder
-# under episodes/ that has chunk MP3s).
+# under Chunks/ that has chunk MP3s).
 EPISODE_DATE = None  # e.g. "2026-04-30"
 ROOT_DIR = os.path.expanduser("~/Documents/The Morning Cup")
 SOUNDS_DIR = os.path.join(ROOT_DIR, "Sounds")
-EPISODES_DIR = os.path.join(ROOT_DIR, "episodes")
+CHUNKS_BASE_DIR = os.path.join(ROOT_DIR, "Chunks")
 OUTPUT_DIR = ROOT_DIR
 # ==============================================================================
 
@@ -120,22 +120,22 @@ def get_resolve():
     return dvr_script.scriptapp("Resolve")
 
 
-def detect_episode_date(episodes_dir):
+def detect_episode_date(chunks_base_dir):
     """Pick the most recent YYYY-MM-DD subfolder that contains *.mp3 files."""
-    if not os.path.isdir(episodes_dir):
-        sys.exit(f"Episodes directory not found: {episodes_dir}")
+    if not os.path.isdir(chunks_base_dir):
+        sys.exit(f"Chunks directory not found: {chunks_base_dir}")
     candidates = []
-    for entry in os.listdir(episodes_dir):
+    for entry in os.listdir(chunks_base_dir):
         if not ISO_DATE_RE.match(entry):
             continue
-        full = os.path.join(episodes_dir, entry)
+        full = os.path.join(chunks_base_dir, entry)
         if not os.path.isdir(full):
             continue
         if glob.glob(os.path.join(full, "*.mp3")):
             candidates.append(entry)
     if not candidates:
         sys.exit(
-            f"No episode folders with chunk MP3s found under {episodes_dir}. "
+            f"No episode folders with chunk MP3s found under {chunks_base_dir}. "
             f"Expected subfolders named YYYY-MM-DD."
         )
     candidates.sort(reverse=True)
@@ -335,15 +335,15 @@ def build_tags(manifest, episode_date):
     }
 
 
-def assemble(episode_date=None, sounds_dir=None, episodes_dir=None, output_dir=None):
+def assemble(episode_date=None, sounds_dir=None, chunks_base_dir=None, output_dir=None):
     sounds_dir = sounds_dir or SOUNDS_DIR
-    episodes_dir = episodes_dir or EPISODES_DIR
+    chunks_base_dir = chunks_base_dir or CHUNKS_BASE_DIR
     output_dir = output_dir or OUTPUT_DIR
 
     if not episode_date:
-        episode_date = detect_episode_date(episodes_dir)
+        episode_date = detect_episode_date(chunks_base_dir)
 
-    chunks_dir = os.path.join(episodes_dir, episode_date)
+    chunks_dir = os.path.join(chunks_base_dir, episode_date)
     if not os.path.isdir(chunks_dir):
         sys.exit(f"Chunks directory not found: {chunks_dir}")
 
