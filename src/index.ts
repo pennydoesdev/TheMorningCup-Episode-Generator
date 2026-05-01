@@ -80,19 +80,31 @@ export default {
       if (!isValidIsoDate(date)) return json({ error: "invalid date" }, 400);
       const force = url.searchParams.get("force") === "true";
 
-      // Run in the background — return immediately so the HTTP request can finish.
-      ctx.waitUntil(
-        runEpisode(env, config, { episodeIso: date, force, trigger: "manual" }).catch(
-          (err) => logger.error("manual run failed", { err: String(err), date }),
-        ),
-      );
-      return json({ accepted: true, date, force });
+      // Await inline. ctx.waitUntil() is killed shortly after the response is
+      // sent, which is far less than the 60-120s OpenAI generation needs.
+      // Wall time on a fetch handler isn't capped while we're awaiting a
+      // network call, so blocking the response is the reliable path.
+      try {
+        await runEpisode(env, config, {
+          episodeIso: date,
+          force,
+          trigger: "manual",
+        });
+        const record = await readRunRecord(env, date);
+        return json({ accepted: true, date, force, record });
+      } catch (err) {
+        logger.error("manual run failed", { err: String(err), date });
+        return json(
+          { accepted: true, date, force, error: String(err) },
+          500,
+        );
+      }
     }
 
     return new Response("Not found", { status: 404 });
   },
 
-  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+  async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     const config = loadConfig(env);
     const zoned = getZonedNow(config.workerTimezone);
     const episodeIso = isoDate(zoned);
@@ -117,10 +129,14 @@ export default {
       return;
     }
 
-    ctx.waitUntil(
-      runEpisode(env, config, { episodeIso, force: false, trigger: "cron" }).catch((err) =>
-        logger.error("cron run failed", { err: String(err), episodeIso }),
-      ),
+    // Await directly. Scheduled handlers block on the returned promise — that
+    // budget is what we need for a 60-120s OpenAI call plus TTS chunking.
+    await runEpisode(env, config, {
+      episodeIso,
+      force: false,
+      trigger: "cron",
+    }).catch((err) =>
+      logger.error("cron run failed", { err: String(err), episodeIso }),
     );
   },
 };
