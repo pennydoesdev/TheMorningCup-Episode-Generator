@@ -1,11 +1,11 @@
 # The Morning Cup: Weekly Rewind — Cloudflare Worker Episode Generator
 
 <p align="center">
-  <img src="docs/artwork/cover-1x1.png" alt="The Morning Cup: Weekly Rewind — original podcast cover art" width="420">
+  <img src="docs/artwork/weekly-rewind-1x1.png" alt="The Morning Cup: Weekly Rewind — original podcast cover art" width="420">
 </p>
 
 <p align="center">
-  <img src="docs/artwork/cover-16x9.png" alt="The Morning Cup: Weekly Rewind — 16:9 banner" width="900">
+  <img src="docs/artwork/weekly-rewind-16x9.png" alt="The Morning Cup: Weekly Rewind — 16:9 banner" width="900">
 </p>
 
 A production-ready Cloudflare Worker that, every Sunday at 2:00 PM
