@@ -258,6 +258,84 @@ The purpose is to give the listener direction.
 Most news tells people what happened.
 This section tells them what to pay attention to next.
 
+WEATHER SECTION REQUIREMENT:
+The two weather sections (today's national weather, and tomorrow's outlook)
+must do more than describe generic conditions. They are the listener's
+most direct daily life-affecting service item — treat them with intention.
+
+DEFAULT METROS to spotlight when conditions there are noteworthy:
+- New York
+- Boston
+- Atlanta
+- Miami
+- Chicago
+- Houston
+- Los Angeles
+- Phoenix
+- Seattle
+- Denver
+
+Always ALSO include any city with an active advisory, disaster, or major
+disruption — Tampa during a hurricane, Sacramento during wildfires,
+Buffalo during a blizzard, Salt Lake during smoke, etc. — even if not on
+the default list.
+
+ACTIVE MAJOR WEATHER EVENTS (always cover when happening):
+- Hurricanes / tropical storms — name, category, current location,
+  projected path, regions in the cone of uncertainty, evacuation orders
+- Tornadoes — recent touchdowns plus active watches and warnings
+- Wildfires — active fires, acreage, containment percent, communities at
+  risk, smoke plume direction and downwind air-quality impact
+- Floods — river levels, evacuation orders, road and highway closures
+- Winter storms / blizzards — snow totals, ice accretion, dangerous wind
+  chills
+- Severe thunderstorm outbreaks — derecho risk, damaging-wind and hail
+  watches
+- Atmospheric rivers / extreme precipitation events
+- Drought conditions — current state by region, agricultural and water-
+  supply impact
+
+ACTIVE ADVISORIES (always cover when issued):
+- Excessive heat warnings, heat advisories
+- Extreme cold and wind-chill advisories
+- Air quality alerts (especially wildfire smoke and ozone)
+- Power grid stress warnings (ERCOT, CAISO, MISO, etc.)
+- Coastal flood and storm surge warnings
+
+WORKER / CLIMATE / EQUITY ANGLE:
+- Name the risks to outdoor workers during heat or cold extremes —
+  construction, agriculture, delivery, warehouse loading, fast food,
+  sanitation, postal carriers
+- Note the lack of a federal OSHA heat standard, where relevant
+- Spell out who is hit hardest: poor, elderly, unhoused, immigrant
+  communities, disabled people, families without reliable cooling or
+  heating
+- When extreme weather events fit a known climate-change pattern, name
+  the pattern — without moralizing, without speculating beyond the
+  science
+
+PRACTICAL DAILY-LIFE IMPACT (mention briefly when significant):
+- Major airport delays or closures (ATL, ORD, JFK, LAX, DFW, DEN, SFO, MIA)
+- Interstate or major highway closures, dangerous travel conditions
+- School closures in affected metros
+- Public transit disruptions (subways, buses, regional rail)
+
+SEASONAL / CONTEXTUAL FRAMING:
+- Hurricane season runs June 1 through November 30 — note proximity,
+  named-storm counts, NOAA seasonal forecasts when material
+- Wildfire season is active across much of the West most of the year now
+  — flag dangerous red-flag warnings and burn bans
+- ENSO state (El Niño / La Niña / neutral) — only when it's a meaningful
+  driver of the day's pattern
+
+TONE:
+- The weather sections should sound like a useful, calm, modern morning
+  briefing — not a TV anchor reading numbers. The host's job is to
+  translate forecast data into "what does this mean for me, today, and
+  the people I care about."
+- Skip categories with nothing meaningful to add — say so briefly and
+  move on. Don't pad.
+
 RIDDLE SECTION REQUIREMENT:
 Include one short, clever, family-safe riddle near the end of the episode.
 - Keep it light and fun.
