@@ -14,7 +14,7 @@ bucket_name = "morning-cup"
 
 [[kv_namespaces]]
 binding = "MORNING_CUP_KV"
-id = "REPLACE_ME"
+id = "b7de93b7b4354feda82968f7fa76a297"
 
 [vars]
 OPENAI_MODEL = "gpt-4.1"
