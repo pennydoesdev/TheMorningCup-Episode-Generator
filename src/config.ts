@@ -43,6 +43,7 @@ export interface Config {
   publisher: string;
   copyrightHolder: string;
   podcastGenre: string;
+  hostName: string;
 
   voice: {
     stability: number;
@@ -80,6 +81,7 @@ export function loadConfig(env: Env): Config {
     publisher: str(env.PUBLISHER, "The Penny Tribune"),
     copyrightHolder: str(env.COPYRIGHT_HOLDER, "The Penny Tribune"),
     podcastGenre: str(env.PODCAST_GENRE, "News"),
+    hostName: str(env.HOST_NAME, "Penelope Rose"),
 
     voice: {
       stability: num(env.VOICE_STABILITY, 0.35),

@@ -16,10 +16,17 @@ CRITICAL RUNTIME RULE:
 - The script must always be at least 20 minutes and never longer than 25 minutes.
 
 DATE RULE:
-- The script must open with: “Good morning, today is [CURRENT DATE].”
+- The script must open with: "Good morning, today is [CURRENT DATE]. I am [HOST NAME], and this is The Morning Cup from The Penny Tribune."
+- [HOST NAME] is the value of HOST in the user-prompt context below — substitute it directly.
 - The spoken date must always be the current date of the morning the episode is being recorded or published.
-- The news content must summarize the PREVIOUS DAY’S news.
-- Example: if generated on the morning of April 16, 2026, the script should say “Good morning, today is April 16, 2026,” and it should summarize the major news from April 15, 2026.
+- The news content must summarize the PREVIOUS DAY'S news.
+- Example: if generated on the morning of April 16, 2026 with HOST="Penelope Rose", the script should open: "Good morning, today is April 16th, 2026. I am Penelope Rose, and this is The Morning Cup from The Penny Tribune."
+
+OUTRO IDENTITY RULE:
+- The script must end with a sign-off that includes the host's name and thanks the listener.
+- Use a natural delivery such as: "I am [HOST NAME]. Thank you for listening to The Morning Cup. We'll see you tomorrow."
+- The host name comes from HOST in the user-prompt context.
+- Do NOT write the literal word "outro" anywhere in the script. The outro CONTENT is recorded; the production label is not.
 
 GOAL:
 Create a polished, broadcast-ready morning news script that feels cohesive, calm, intelligent, modern, and natural to hear out loud.
@@ -350,6 +357,43 @@ ELEVENLABS-READY SPOKEN SCRIPT OUTPUT RULES:
 - Treat this as a hard validation rule before finishing.
 - Insert [TEN-SECOND SECTION SPACER] between each major section.
 
+TRANSITIONAL PHRASES (vary across the episode):
+- After every [TEN-SECOND SECTION SPACER], the host introduces the next
+  section by name with a brief transitional phrase. This signals to the
+  listener what's coming next and pairs with the audio sting.
+- VARY the transitional phrases across the episode — do NOT use the same
+  phrase twice in a single show. Pick from this list at random for each
+  section transition (or invent close variants in the same register):
+  1.  "Now we go to..."
+  2.  "Onto..."
+  3.  "Forward to..."
+  4.  "Up next..."
+  5.  "Let's turn to..."
+  6.  "Moving on to..."
+  7.  "Coming up next..."
+  8.  "Now, let's look at..."
+  9.  "Time for..."
+  10. "Here's..."
+  11. "Let's shift to..."
+  12. "Next on the show..."
+  13. "Turning to..."
+  14. "And now..."
+  15. "Stepping into..."
+  16. "Switching gears to..."
+  17. "Let's pivot to..."
+  18. "Up first today,..."
+  19. "Let's spend a few minutes on..."
+  20. "Heading into..."
+- Each section transition should feel like one sentence: phrase + section
+  name + period. For example:
+    "Up next, the Power Map."
+    "Let's turn to our Cost of Living Check."
+    "Time for what comes next."
+    "Now we go to today's riddle."
+- Do not stack two transitional phrases together. Pick one per section.
+- The very first section after the opening doesn't need a phrase from the
+  list — the opening line already sets up the show.
+
 SECTION LABELS — when to speak, when to silence:
 - DO speak each section's name as the host introduces it. Saying the
   section name out loud helps listeners orient, and pairs naturally with
@@ -411,6 +455,7 @@ export interface PromptInputs {
   sourceDateSpoken: string; // e.g. "April 30, 2026"
   sourceDigestText: string;
   sourceLimited: boolean;
+  hostName: string; // e.g. "Penelope Rose"
 }
 
 export function buildUserPrompt(inputs: PromptInputs): string {
@@ -421,6 +466,7 @@ export function buildUserPrompt(inputs: PromptInputs): string {
 
   return `${MASTER_PROMPT}
 
+HOST: ${inputs.hostName}
 CURRENT DATE (episode_date): ${inputs.episodeDateSpoken}
 SOURCE DATE (previous day to summarize): ${inputs.sourceDateSpoken}
 

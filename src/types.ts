@@ -36,6 +36,7 @@ export interface Env {
   PUBLISHER?: string;
   COPYRIGHT_HOLDER?: string;
   PODCAST_GENRE?: string;
+  HOST_NAME?: string;
 
   VOICE_STABILITY?: string;
   VOICE_SIMILARITY_BOOST?: string;

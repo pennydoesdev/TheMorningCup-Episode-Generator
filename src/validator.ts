@@ -26,6 +26,10 @@ const FORBIDDEN_PATTERNS: { name: string; regex: RegExp }[] = [
 const MARKDOWN_TABLE = /\|.*\|.*\n[\s-:]*\|[\s-:]*\|/m;
 const URL_LIKE = /https?:\/\/\S+/;
 
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export function validateEpisode(
   episode: EpisodeJson,
   config: Config,
@@ -78,6 +82,12 @@ export function validateEpisode(
 
   if (!/the morning cup/i.test(script)) {
     errors.push('Script must include "The Morning Cup"');
+  }
+
+  // Host identity should appear in the script (opening + outro). One mention
+  // is enough to clear validation; the prompt encourages two.
+  if (config.hostName && !new RegExp(escapeRegex(config.hostName), "i").test(script)) {
+    errors.push(`Script must include host name "${config.hostName}"`);
   }
 
   if (!script.includes("[TEN-SECOND SECTION SPACER]")) {

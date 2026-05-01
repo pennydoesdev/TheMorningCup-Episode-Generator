@@ -183,6 +183,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       sourceDateSpoken: spokenDate(sourceIso),
       sourceDigestText: digestText,
       sourceLimited: !digest.available,
+      hostName: config.hostName,
     });
 
     const generated = await generateEpisode(env, config, userPrompt);
