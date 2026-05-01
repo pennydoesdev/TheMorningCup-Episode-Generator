@@ -24,18 +24,33 @@ cp "$HOME/Documents/The Morning Cup/Generator/scripts/morning-cup.sh" \
 chmod +x "$HOME/Documents/The Morning Cup/Scripts/morning-cup.sh"
 ```
 
-### 2. Save your `RUN_SECRET` where the wrapper can find it
+### 2. Decide where `RUN_SECRET` lives
 
-The Apple Shortcuts shell environment is sandboxed and doesn't load your
-shell profile. Put the secret in a `.env` file the wrapper reads on every
-run:
+The wrapper script needs `RUN_SECRET` to talk to the worker. Two options —
+pick one:
+
+**Option A — Embed it directly in each Shortcut (simpler).**
+You'll prefix every Shortcut's shell script with one `export` line. The
+secret is stored inside the Shortcut itself.
+
+Pros: one less file to manage, no setup commands to run.
+Cons: the secret travels with the Shortcut if you ever export, share, or
+sync it to another Mac via iCloud. Don't share or screen-share these
+Shortcuts publicly.
+
+You'll see the exact `export` line in each Shortcut's instructions below.
+
+**Option B — Use a `.env` file (more portable).**
+Keep the secret in `~/Documents/The Morning Cup/.env`; the wrapper reads
+it on every run. Set up once:
 
 ```bash
 echo 'RUN_SECRET="<your-actual-secret>"' > "$HOME/Documents/The Morning Cup/.env"
 chmod 600 "$HOME/Documents/The Morning Cup/.env"
 ```
 
-(`.env` lives outside the git repo so it never gets committed.)
+If you do this, you can skip the `export RUN_SECRET=…` line in each
+Shortcut below — the wrapper still finds it via `.env`.
 
 ### 3. Confirm the wrapper works from Terminal first
 
@@ -65,10 +80,12 @@ fetches chunks, assembles the final MP3 with chapters, opens it.
    - **Input:** `nothing`
    - **Pass Input:** `to stdin` (default; doesn't matter here)
    - **Run as Administrator:** off
-   - Paste this into the script box:
+   - Paste this into the script box (replace `<your-actual-secret>`):
      ```bash
+     export RUN_SECRET="<your-actual-secret>"
      "$HOME/Documents/The Morning Cup/Scripts/morning-cup.sh" make
      ```
+   *(Skip the `export` line if you're using Option B with a `.env` file.)*
 6. Below that action, search **Show Notification** and add it. Set:
    - **Title:** `Morning Cup ready`
    - **Body:** select **Shell Script Result** as a Magic Variable (last
@@ -94,11 +111,15 @@ chunks + builds. No worker trigger, no waiting on OpenAI/ElevenLabs.
 1. Shortcuts.app → **+** → name it `Fetch & Build Latest`.
 2. **Run Shell Script** action:
    - **Shell:** `/bin/zsh`
-   - Script:
+   - Script (replace `<your-actual-secret>` if you're using Option A):
      ```bash
+     export RUN_SECRET="<your-actual-secret>"
      "$HOME/Documents/The Morning Cup/Scripts/morning-cup.sh" fetch && \
      "$HOME/Documents/The Morning Cup/Scripts/morning-cup.sh" build
      ```
+   *(`fetch` doesn't strictly need the secret since R2 reads use Wrangler's
+   own auth, but it's fine to leave the export in for consistency. Skip
+   if you're using Option B.)*
 3. Add **Show Notification**:
    - **Title:** `Morning Cup built`
    - **Body:** Shell Script Result
@@ -131,8 +152,9 @@ Quick diagnostic — shows today's run record without triggering anything.
 **Build it:**
 
 1. Shortcuts.app → **+** → name it `Check Worker Status`.
-2. **Run Shell Script** action:
+2. **Run Shell Script** action (replace `<your-actual-secret>` if using Option A):
    ```bash
+   export RUN_SECRET="<your-actual-secret>"
    "$HOME/Documents/The Morning Cup/Scripts/morning-cup.sh" status
    ```
 3. Add a **Show Result** action below it (search "show result" — it shows
