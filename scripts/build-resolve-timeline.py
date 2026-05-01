@@ -2,9 +2,12 @@
 """
 Assemble a Morning Cup episode in DaVinci Resolve and render it to MP3.
 
-Pipeline:
+Pipeline (in order on the timeline):
     [Song.wav]
-    -> chunk-001 -> [sting] -> chunk-002 -> [sting] -> ... -> chunk-N
+    -> [Coffee Pour.wav]
+    -> [Cream or sugar, hon?.mp3]
+    -> [News Intro Sting.wav]            ← signals the news is starting
+    -> chunk-001 -> [section sting] -> chunk-002 -> [section sting] -> ... -> chunk-N
     -> [Thank You.wav]
 
 Output: ~/Documents/The Morning Cup/The Morning Cup - {EPISODE_DATE}.mp3
@@ -25,9 +28,14 @@ B) From a terminal (Resolve must be running):
 
 Notes:
 - Free Resolve 18+ supports the scripting API; no Studio license needed.
-- If the scripted MP3 render fails (Resolve sometimes refuses MP3 codec depending
-  on system FFmpeg), the timeline is still assembled and queued — you can hit
-  Render manually on the Deliver page.
+- Coffee Pour and "Cream or sugar, hon?" are placed sequentially on track A1
+  (pour finishes, voice begins). If you want them overlapping, drag the voice
+  clip earlier on the timeline after the script runs.
+- If a referenced asset file is missing, that slot is skipped with a warning
+  rather than aborting — the timeline is still assembled with the rest.
+- If the scripted MP3 render fails (Resolve sometimes refuses MP3 codec
+  depending on system FFmpeg), the timeline is still assembled and queued —
+  you can hit Render manually on the Deliver page.
 """
 
 import glob
@@ -42,8 +50,11 @@ CHUNKS_DIR = os.path.expanduser(f"~/Documents/The Morning Cup/episodes/{EPISODE_
 OUTPUT_DIR = ASSETS_DIR
 # ==============================================================================
 
-INTRO_FILENAME = "The Morning Cup - Song.wav"
-STING_FILENAME = "morning-cup-sting.wav"
+INTRO_SONG_FILENAME = "The Morning Cup - Song.wav"
+COFFEE_POUR_FILENAME = "Coffee Pour.wav"
+CREAM_OR_SUGAR_FILENAME = "Cream or sugar, hon?.mp3"
+NEWS_INTRO_STING_FILENAME = "news-intro-sting.wav"
+SECTION_STING_FILENAME = "morning-cup-sting.wav"
 OUTRO_FILENAME = "The Morning Cup - Thank You.wav"
 
 
@@ -71,12 +82,19 @@ def get_resolve():
     return dvr_script.scriptapp("Resolve")
 
 
-def import_clip(media_storage, path, label):
+def import_clip(media_storage, path, label, required=True):
+    """Import a single audio file. Returns the MediaPoolItem, or None if optional and missing."""
     if not os.path.isfile(path):
-        sys.exit(f"{label} not found at: {path}")
+        if required:
+            sys.exit(f"{label} not found at: {path}")
+        print(f"Warning: optional {label} not found at {path} — skipping.")
+        return None
     items = media_storage.AddItemListToMediaPool([path])
     if not items:
-        sys.exit(f"Failed to import {label}: {path}")
+        if required:
+            sys.exit(f"Failed to import {label}: {path}")
+        print(f"Warning: failed to import optional {label} ({path}) — skipping.")
+        return None
     return items[0]
 
 
@@ -134,8 +152,11 @@ def render_and_wait(project, job_id, expected_path):
 
 
 def assemble(chunks_dir, episode_date, assets_dir, output_dir):
-    intro_path = os.path.join(assets_dir, INTRO_FILENAME)
-    sting_path = os.path.join(assets_dir, STING_FILENAME)
+    intro_song_path = os.path.join(assets_dir, INTRO_SONG_FILENAME)
+    coffee_pour_path = os.path.join(assets_dir, COFFEE_POUR_FILENAME)
+    cream_or_sugar_path = os.path.join(assets_dir, CREAM_OR_SUGAR_FILENAME)
+    news_intro_sting_path = os.path.join(assets_dir, NEWS_INTRO_STING_FILENAME)
+    section_sting_path = os.path.join(assets_dir, SECTION_STING_FILENAME)
     outro_path = os.path.join(assets_dir, OUTRO_FILENAME)
 
     if not os.path.isdir(chunks_dir):
@@ -156,13 +177,16 @@ def assemble(chunks_dir, episode_date, assets_dir, output_dir):
     media_pool = project.GetMediaPool()
     media_storage = resolve.GetMediaStorage()
 
-    print(
-        f"Importing intro, sting, outro, and {len(chunk_paths)} chunk(s) "
-        f"into the media pool..."
+    print(f"Importing intro/outro assets and {len(chunk_paths)} chunk(s)...")
+    intro_song = import_clip(media_storage, intro_song_path, "Intro song", required=True)
+    coffee_pour = import_clip(media_storage, coffee_pour_path, "Coffee Pour", required=True)
+    cream_or_sugar = import_clip(media_storage, cream_or_sugar_path, "Cream or sugar voice line", required=True)
+    news_intro_sting = import_clip(
+        media_storage, news_intro_sting_path, "News intro sting", required=False
     )
-    intro_clip = import_clip(media_storage, intro_path, "Intro song")
-    sting_clip = import_clip(media_storage, sting_path, "Sting")
-    outro_clip = import_clip(media_storage, outro_path, "Outro thank-you")
+    section_sting = import_clip(media_storage, section_sting_path, "Section sting", required=True)
+    outro = import_clip(media_storage, outro_path, "Outro thank-you", required=True)
+
     chunk_items = media_storage.AddItemListToMediaPool(chunk_paths)
     if not chunk_items:
         sys.exit("Failed to import chunk audio into the media pool.")
@@ -173,17 +197,25 @@ def assemble(chunks_dir, episode_date, assets_dir, output_dir):
         sys.exit(f"Failed to create timeline '{timeline_name}'.")
     project.SetCurrentTimeline(timeline)
 
-    sequence = [{"mediaPoolItem": intro_clip}]
+    sequence = [
+        {"mediaPoolItem": intro_song},
+        {"mediaPoolItem": coffee_pour},
+        {"mediaPoolItem": cream_or_sugar},
+    ]
+    if news_intro_sting:
+        sequence.append({"mediaPoolItem": news_intro_sting})
     for idx, chunk in enumerate(chunk_items):
         sequence.append({"mediaPoolItem": chunk})
         if idx < len(chunk_items) - 1:
-            sequence.append({"mediaPoolItem": sting_clip})
-    sequence.append({"mediaPoolItem": outro_clip})
+            sequence.append({"mediaPoolItem": section_sting})
+    sequence.append({"mediaPoolItem": outro})
 
     media_pool.AppendToTimeline(sequence)
+    news_intro_label = "1 news-intro sting + " if news_intro_sting else ""
     print(
-        f"Timeline '{timeline_name}' assembled: 1 intro + {len(chunk_items)} "
-        f"chunks + {len(chunk_items) - 1} stings + 1 outro "
+        f"Timeline '{timeline_name}' assembled: intro song + coffee pour + "
+        f"voice line + {news_intro_label}{len(chunk_items)} chunks + "
+        f"{len(chunk_items) - 1} section stings + outro "
         f"= {len(sequence)} clips."
     )
 
