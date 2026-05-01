@@ -172,6 +172,22 @@ ffmpeg -y -loglevel error -f concat -safe 0 -i "$LIST" \
   -metadata comment="$COMMENT" \
   "$OUTPUT"
 
+# --- push final MP3 to Google Drive (optional) -------------------------------
+
+PUSH_DRIVE_PY="$(dirname "$0")/push-final-to-drive.py"
+if [ -f "$PUSH_DRIVE_PY" ] && [ -f "$ROOT/.env" ]; then
+  # Pull env values (GOOGLE_DRIVE_FOLDER_ID, GOOGLE_DRIVE_KEY_PATH) from .env.
+  set -o allexport
+  # shellcheck disable=SC1091
+  source "$ROOT/.env"
+  set +o allexport
+  if [ -n "${GOOGLE_DRIVE_FOLDER_ID:-}" ]; then
+    echo "Pushing final MP3 to Google Drive..."
+    python3 "$PUSH_DRIVE_PY" "$OUTPUT" "$DATE" || \
+      echo "Warning: Drive upload failed; episode is still saved locally." >&2
+  fi
+fi
+
 # --- chapter markers (CTOC + CHAP ID3 frames) --------------------------------
 
 WRITE_CHAPTERS_PY="$(dirname "$0")/write-chapters.py"

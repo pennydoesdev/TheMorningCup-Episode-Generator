@@ -39,6 +39,15 @@ PUBLISHER = "The Penny Tribune"
 COPYRIGHT_HOLDER = "The Penny Tribune"
 PODCAST_GENRE = "News"
 HOST_NAME = "Penelope Rose"
+
+# Publishing pipeline (auto-publish to Google Drive + WordPress draft after each run)
+ENABLE_PUBLISHING = "true"
+GOOGLE_DRIVE_FOLDER_ID = "1FNlBn7-pYJLnd3ORFCDeli5f7Z9C8yoM"
+WP_URL = "https://thepennytribune.com"
+WP_USERNAME = "systems"
+WP_CPT_SLUG = "serve_episode"
+WP_PODCAST_SHOW_TAXONOMY = "serve_podcast_category"
+WP_PODCAST_SHOW_TERM = "The Morning Cup"
 VOICE_STABILITY = "0.35"
 VOICE_SIMILARITY_BOOST = "0.85"
 VOICE_STYLE = "0.7"
@@ -50,3 +59,5 @@ VOICE_USE_SPEAKER_BOOST = "true"
 #   ELEVENLABS_VOICE_ID
 #   RESEND_API_KEY
 #   RUN_SECRET
+#   GOOGLE_SERVICE_ACCOUNT_KEY  (full contents of the service account JSON)
+#   WP_APP_PASSWORD             (WordPress Application Password)

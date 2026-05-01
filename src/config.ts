@@ -45,6 +45,14 @@ export interface Config {
   podcastGenre: string;
   hostName: string;
 
+  // Publishing pipeline
+  enablePublishing: boolean;
+  googleDriveFolderId: string;
+  wpUrl: string;
+  wpCptSlug: string;
+  wpPodcastShowTaxonomy: string;
+  wpPodcastShowTerm: string;
+
   voice: {
     stability: number;
     similarityBoost: number;
@@ -82,6 +90,13 @@ export function loadConfig(env: Env): Config {
     copyrightHolder: str(env.COPYRIGHT_HOLDER, "The Penny Tribune"),
     podcastGenre: str(env.PODCAST_GENRE, "News"),
     hostName: str(env.HOST_NAME, "Penelope Rose"),
+
+    enablePublishing: bool(env.ENABLE_PUBLISHING, false),
+    googleDriveFolderId: str(env.GOOGLE_DRIVE_FOLDER_ID, ""),
+    wpUrl: str(env.WP_URL, ""),
+    wpCptSlug: str(env.WP_CPT_SLUG, "serve_episode"),
+    wpPodcastShowTaxonomy: str(env.WP_PODCAST_SHOW_TAXONOMY, "serve_podcast_category"),
+    wpPodcastShowTerm: str(env.WP_PODCAST_SHOW_TERM, "The Morning Cup"),
 
     voice: {
       stability: num(env.VOICE_STABILITY, 0.35),

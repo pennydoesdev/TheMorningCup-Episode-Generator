@@ -38,6 +38,17 @@ export interface Env {
   PODCAST_GENRE?: string;
   HOST_NAME?: string;
 
+  // Publishing pipeline
+  ENABLE_PUBLISHING?: string;
+  GOOGLE_DRIVE_FOLDER_ID?: string;
+  GOOGLE_SERVICE_ACCOUNT_KEY?: string; // secret: full JSON contents
+  WP_URL?: string;
+  WP_USERNAME?: string;
+  WP_APP_PASSWORD?: string; // secret
+  WP_CPT_SLUG?: string;
+  WP_PODCAST_SHOW_TAXONOMY?: string;
+  WP_PODCAST_SHOW_TERM?: string;
+
   VOICE_STABILITY?: string;
   VOICE_SIMILARITY_BOOST?: string;
   VOICE_STYLE?: string;

@@ -45,6 +45,13 @@ import {
   sendFailureEmail,
 } from "./email";
 import {
+  createWordPressDraft,
+  generatePostBody,
+  uploadEpisodeToDrive,
+  type DriveArtifact,
+} from "./publish";
+import type { Manifest } from "./types";
+import {
   normalizeWhitespace,
   stripPacingTags,
   stripSpacerMarker,
@@ -372,6 +379,25 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       contentType: "text/plain; charset=utf-8",
     });
 
+    // 6.5 Publishing — best-effort. Failures here do NOT fail the run; the
+    // chunks are already in R2 and recoverable.
+    if (config.enablePublishing) {
+      try {
+        await runPublishStep(env, config, {
+          episodeIso,
+          episode,
+          manifest,
+          txtKey,
+          htmlKey,
+          jsonKey,
+          manifestKey,
+          completedChunks,
+        });
+      } catch (err) {
+        logger.error("publishing failed", { err: String(err), episodeIso });
+      }
+    }
+
     // 7. Email
     try {
       await sendCompletionEmail(env, config, {
@@ -450,6 +476,119 @@ function checkAuth(req: Request, env: Env): { ok: true } | { ok: false; response
 
 function defaultEpisodeIso(config: Config): string {
   return isoDate(getZonedNow(config.workerTimezone));
+}
+
+interface PublishInputs {
+  episodeIso: string;
+  episode: EpisodeJson;
+  manifest: Manifest;
+  txtKey: string;
+  htmlKey: string;
+  jsonKey: string;
+  manifestKey: string;
+  completedChunks: ChunkPiece[];
+}
+
+async function r2GetBytes(env: Env, key: string): Promise<ArrayBuffer> {
+  const obj = await env.MORNING_CUP_BUCKET.get(key);
+  if (!obj) throw new Error(`R2 object not found: ${key}`);
+  return obj.arrayBuffer();
+}
+
+async function r2GetText(env: Env, key: string): Promise<string> {
+  const obj = await env.MORNING_CUP_BUCKET.get(key);
+  if (!obj) throw new Error(`R2 object not found: ${key}`);
+  return obj.text();
+}
+
+async function runPublishStep(
+  env: Env,
+  config: Config,
+  inputs: PublishInputs,
+): Promise<void> {
+  const { episodeIso, episode, manifest } = inputs;
+  logger.info("publish: start", { episodeIso });
+
+  // 1. Generate post body (OpenAI). Best-effort; falls back to social copy
+  // if body generation fails.
+  let postBody = "";
+  try {
+    postBody = await generatePostBody(env, config, episode, manifest);
+    logger.info("publish: body generated", {
+      length: postBody.length,
+    });
+  } catch (err) {
+    logger.error("publish: body generation failed", { err: String(err) });
+    postBody =
+      (episode.social_copy?.main_post ?? "") +
+      "\n\n" +
+      (episode.social_copy?.section_posts ?? [])
+        .map((s) => `**${s.section}** — ${s.post}`)
+        .join("\n\n");
+  }
+
+  // 2. Push artifacts to Google Drive.
+  if (config.googleDriveFolderId) {
+    try {
+      const baseTitle = `${manifest.show_name} - ${episodeIso}`;
+      const txt = await r2GetText(env, inputs.txtKey);
+      const html = await r2GetText(env, inputs.htmlKey);
+      const jsonStr = await r2GetText(env, inputs.jsonKey);
+      const manifestStr = await r2GetText(env, inputs.manifestKey);
+
+      const rootFiles: DriveArtifact[] = [
+        { name: `${baseTitle}.txt`, mimeType: "text/plain; charset=utf-8", body: txt },
+        { name: `${baseTitle}.html`, mimeType: "text/html; charset=utf-8", body: html },
+        { name: `${baseTitle}.json`, mimeType: "application/json; charset=utf-8", body: jsonStr },
+        { name: `${baseTitle} - manifest.json`, mimeType: "application/json; charset=utf-8", body: manifestStr },
+      ];
+
+      const chunkFiles: DriveArtifact[] = [];
+      for (const c of inputs.completedChunks) {
+        const bytes = await r2GetBytes(env, c.r2_key);
+        chunkFiles.push({
+          name: c.filename,
+          mimeType: "audio/mpeg",
+          body: bytes,
+        });
+      }
+
+      const folderId = await uploadEpisodeToDrive(
+        env,
+        config,
+        episodeIso,
+        rootFiles,
+        chunkFiles,
+      );
+      logger.info("publish: drive upload complete", { folderId });
+    } catch (err) {
+      logger.error("publish: drive upload failed", { err: String(err) });
+    }
+  } else {
+    logger.info("publish: drive skipped — no GOOGLE_DRIVE_FOLDER_ID");
+  }
+
+  // 3. Create WordPress draft.
+  if (config.wpUrl && env.WP_USERNAME && env.WP_APP_PASSWORD) {
+    try {
+      const result = await createWordPressDraft(
+        env,
+        config,
+        episodeIso,
+        episode,
+        manifest,
+        postBody,
+      );
+      logger.info("publish: wp draft created", {
+        id: result.id,
+        link: result.link,
+      });
+    } catch (err) {
+      logger.error("publish: wp draft failed", { err: String(err) });
+    }
+  } else {
+    logger.info("publish: wp skipped — credentials not set");
+  }
 }
 
 function json(body: unknown, status: number = 200): Response {
