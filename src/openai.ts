@@ -88,6 +88,10 @@ async function callResponses(
         schema: EPISODE_JSON_SCHEMA.schema,
       },
     },
+    // Built-in web search lets the model research yesterday's actual news
+    // instead of relying on an RSS-derived digest. The model decides when to
+    // search based on the prompt instructions.
+    tools: [{ type: "web_search" }],
     stream: true,
   };
 

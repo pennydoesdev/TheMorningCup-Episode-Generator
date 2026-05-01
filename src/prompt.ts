@@ -263,18 +263,29 @@ export interface PromptInputs {
 }
 
 export function buildUserPrompt(inputs: PromptInputs): string {
-  const limitedNote = inputs.sourceLimited
-    ? `\nIMPORTANT: A live source digest is NOT available for ${inputs.sourceDateSpoken}. Produce a generic structural draft only, do not invent facts, and set source_limited=true in metadata. Where a category has no information, say so briefly and move on.`
-    : "";
+  const supplementalDigest =
+    inputs.sourceDigestText && inputs.sourceDigestText.length > 100
+      ? `\nSUPPLEMENTAL CONTEXT (starting hints only — verify and expand with web_search before relying on any item):\n${inputs.sourceDigestText}\n`
+      : "";
 
   return `${MASTER_PROMPT}
 
 CURRENT DATE (episode_date): ${inputs.episodeDateSpoken}
 SOURCE DATE (previous day to summarize): ${inputs.sourceDateSpoken}
 
-SOURCE DIGEST (use these items as your factual basis; do not invent facts):
-${inputs.sourceDigestText}
-${limitedNote}
+RESEARCH INSTRUCTIONS:
+You have a web_search tool available. You MUST use it to research the actual news from ${inputs.sourceDateSpoken}. Run multiple targeted searches across the topic flow:
+- A genuine positive opening story (rescue, mutual aid, labor wins, conservation, ordinary people doing something kind)
+- Major U.S. politics and political-trend developments
+- National crime headlines, immigration, California governor's race, House/Senate primaries
+- Business, economy, trade, technology
+- Healthcare, climate, positive science / ocean / conservation
+- International, Iran, Gaza
+- Any meaningful social/culture conversation
 
+Pull facts from credible outlets (Reuters, AP, NYT, CNN, BBC, Guardian, NPR, Democracy Now, Jacobin, The American Prospect, Truthout, and other independent / leftist reporting where it strengthens the editorial lens). Cite real source URLs in source_notes. If web_search returns nothing meaningful for a category, say so briefly in the script and move on — do NOT invent or fabricate facts under any circumstance.
+
+Do NOT preface the script with a disclaimer about source availability or describe the script as a draft. Open with "Good morning, today is ${inputs.episodeDateSpoken}." and proceed directly into the show.
+${supplementalDigest}
 Return STRICT JSON ONLY. No markdown. No commentary.`;
 }
