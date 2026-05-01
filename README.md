@@ -10,9 +10,10 @@ in Cloudflare R2, and emails you the script, metadata, and chunk links.
 
 | Doc | What's in it |
 |-----|--------------|
-| [docs/QUICKSTART.md](./docs/QUICKSTART.md) | **Start here** — every command in a copy-paste block, zero to first episode |
+| [docs/QUICKSTART.md](./docs/QUICKSTART.md) | **First-time setup** — every command in a copy-paste block, zero to first episode |
+| [docs/PRODUCTION-WORKFLOW.md](./docs/PRODUCTION-WORKFLOW.md) | **Daily morning routine** — pull, build, upload, review, publish |
 | [docs/PIPELINE.md](./docs/PIPELINE.md) | Full pipeline diagram + every component, end-to-end |
-| [docs/SETUP.md](./docs/SETUP.md) | First-time setup — folders, secrets, sound assets, Wrangler |
+| [docs/SETUP.md](./docs/SETUP.md) | Original first-time setup notes (superseded by QUICKSTART) |
 | [docs/WALKTHROUGH.md](./docs/WALKTHROUGH.md) | Worked example: generate one full episode end-to-end (with chapters) |
 | [docs/DAILY-WORKFLOW.md](./docs/DAILY-WORKFLOW.md) | The two commands you run each morning |
 | [docs/EDITING.md](./docs/EDITING.md) | How `build-episode.sh` (and the optional Resolve script) assembles the final MP3 |
