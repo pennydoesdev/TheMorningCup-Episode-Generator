@@ -48,6 +48,7 @@ export interface Env {
   WP_CPT_SLUG?: string;
   WP_PODCAST_SHOW_TAXONOMY?: string;
   WP_PODCAST_SHOW_TERM?: string;
+  WP_PARENT_PODCAST_ID?: string;
 
   VOICE_STABILITY?: string;
   VOICE_SIMILARITY_BOOST?: string;

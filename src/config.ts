@@ -52,6 +52,7 @@ export interface Config {
   wpCptSlug: string;
   wpPodcastShowTaxonomy: string;
   wpPodcastShowTerm: string;
+  wpParentPodcastId: number;
 
   voice: {
     stability: number;
@@ -97,6 +98,7 @@ export function loadConfig(env: Env): Config {
     wpCptSlug: str(env.WP_CPT_SLUG, "serve_episode"),
     wpPodcastShowTaxonomy: str(env.WP_PODCAST_SHOW_TAXONOMY, "serve_podcast_category"),
     wpPodcastShowTerm: str(env.WP_PODCAST_SHOW_TERM, "The Morning Cup"),
+    wpParentPodcastId: num(env.WP_PARENT_PODCAST_ID, 0),
 
     voice: {
       stability: num(env.VOICE_STABILITY, 0.35),

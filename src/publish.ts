@@ -350,11 +350,24 @@ export async function createWordPressDraft(
   });
   const title = `${manifest.show_name} — ${weekday}, ${spokenDateFromIso(episodeIso)}`;
 
+  // Apollo plugin _ep_* meta. _ep_podcast_id ties this episode to its
+  // parent serve_podcast show; the audio meta is intentionally left blank
+  // here — the local build-episode.sh fills _ep_audio_url + _ep_audio_r2_key
+  // after the final MP3 is rendered.
+  const epMeta: Record<string, unknown> = {
+    _ep_episode_type: "full",
+    _ep_explicit: false,
+  };
+  if (config.wpParentPodcastId > 0) {
+    epMeta._ep_podcast_id = config.wpParentPodcastId;
+  }
+
   const payload: Record<string, unknown> = {
     title,
     status: "draft",
     content: postBody,
     excerpt: episode.social_copy?.main_post ?? "",
+    meta: epMeta,
   };
 
   // Try to resolve and attach the "Podcast Show" taxonomy term.
