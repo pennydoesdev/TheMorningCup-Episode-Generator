@@ -11,6 +11,9 @@ export interface ManifestInputs {
   episodeIso: string; // YYYY-MM-DD
   sourceIso: string; // YYYY-MM-DD
   baseTitle: string; // "The Morning Cup"
+  publisher: string; // "The Penny Tribune"
+  copyrightHolder: string; // "The Penny Tribune"
+  genre: string; // "Podcast" / "News"
   wordCount: number;
   estimatedRuntimeMinutes: number;
   validation: ValidationResult;
@@ -27,10 +30,17 @@ export function buildManifest(inputs: ManifestInputs): Manifest {
     character_count: c.character_count,
   }));
 
+  const year = Number(inputs.episodeIso.slice(0, 4));
+
   return {
     episode_date: inputs.episodeIso,
     source_date: inputs.sourceIso,
     title: `${inputs.baseTitle} - ${inputs.episodeIso}`,
+    show_name: inputs.baseTitle,
+    publisher: inputs.publisher,
+    copyright: `Copyright ${year} - ${inputs.copyrightHolder}`,
+    year,
+    genre: inputs.genre,
     word_count: inputs.wordCount,
     estimated_runtime_minutes: inputs.estimatedRuntimeMinutes,
     chunk_count: chunks.length,

@@ -33,6 +33,10 @@ export interface Env {
   EMAIL_TO?: string;
   R2_PUBLIC_BASE_URL?: string;
 
+  PUBLISHER?: string;
+  COPYRIGHT_HOLDER?: string;
+  PODCAST_GENRE?: string;
+
   VOICE_STABILITY?: string;
   VOICE_SIMILARITY_BOOST?: string;
   VOICE_STYLE?: string;
@@ -115,6 +119,11 @@ export interface Manifest {
   episode_date: string;
   source_date: string;
   title: string;
+  show_name: string;
+  publisher: string;
+  copyright: string;
+  year: number;
+  genre: string;
   word_count: number;
   estimated_runtime_minutes: number;
   chunk_count: number;

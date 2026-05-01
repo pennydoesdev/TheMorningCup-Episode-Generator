@@ -40,6 +40,10 @@ export interface Config {
   emailTo: string;
   r2PublicBaseUrl: string;
 
+  publisher: string;
+  copyrightHolder: string;
+  podcastGenre: string;
+
   voice: {
     stability: number;
     similarityBoost: number;
@@ -72,6 +76,10 @@ export function loadConfig(env: Env): Config {
     emailFrom: str(env.EMAIL_FROM, ""),
     emailTo: str(env.EMAIL_TO, ""),
     r2PublicBaseUrl: str(env.R2_PUBLIC_BASE_URL, ""),
+
+    publisher: str(env.PUBLISHER, "The Penny Tribune"),
+    copyrightHolder: str(env.COPYRIGHT_HOLDER, "The Penny Tribune"),
+    podcastGenre: str(env.PODCAST_GENRE, "News"),
 
     voice: {
       stability: num(env.VOICE_STABILITY, 0.35),
