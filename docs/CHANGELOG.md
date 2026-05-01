@@ -4,6 +4,85 @@ Reverse-chronological summary of significant changes to the pipeline. For
 the full git log: `git log --oneline main`. Use this page for "what's new
 since the last time I looked at the repo."
 
+## 2026-05-01 — Auto-publishing pipeline complete (Drive + S3 + WordPress)
+
+End-to-end auto-publishing landed and was verified with a real episode
+upload:
+
+**Worker side** (`src/publish.ts` invoked at end of every successful run):
+- Generates a 400–500 word episode description via OpenAI from the
+  manifest, social copy, and first 1500 chars of the script.
+- Uploads chunks/txt/html/json/manifest to a dated Google Drive folder
+  via service-account JWT auth (Web Crypto SubtleCrypto, no Node deps).
+- Creates a WordPress `serve_episode` draft via REST API with:
+  - Title in deterministic format ("The Morning Cup — Friday, May 1st, 2026")
+  - AI-generated body, social-copy excerpt
+  - `serve_podcast_category` taxonomy = "The Morning Cup"
+  - Apollo plugin `_ep_*` meta: `_ep_podcast_id=2616`,
+    `_ep_episode_type="full"`, `_ep_explicit=false`
+- Best-effort: failures log via `wrangler tail` but do NOT fail the run.
+
+**Local side**:
+- `scripts/push-final-to-drive.py` — uploads the final assembled MP3
+  to the same dated Drive folder.
+- `scripts/upload-audio.py` — uploads the MP3 to S3 (`audio/YYYY/MM/`
+  prefix the Apollo plugin reads), then PATCHes the WordPress draft's
+  audio meta (`_ep_audio_url`, `_ep_audio_r2_key`, `_ep_file_size`,
+  `_ep_mime_type`, `_ep_duration_sec`, `_ep_duration`).
+- `scripts/build-episode.sh` calls both helpers automatically after
+  rendering, gated on env-var presence.
+
+**Configuration**:
+- New worker secrets: `GOOGLE_SERVICE_ACCOUNT_KEY`, `WP_APP_PASSWORD`.
+- New worker vars: `ENABLE_PUBLISHING`, `GOOGLE_DRIVE_FOLDER_ID`,
+  `WP_URL`, `WP_USERNAME`, `WP_CPT_SLUG` (default `serve_episode`),
+  `WP_PODCAST_SHOW_TAXONOMY` (default `serve_podcast_category`),
+  `WP_PODCAST_SHOW_TERM`, `WP_PARENT_PODCAST_ID`.
+- New local `.env` keys: `GOOGLE_DRIVE_FOLDER_ID`,
+  `GOOGLE_DRIVE_KEY_PATH`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_REGION`,
+  `S3_BUCKET`, `S3_CF_URL`, `WP_URL`, `WP_USERNAME`, `WP_APP_PASSWORD`.
+
+**Python deps** the local pipeline now requires:
+- `mutagen` (chapter markers + ID3 tags)
+- `cryptography` (Google service-account JWT signing)
+- `boto3` (S3 uploads)
+- `requests` (WordPress REST API)
+
+`scripts/team-setup.sh` updated to install all four for new teammates.
+
+**New docs**:
+- `docs/QUICKSTART.md` — single-page zero-to-first-episode setup, every
+  command in a copy-paste block.
+- `docs/PRODUCTION-WORKFLOW.md` — focused daily morning routine.
+- `docs/PUBLISHING.md` — auto-publishing setup + troubleshooting matrix.
+- `docs/PIPELINE.md` — full pipeline diagrams via mermaid (renders on GitHub).
+- `docs/TEAM-SHARING.md` — onboarding, asset distribution, secret
+  rotation, offboarding.
+- `docs/CHAPTERS.md` — embedded MP3 chapter markers.
+- `docs/TRANSCRIPTS.md` — accessing the .txt / .html / .json transcripts.
+- `docs/APPLE-SHORTCUTS.md` — menu-bar / hotkey integration.
+
+**Prompt additions** (no removals):
+- `WEATHER SECTION REQUIREMENT` — 10 default metros to spotlight,
+  active-event coverage rules (hurricanes, wildfires, floods, etc.),
+  active advisories, worker / climate / equity angle, daily-life impact,
+  seasonal context.
+- `TRANSITIONAL PHRASES` — 20 varied section intros the model rotates
+  through after each sting.
+- Host identity wired through `HOST_NAME` (default "Penelope Rose")
+  with required intro and outro lines that name the host.
+- `OUTRO IDENTITY RULE` — bans the literal word "outro" while keeping
+  the outro CONTENT as a natural sign-off.
+- `SECTION LABELS` rule — labels are spoken as headlines after stings
+  ("Now, the Power Map.") but never as standalone heading lines.
+
+**Verification status as of this commit**:
+- ✓ Worker generation, validation, repair, extend pass — verified
+- ✓ ElevenLabs TTS parallel x4 — verified
+- ✓ Local fetch + build + chapters — verified
+- ✓ Final MP3 to Google Drive (push-final-to-drive.py) — verified
+- ✓ Final MP3 to S3 + WP draft attach (upload-audio.py) — verified
+
 ## 2026-05-01 — Chapters, walkthrough doc, length-extend pass
 
 **MP3 chapter markers** (`scripts/write-chapters.py`):

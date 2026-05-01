@@ -121,12 +121,23 @@ else
   npm install -g wrangler
 fi
 
-# mutagen (Python ID3 lib for chapter markers + tags)
-if python3 -c "import mutagen" >/dev/null 2>&1; then
-  green "✓ mutagen present"
-else
-  step "Installing mutagen for the current user"
-  python3 -m pip install --user --break-system-packages mutagen
+# Python deps for the local pipeline:
+#   mutagen       — ID3 tag + chapter marker writing (write-chapters.py)
+#   cryptography  — JWT signing for Google service-account auth
+#                   (push-final-to-drive.py)
+#   boto3         — S3 audio uploads (upload-audio.py)
+#   requests      — WordPress REST API calls (upload-audio.py)
+need_install=()
+for pkg in mutagen cryptography boto3 requests; do
+  if python3 -c "import $pkg" >/dev/null 2>&1; then
+    green "✓ $pkg present"
+  else
+    need_install+=("$pkg")
+  fi
+done
+if [ "${#need_install[@]}" -gt 0 ]; then
+  step "Installing Python deps: ${need_install[*]}"
+  python3 -m pip install --user --break-system-packages "${need_install[@]}"
 fi
 
 # --- summary -----------------------------------------------------------------

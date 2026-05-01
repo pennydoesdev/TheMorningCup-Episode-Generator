@@ -86,6 +86,29 @@ Cost: web_search adds ~$0.03/call × 8-15 calls per episode = ~$0.30-0.50/run.
 
 **Fix:** `fetch-chunks.sh` was updated to pass `"$BUCKET/$KEY"` as one argument and add `--remote`. Pull the latest if you're seeing this on an older copy.
 
+### `push-final-to-drive.py` errors `Missing dependency: cryptography`
+
+**Root cause:** The Drive upload helper signs a JWT for the Google
+service-account OAuth flow using the `cryptography` Python package, and
+it isn't installed.
+
+**Fix:**
+```bash
+python3 -m pip install --user --break-system-packages cryptography
+```
+
+While you're there, install all four local-pipeline Python deps in one shot:
+```bash
+python3 -m pip install --user --break-system-packages mutagen cryptography boto3 requests
+```
+
+### `upload-audio.py` errors `Missing dep: boto3` or `Missing dep: requests`
+
+Same fix — install the missing package(s):
+```bash
+python3 -m pip install --user --break-system-packages boto3 requests
+```
+
 ### `pip3 install mutagen` fails with `externally-managed-environment`
 
 **Root cause:** macOS Homebrew Python protects itself against system-wide pip installs.

@@ -64,11 +64,20 @@ ENVEOF
 chmod 600 "$HOME/Documents/The Morning Cup/.env"
 ```
 
-The local Python helpers need three packages — `cryptography` (JWT
-signing for Drive), `boto3` (R2 audio upload), and `requests` (WP REST):
+The local Python helpers need four packages:
+- `mutagen` — ID3 tag + chapter marker writing (`write-chapters.py`)
+- `cryptography` — JWT signing for Google service-account auth (`push-final-to-drive.py`)
+- `boto3` — S3 audio uploads (`upload-audio.py`)
+- `requests` — WordPress REST API calls (`upload-audio.py`)
 
 ```bash
-python3 -m pip install --user --break-system-packages cryptography boto3 requests
+python3 -m pip install --user --break-system-packages mutagen cryptography boto3 requests
+```
+
+Verify all four import cleanly:
+
+```bash
+python3 -c "import mutagen, cryptography, boto3, requests; print('all good')"
 ```
 
 ### 2b. S3 audio bucket credentials (for upload-audio.py)
