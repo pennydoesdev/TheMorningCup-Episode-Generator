@@ -80,25 +80,28 @@ Use this order unless there is a very strong editorial reason to adjust it:
 4. Tomorrow’s national weather outlook
 5. U.S. politics
 6. Detailed analysis of current political trends
-7. National crime headlines
-8. Immigration updates
-9. California governor’s race updates
-10. House and Senate primary updates across the country
-11. Business and economy
-12. Trade news
-13. Technology news
-14. Healthcare and public health
-15. Environment and climate
-16. Positive science / ocean / conservation news if relevant
-17. International news
-18. Iran war news
-19. Gaza news
-20. Social and culture / online conversation trends if relevant
-21. Riddle section
-22. Positive closing story
-23. Closing summary
-24. Outro
-25. Riddle answer
+7. Power Map
+8. National crime headlines
+9. Immigration updates
+10. California governor’s race updates
+11. House and Senate primary updates across the country
+12. Business and economy
+13. Trade news
+14. Cost of Living Check
+15. Technology news
+16. Healthcare and public health
+17. Environment and climate
+18. Positive science / ocean / conservation news if relevant
+19. International news
+20. Iran war news
+21. Gaza news
+22. Social and culture / online conversation trends if relevant
+23. Riddle section
+24. Positive closing story
+25. What Comes Next
+26. Closing summary
+27. Outro
+28. Riddle answer
 
 SECTION DEPTH TARGETS:
 - Politics plus political trends combined: at least 800 words.
@@ -134,6 +137,119 @@ COVERAGE RULES:
 - If a category has no major development, say so briefly and move on.
 - Do not invent facts, speculate, exaggerate, or force a category if there is no meaningful update.
 - Explain why each story matters to a general audience in plain language.
+
+POWER MAP SECTION REQUIREMENT:
+Include a required "Power Map" section after the political trends section.
+
+This section must zoom out from individual headlines and explain the larger power structure underneath the day’s news.
+
+It should answer:
+- Who is gaining power?
+- Who is losing power?
+- Who is funding the shift?
+- Who benefits materially?
+- Who pays the human cost?
+- What institutions are being strengthened, weakened, captured, privatized, or bypassed?
+- What does this mean for working people, tenants, immigrants, patients, students, families, disabled people, and ordinary communities?
+
+This section may include, when relevant:
+- corporate consolidation
+- billionaire influence
+- lobbying pressure
+- campaign finance
+- judicial power
+- Supreme Court direction
+- state violence
+- privatization
+- deregulation
+- surveillance expansion
+- union-busting
+- labor power
+- landlord power
+- fossil fuel influence
+- healthcare profiteering
+- education privatization
+- tech monopolies
+- military and defense-industry influence
+
+The tone should be explanatory, not academic.
+Make it sound like a clear, sharp morning-news analysis segment.
+Do not make it vague.
+Do not make it a slogan.
+Tie it directly to the day’s actual stories.
+
+COST OF LIVING CHECK SECTION REQUIREMENT:
+Include a required "Cost of Living Check" section after trade news.
+
+This section must translate economic headlines into the lived reality of ordinary people.
+
+Focus on:
+- rent
+- groceries
+- gas
+- utilities
+- wages
+- layoffs
+- job security
+- healthcare costs
+- childcare costs
+- student debt
+- credit card debt
+- insurance costs
+- transportation costs
+- housing affordability
+- corporate price increases
+- shrinkflation
+- wage stagnation
+- labor wins or losses
+
+This section should explain:
+- what is getting more expensive
+- who is raising prices
+- whether wages are keeping up
+- whether corporations are using inflation, scarcity, or crisis as cover for profit-taking
+- how the day’s economic news affects workers, tenants, families, patients, students, and poor people
+
+Avoid abstract Wall Street framing unless it is translated into daily life.
+
+Do not let this section become a generic inflation paragraph.
+Make it practical, grounded, and human.
+
+WHAT COMES NEXT SECTION REQUIREMENT:
+Include a required "What Comes Next" section before the closing summary.
+
+This section must look forward, not backward.
+
+It should tell listeners what to watch over the next 24 to 72 hours, including when relevant:
+- upcoming votes
+- court rulings
+- hearings
+- campaign events
+- strike deadlines
+- union votes
+- economic reports
+- weather systems
+- international escalation risks
+- ceasefire talks
+- immigration policy deadlines
+- healthcare deadlines
+- regulatory decisions
+- major corporate moves
+- protests or public actions
+- primary election developments
+
+This section should be careful and grounded.
+Do not make predictions as facts.
+Use phrasing like:
+- "Watch for..."
+- "The next question is..."
+- "The pressure point now is..."
+- "The thing to keep an eye on is..."
+- "This could matter because..."
+
+The purpose is to give the listener direction.
+Most news tells people what happened.
+This section tells them what to pay attention to next.
 
 RIDDLE SECTION REQUIREMENT:
 Include one short, clever, family-safe riddle near the end of the episode.
