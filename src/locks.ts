@@ -2,25 +2,25 @@
 
 import type { Env, RunRecord, RunStage } from "./types";
 
-const RUN_KEY_PREFIX = "weekly-cup-run-";
+const RUN_KEY_PREFIX = "morning-cup-run-";
 
 function kvKey(episodeIso: string): string {
   return `${RUN_KEY_PREFIX}${episodeIso}`;
 }
 
 function r2Key(episodeIso: string): string {
-  return `weekly-cup/${episodeIso}/run.json`;
+  return `morning-cup/${episodeIso}/run.json`;
 }
 
 export async function readRunRecord(
   env: Env,
   episodeIso: string,
 ): Promise<RunRecord | null> {
-  if (env.WEEKLY_CUP_KV) {
-    const v = await env.WEEKLY_CUP_KV.get(kvKey(episodeIso), "json");
+  if (env.MORNING_CUP_KV) {
+    const v = await env.MORNING_CUP_KV.get(kvKey(episodeIso), "json");
     if (v) return v as RunRecord;
   }
-  const obj = await env.WEEKLY_CUP_BUCKET.get(r2Key(episodeIso));
+  const obj = await env.MORNING_CUP_BUCKET.get(r2Key(episodeIso));
   if (!obj) return null;
   try {
     const text = await obj.text();
@@ -35,11 +35,11 @@ export async function writeRunRecord(
   record: RunRecord,
 ): Promise<void> {
   const text = JSON.stringify(record, null, 2);
-  await env.WEEKLY_CUP_BUCKET.put(r2Key(record.episode_date), text, {
+  await env.MORNING_CUP_BUCKET.put(r2Key(record.episode_date), text, {
     httpMetadata: { contentType: "application/json; charset=utf-8" },
   });
-  if (env.WEEKLY_CUP_KV) {
-    await env.WEEKLY_CUP_KV.put(kvKey(record.episode_date), text, {
+  if (env.MORNING_CUP_KV) {
+    await env.MORNING_CUP_KV.put(kvKey(record.episode_date), text, {
       // Auto-expire after 14 days; the R2 copy is the durable record.
       expirationTtl: 60 * 60 * 24 * 14,
     });

@@ -21,16 +21,12 @@ export interface Config {
   elevenLabsModelId: string;
   elevenLabsOutputFormat: string;
   workerTimezone: string;
-  workerRunHour: number;
-  workerRunWeekday: string;
 
   minScriptWords: number;
   targetScriptWordsMin: number;
   targetScriptWordsMax: number;
   maxScriptWords: number;
   wordsPerMinute: number;
-  minRuntimeMinutes: number;
-  maxRuntimeMinutes: number;
 
   maxTtsCharsPerChunk: number;
 
@@ -62,16 +58,12 @@ export function loadConfig(env: Env): Config {
     elevenLabsModelId: str(env.ELEVENLABS_MODEL_ID, "eleven_multilingual_v2"),
     elevenLabsOutputFormat: str(env.ELEVENLABS_OUTPUT_FORMAT, "mp3_44100_128"),
     workerTimezone: str(env.WORKER_TIMEZONE, "America/New_York"),
-    workerRunHour: num(env.WORKER_RUN_HOUR, 14),
-    workerRunWeekday: str(env.WORKER_RUN_WEEKDAY, "Sunday"),
 
-    minScriptWords: num(env.MIN_SCRIPT_WORDS, 6400),
-    targetScriptWordsMin: num(env.TARGET_SCRIPT_WORDS_MIN, 6400),
-    targetScriptWordsMax: num(env.TARGET_SCRIPT_WORDS_MAX, 7200),
-    maxScriptWords: num(env.MAX_SCRIPT_WORDS, 7500),
+    minScriptWords: num(env.MIN_SCRIPT_WORDS, 3300),
+    targetScriptWordsMin: num(env.TARGET_SCRIPT_WORDS_MIN, 3300),
+    targetScriptWordsMax: num(env.TARGET_SCRIPT_WORDS_MAX, 3700),
+    maxScriptWords: num(env.MAX_SCRIPT_WORDS, 3900),
     wordsPerMinute: num(env.WORDS_PER_MINUTE, 145),
-    minRuntimeMinutes: num(env.MIN_RUNTIME_MINUTES, 40),
-    maxRuntimeMinutes: num(env.MAX_RUNTIME_MINUTES, 50),
 
     maxTtsCharsPerChunk: num(env.MAX_TTS_CHARS_PER_CHUNK, 2500),
 

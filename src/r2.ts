@@ -15,7 +15,7 @@ export async function putText(
   text: string,
   opts: PutOptions = {},
 ): Promise<void> {
-  await env.WEEKLY_CUP_BUCKET.put(key, text, {
+  await env.MORNING_CUP_BUCKET.put(key, text, {
     httpMetadata: {
       contentType: opts.contentType ?? "text/plain; charset=utf-8",
       cacheControl: opts.cacheControl,
@@ -30,7 +30,7 @@ export async function putJson(
   value: unknown,
   opts: PutOptions = {},
 ): Promise<void> {
-  await env.WEEKLY_CUP_BUCKET.put(key, JSON.stringify(value, null, 2), {
+  await env.MORNING_CUP_BUCKET.put(key, JSON.stringify(value, null, 2), {
     httpMetadata: {
       contentType: opts.contentType ?? "application/json; charset=utf-8",
       cacheControl: opts.cacheControl,
@@ -45,7 +45,7 @@ export async function putArrayBuffer(
   buf: ArrayBuffer,
   opts: PutOptions = {},
 ): Promise<void> {
-  await env.WEEKLY_CUP_BUCKET.put(key, buf, {
+  await env.MORNING_CUP_BUCKET.put(key, buf, {
     httpMetadata: {
       contentType: opts.contentType ?? "application/octet-stream",
       cacheControl: opts.cacheControl,
@@ -55,7 +55,7 @@ export async function putArrayBuffer(
 }
 
 export async function objectExists(env: Env, key: string): Promise<boolean> {
-  const head = await env.WEEKLY_CUP_BUCKET.head(key);
+  const head = await env.MORNING_CUP_BUCKET.head(key);
   return head !== null;
 }
 
@@ -63,11 +63,11 @@ export async function listEpisodeObjects(
   env: Env,
   episodeIso: string,
 ): Promise<R2Object[]> {
-  const prefix = `weekly-cup/${episodeIso}/`;
+  const prefix = `morning-cup/${episodeIso}/`;
   const out: R2Object[] = [];
   let cursor: string | undefined = undefined;
   for (let i = 0; i < 10; i++) {
-    const res: R2Objects = await env.WEEKLY_CUP_BUCKET.list({ prefix, cursor });
+    const res: R2Objects = await env.MORNING_CUP_BUCKET.list({ prefix, cursor });
     out.push(...res.objects);
     if (!res.truncated) break;
     cursor = res.truncated ? res.cursor : undefined;
@@ -77,7 +77,7 @@ export async function listEpisodeObjects(
 }
 
 export async function getJson<T>(env: Env, key: string): Promise<T | null> {
-  const obj = await env.WEEKLY_CUP_BUCKET.get(key);
+  const obj = await env.MORNING_CUP_BUCKET.get(key);
   if (!obj) return null;
   const text = await obj.text();
   try {

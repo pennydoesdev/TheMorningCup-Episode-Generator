@@ -1,8 +1,8 @@
 # Setup Guide
 
-End-to-end first-time setup of The Morning Cup: Weekly Rewind pipeline.
+End-to-end first-time setup of The Morning Cup pipeline.
 
-After this, your weekly workflow is two commands. See [DAILY-WORKFLOW.md](./DAILY-WORKFLOW.md).
+After this, your daily workflow is two commands. See [DAILY-WORKFLOW.md](./DAILY-WORKFLOW.md).
 
 ---
 
@@ -21,7 +21,7 @@ After this, your weekly workflow is two commands. See [DAILY-WORKFLOW.md](./DAIL
                 └────────────┬─────────────────────┘
                              │
                              ▼ (R2 bucket)
-              weekly-cup/<DATE>/
+              morning-cup/<DATE>/
                 ├── chunks/001.mp3 … NNN.mp3
                 ├── manifest.json (title, copyright, etc.)
                 ├── files.txt
@@ -33,8 +33,8 @@ After this, your weekly workflow is two commands. See [DAILY-WORKFLOW.md](./DAIL
                    │  build-episode.sh  │  ffmpeg assemble + tag
                    └────────┬───────────┘
                             ▼
-       ~/Documents/The Morning Cup - Weekly Rewind/Episodes/
-         The Morning Cup - Weekly Rewind - <DATE>.mp3
+       ~/Documents/The Morning Cup/Episodes/
+         The Morning Cup - <DATE>.mp3
          (intro song → coffee pour → "cream or sugar?" →
           intro sting → 19 chunks with section stings →
           thank-you outro, all ID3-tagged)
@@ -56,8 +56,8 @@ On your Mac you'll need:
 
 Cloudflare account with these resources (created once):
 
-- **R2 bucket** named `weekly-cup`
-- **KV namespace** with binding `WEEKLY_CUP_KV` (id is in `wrangler.toml`)
+- **R2 bucket** named `morning-cup`
+- **KV namespace** with binding `MORNING_CUP_KV` (id is in `wrangler.toml`)
 - **OpenAI API key** with access to `gpt-5-mini` (or whichever model is in `wrangler.toml`)
 - **ElevenLabs API key** + a cloned voice id
 
@@ -72,45 +72,45 @@ ElevenLabs account with:
 The repo is the **source of truth** for the worker code and helper scripts. We mirror the helper scripts to a working folder you'll use day-to-day.
 
 ```bash
-mkdir -p "$HOME/Documents/The Morning Cup - Weekly Rewind/Sounds"
-mkdir -p "$HOME/Documents/The Morning Cup - Weekly Rewind/Scripts"
-mkdir -p "$HOME/Documents/The Morning Cup - Weekly Rewind/Chunks"
-mkdir -p "$HOME/Documents/The Morning Cup - Weekly Rewind/Episodes"
+mkdir -p "$HOME/Documents/The Morning Cup/Sounds"
+mkdir -p "$HOME/Documents/The Morning Cup/Scripts"
+mkdir -p "$HOME/Documents/The Morning Cup/Chunks"
+mkdir -p "$HOME/Documents/The Morning Cup/Episodes"
 
 cd "$HOME/Documents/The Morning Cup"
-git clone https://github.com/pennydoesdev/WeeklyCup-Episode-Generator.git Generator
+git clone https://github.com/pennydoesdev/TheMorningCup-Episode-Generator.git Generator
 ```
 
 ## 2. Copy the helper scripts to the working `Scripts/` folder
 
 ```bash
-cp "$HOME/Documents/The Morning Cup - Weekly Rewind/Generator/scripts/fetch-chunks.sh" \
-   "$HOME/Documents/The Morning Cup - Weekly Rewind/Scripts/fetch-chunks.sh"
-cp "$HOME/Documents/The Morning Cup - Weekly Rewind/Generator/scripts/build-episode.sh" \
-   "$HOME/Documents/The Morning Cup - Weekly Rewind/Scripts/build-episode.sh"
-chmod +x "$HOME/Documents/The Morning Cup - Weekly Rewind/Scripts/"*.sh
+cp "$HOME/Documents/The Morning Cup/Generator/scripts/fetch-chunks.sh" \
+   "$HOME/Documents/The Morning Cup/Scripts/fetch-chunks.sh"
+cp "$HOME/Documents/The Morning Cup/Generator/scripts/build-episode.sh" \
+   "$HOME/Documents/The Morning Cup/Scripts/build-episode.sh"
+chmod +x "$HOME/Documents/The Morning Cup/Scripts/"*.sh
 ```
 
 When the repo updates, refresh your local copies:
 ```bash
-cd "$HOME/Documents/The Morning Cup - Weekly Rewind/Generator" && git pull origin main
-cp "$HOME/Documents/The Morning Cup - Weekly Rewind/Generator/scripts/"*.sh \
-   "$HOME/Documents/The Morning Cup - Weekly Rewind/Scripts/"
-chmod +x "$HOME/Documents/The Morning Cup - Weekly Rewind/Scripts/"*.sh
+cd "$HOME/Documents/The Morning Cup/Generator" && git pull origin main
+cp "$HOME/Documents/The Morning Cup/Generator/scripts/"*.sh \
+   "$HOME/Documents/The Morning Cup/Scripts/"
+chmod +x "$HOME/Documents/The Morning Cup/Scripts/"*.sh
 ```
 
 ## 3. Create the six sound assets
 
-All six live in `~/Documents/The Morning Cup - Weekly Rewind/Sounds/` with these exact filenames:
+All six live in `~/Documents/The Morning Cup/Sounds/` with these exact filenames:
 
 | File | What | How to make |
 |------|------|-------------|
-| `The Morning Cup - Weekly Rewind - Song.wav` | Intro theme | DAW / commission / royalty-free track |
+| `The Morning Cup - Song.wav` | Intro theme | DAW / commission / royalty-free track |
 | `Coffee Pour.wav` | 2-second pour ambience | ElevenLabs Sound Effects ([prompts](./PROMPTS.md)) |
 | `Cream or sugar, hon?.mp3` | Voice line in your cloned voice | ElevenLabs Speech (TTS), select your cloned voice |
 | `intro-sting.wav` | Sting that says "now the news begins" | ElevenLabs Sound Effects |
-| `weekly-rewind-sting.wav` | Section transition sting | ElevenLabs Sound Effects |
-| `The Morning Cup - Weekly Rewind - Thank You.wav` | Outro thank-you bed | DAW / commission / royalty-free |
+| `morning-cup-sting.wav` | Section transition sting | ElevenLabs Sound Effects |
+| `The Morning Cup - Thank You.wav` | Outro thank-you bed | DAW / commission / royalty-free |
 
 ElevenLabs prompt copy-paste templates are in [PROMPTS.md](./PROMPTS.md).
 
@@ -130,7 +130,7 @@ which ffmpeg
 If the worker isn't already deployed:
 
 ```bash
-cd "$HOME/Documents/The Morning Cup - Weekly Rewind/Generator"
+cd "$HOME/Documents/The Morning Cup/Generator"
 npm install
 wrangler login            # browser auth
 
@@ -160,15 +160,15 @@ RUN_SECRET="<your-secret>"
 DATE="2026-04-30"
 curl --max-time 900 -X POST \
   -H "Authorization: Bearer $RUN_SECRET" \
-  "https://weeklycupgenerator.<your-subdomain>.workers.dev/run?date=$DATE&force=true"
+  "https://themorningcupgenerator.<your-subdomain>.workers.dev/run?date=$DATE&force=true"
 ```
 
 When it returns (~6-9 min), pull and assemble:
 
 ```bash
-"$HOME/Documents/The Morning Cup - Weekly Rewind/Scripts/fetch-chunks.sh" "$DATE"
-"$HOME/Documents/The Morning Cup - Weekly Rewind/Scripts/build-episode.sh" "$DATE"
-open "$HOME/Documents/The Morning Cup - Weekly Rewind/Episodes/The Morning Cup - $DATE.mp3"
+"$HOME/Documents/The Morning Cup/Scripts/fetch-chunks.sh" "$DATE"
+"$HOME/Documents/The Morning Cup/Scripts/build-episode.sh" "$DATE"
+open "$HOME/Documents/The Morning Cup/Episodes/The Morning Cup - $DATE.mp3"
 ```
 
 If you hear: intro song → coffee pour → "cream or sugar, hon?" → intro sting → news → outro, you're done.
@@ -179,18 +179,18 @@ Only useful if you have **DaVinci Resolve Studio** (paid). Free Resolve doesn't 
 
 ```bash
 mkdir -p "$HOME/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Edit"
-ln -sf "$HOME/Documents/The Morning Cup - Weekly Rewind/Generator/scripts/build-resolve-timeline.py" \
-       "$HOME/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Edit/build-weekly-rewind.py"
+ln -sf "$HOME/Documents/The Morning Cup/Generator/scripts/build-resolve-timeline.py" \
+       "$HOME/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Edit/build-morning-cup.py"
 ```
 
-Restart Resolve. The script appears at **Workspace > Scripts > Edit > build-weekly-rewind**.
+Restart Resolve. The script appears at **Workspace > Scripts > Edit > build-morning-cup**.
 
 ---
 
 ## Folder layout when you're done
 
 ```
-~/Documents/The Morning Cup - Weekly Rewind/
+~/Documents/The Morning Cup/
 ├── Generator/                    ← cloned repo, source of truth
 ├── Scripts/
 │   ├── fetch-chunks.sh
@@ -200,7 +200,7 @@ Restart Resolve. The script appears at **Workspace > Scripts > Edit > build-week
 │   ├── Coffee Pour.wav
 │   ├── Cream or sugar, hon?.mp3
 │   ├── intro-sting.wav
-│   ├── weekly-rewind-sting.wav
+│   ├── morning-cup-sting.wav
 │   └── The Morning Cup - Thank You.wav
 ├── Chunks/<YYYY-MM-DD>/          ← per-day raw chunks (created by fetch-chunks.sh)
 └── Episodes/                     ← final tagged MP3s (created by build-episode.sh)

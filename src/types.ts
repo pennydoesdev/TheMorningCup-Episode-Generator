@@ -1,9 +1,9 @@
-// Shared types for The Morning Cup: Weekly Rewind generator.
+// Shared types for The Morning Cup generator.
 
 export interface Env {
   // Bindings
-  WEEKLY_CUP_BUCKET: R2Bucket;
-  WEEKLY_CUP_KV?: KVNamespace;
+  MORNING_CUP_BUCKET: R2Bucket;
+  MORNING_CUP_KV?: KVNamespace;
 
   // Secrets
   OPENAI_API_KEY: string;
@@ -17,15 +17,11 @@ export interface Env {
   ELEVENLABS_MODEL_ID?: string;
   ELEVENLABS_OUTPUT_FORMAT?: string;
   WORKER_TIMEZONE?: string;
-  WORKER_RUN_HOUR?: string;
-  WORKER_RUN_WEEKDAY?: string;
   MIN_SCRIPT_WORDS?: string;
   TARGET_SCRIPT_WORDS_MIN?: string;
   TARGET_SCRIPT_WORDS_MAX?: string;
   MAX_SCRIPT_WORDS?: string;
   WORDS_PER_MINUTE?: string;
-  MIN_RUNTIME_MINUTES?: string;
-  MAX_RUNTIME_MINUTES?: string;
   MAX_TTS_CHARS_PER_CHUNK?: string;
   ENABLE_EMAIL?: string;
   ENABLE_SOURCE_DIGEST?: string;
@@ -92,8 +88,6 @@ export interface EpisodeJson {
   riddle_question: string;
   riddle_answer: string;
   social_copy: SocialCopy;
-  short_social_post: string;
-  social_image_concept: string;
   source_notes: SourceNote[];
   self_validation: SelfValidation;
   chapters: ChapterEntry[];
@@ -184,8 +178,7 @@ export interface RunRecord {
 }
 
 export interface SourceDigest {
-  source_date: string; // YYYY-MM-DD — start of source window
-  source_window_end: string; // YYYY-MM-DD — end of source window (inclusive)
+  source_date: string; // YYYY-MM-DD
   generated_at: string;
   available: boolean;
   categories: Record<string, SourceItem[]>;

@@ -1,4 +1,4 @@
-// Cloudflare Worker entrypoint for The Morning Cup: Weekly Rewind generator.
+// Cloudflare Worker entrypoint for The Morning Cup generator.
 // Exposes a fetch handler (manual routes) and a scheduled handler (cron).
 
 import type {
@@ -14,7 +14,7 @@ import {
   getZonedNow,
   isoDate,
   isValidIsoDate,
-  shiftIsoDate,
+  previousIsoDate,
   spokenDate,
 } from "./utils/date";
 import {
@@ -50,7 +50,7 @@ import {
   stripSpacerMarker,
 } from "./utils/text";
 
-const BASE_TITLE = "The Morning Cup - Weekly Rewind";
+const BASE_TITLE = "The Morning Cup";
 
 export default {
   async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -58,7 +58,7 @@ export default {
     const url = new URL(req.url);
 
     if (req.method === "GET" && url.pathname === "/health") {
-      return json({ ok: true, service: "weekly-cup-generator", time: new Date().toISOString() });
+      return json({ ok: true, service: "morning-cup-generator", time: new Date().toISOString() });
     }
 
     if (req.method === "GET" && url.pathname === "/status") {
@@ -81,7 +81,9 @@ export default {
       const force = url.searchParams.get("force") === "true";
 
       // Await inline. ctx.waitUntil() is killed shortly after the response is
-      // sent, which is far less than the 60-180s OpenAI generation needs.
+      // sent, which is far less than the 60-120s OpenAI generation needs.
+      // Wall time on a fetch handler isn't capped while we're awaiting a
+      // network call, so blocking the response is the reliable path.
       try {
         await runEpisode(env, config, {
           episodeIso: date,
@@ -107,20 +109,10 @@ export default {
     const zoned = getZonedNow(config.workerTimezone);
     const episodeIso = isoDate(zoned);
 
-    // Only run when local weekday matches and local hour is the configured run
-    // hour in the configured tz.
-    if (zoned.weekday !== config.workerRunWeekday) {
-      logger.info("cron skip — local weekday is not the run weekday", {
-        weekday: zoned.weekday,
-        expected: config.workerRunWeekday,
-        episodeIso,
-      });
-      return;
-    }
-    if (zoned.hour !== config.workerRunHour) {
-      logger.info("cron skip — local hour is not the run hour", {
+    // Only run when local time is 5 AM (5 <= hour < 6) in the configured tz.
+    if (zoned.hour !== 5) {
+      logger.info("cron skip — local hour is not 5", {
         hour: zoned.hour,
-        expected: config.workerRunHour,
         episodeIso,
       });
       return;
@@ -138,7 +130,7 @@ export default {
     }
 
     // Await directly. Scheduled handlers block on the returned promise — that
-    // budget is what we need for a 60-180s OpenAI call plus TTS chunking.
+    // budget is what we need for a 60-120s OpenAI call plus TTS chunking.
     await runEpisode(env, config, {
       episodeIso,
       force: false,
@@ -157,19 +149,10 @@ interface RunInputs {
 
 async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<void> {
   const { episodeIso, force } = inputs;
-  // Source window: the previous 7 days ending the day before the episode date
-  // (Saturday) and starting six days earlier (the prior Sunday).
-  const sourceWindowEndIso = shiftIsoDate(episodeIso, -1);
-  const sourceWindowStartIso = shiftIsoDate(episodeIso, -7);
+  const sourceIso = previousIsoDate(episodeIso);
   const baseTitle = BASE_TITLE;
 
-  logger.info("run start", {
-    episodeIso,
-    sourceWindowStartIso,
-    sourceWindowEndIso,
-    force,
-    trigger: inputs.trigger,
-  });
+  logger.info("run start", { episodeIso, sourceIso, force, trigger: inputs.trigger });
 
   const existing = await readRunRecord(env, episodeIso);
   if (isCompleted(existing) && !force) {
@@ -179,7 +162,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
 
   await updateRunStage(env, episodeIso, {
     episode_date: episodeIso,
-    source_date: sourceWindowStartIso,
+    source_date: sourceIso,
     status: "pending",
     started_at: existing?.started_at ?? new Date().toISOString(),
     error: undefined,
@@ -188,22 +171,16 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
   let stage: RunRecord["status"] = "pending";
 
   try {
-    // 1. Source digest — covers the 7-day window.
+    // 1. Source digest
     stage = "generating";
     await updateRunStage(env, episodeIso, { status: stage });
-    const digest = await buildSourceDigest(
-      env,
-      sourceWindowStartIso,
-      sourceWindowEndIso,
-      config.enableSourceDigest,
-    );
+    const digest = await buildSourceDigest(env, sourceIso, config.enableSourceDigest);
     const digestText = renderDigestForPrompt(digest);
 
     // 2. Build prompt + call OpenAI
     const userPrompt = buildUserPrompt({
       episodeDateSpoken: spokenDate(episodeIso),
-      sourceWindowStartSpoken: spokenDate(sourceWindowStartIso),
-      sourceWindowEndSpoken: spokenDate(sourceWindowEndIso),
+      sourceDateSpoken: spokenDate(sourceIso),
       sourceDigestText: digestText,
       sourceLimited: !digest.available,
     });
@@ -236,7 +213,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
 
     if (!validation.ok) {
       // Save rejected raw and email failure alert.
-      const rejectedKey = `weekly-cup/rejected/${episodeIso}-${Date.now()}.json`;
+      const rejectedKey = `morning-cup/rejected/${episodeIso}-${Date.now()}.json`;
       await putJson(env, rejectedKey, {
         episode_iso: episodeIso,
         validation,
@@ -266,7 +243,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
     }
 
     // 4. Write TXT, HTML, JSON
-    const baseDir = `weekly-cup/${episodeIso}/`;
+    const baseDir = `morning-cup/${episodeIso}/`;
     const txtKey = `${baseDir}${baseTitle} - ${episodeIso}.txt`;
     const htmlKey = `${baseDir}${baseTitle} - ${episodeIso}.html`;
     const jsonKey = `${baseDir}${baseTitle} - ${episodeIso}.json`;
@@ -307,10 +284,14 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       throw new Error("Chunker produced 0 chunks");
     }
 
-    // Synthesize chunks in parallel with bounded concurrency.
+    // Synthesize chunks in parallel with bounded concurrency. ElevenLabs
+    // tolerates a handful of concurrent requests fine, and the wall-time
+    // saving is significant (~4x for ~12 chunks vs sequential).
     const TTS_CONCURRENCY = 4;
     const slots: (ChunkPiece | undefined)[] = new Array(chunks.length);
     type ChunkFailure = { order: number; err: unknown };
+    // Wrapped in an object so TS doesn't narrow the variable to null after
+    // declaration — closures mutate it and we need the union type to survive.
     const failureState: { value: ChunkFailure | null } = { value: null };
     let nextChunkIdx = 0;
 
@@ -372,7 +353,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
     // 6. Manifest + files.txt
     const manifest = buildManifest({
       episodeIso,
-      sourceIso: sourceWindowStartIso,
+      sourceIso,
       baseTitle,
       publisher: config.publisher,
       copyrightHolder: config.copyrightHolder,
@@ -394,7 +375,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
     try {
       await sendCompletionEmail(env, config, {
         episodeIso,
-        sourceIso: sourceWindowStartIso,
+        sourceIso,
         wordCount: validation.word_count,
         estimatedRuntimeMinutes: validation.estimated_runtime_minutes,
         validationOk: validation.ok,

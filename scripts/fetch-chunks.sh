@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
 #
-# fetch-chunks.sh - Pull a Weekly Rewind episode's chunks (and manifest) from R2
-#                   into ~/Documents/The Morning Cup - Weekly Rewind/Chunks/<DATE>/
+# fetch-chunks.sh - Pull a Morning Cup episode's chunks (and manifest) from R2
+#                   into ~/Documents/The Morning Cup/Chunks/<DATE>/
 #
 # Usage:
 #     scripts/fetch-chunks.sh                # uses today's date in America/New_York
 #     scripts/fetch-chunks.sh 2026-04-30     # specific date
 #     scripts/fetch-chunks.sh --latest       # whatever's most recent in the bucket
 #
-# Requires: wrangler CLI authenticated against the weekly-cup R2 bucket
+# Requires: wrangler CLI authenticated against the morning-cup R2 bucket
 # (`wrangler login` once if you haven't, then it stays authenticated).
 # Skips chunks that are already on disk so re-running is fast and safe.
 #
 
 set -euo pipefail
 
-ROOT="$HOME/Documents/The Morning Cup - Weekly Rewind"
-BUCKET="weekly-cup"
+ROOT="$HOME/Documents/The Morning Cup"
+BUCKET="morning-cup"
 
 # --- argument parsing --------------------------------------------------------
 
@@ -25,8 +25,8 @@ if [ $# -ge 1 ]; then
   case "$1" in
     --latest)
       # Discover the most recent date by listing the bucket.
-      DATE=$(wrangler r2 object list "$BUCKET" --prefix "weekly-cup/" --remote 2>/dev/null \
-        | grep -oE 'weekly-cup/[0-9]{4}-[0-9]{2}-[0-9]{2}/' \
+      DATE=$(wrangler r2 object list "$BUCKET" --prefix "morning-cup/" --remote 2>/dev/null \
+        | grep -oE 'morning-cup/[0-9]{4}-[0-9]{2}-[0-9]{2}/' \
         | sort -u \
         | tail -1 \
         | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')
@@ -59,8 +59,8 @@ mkdir -p "$DEST"
 
 # --- pull manifest first; the chunk count comes from it ----------------------
 
-MANIFEST_FILE="$DEST/The Morning Cup - Weekly Rewind - $DATE - manifest.json"
-MANIFEST_KEY="weekly-cup/$DATE/The Morning Cup - Weekly Rewind - $DATE - manifest.json"
+MANIFEST_FILE="$DEST/The Morning Cup - $DATE - manifest.json"
+MANIFEST_KEY="morning-cup/$DATE/The Morning Cup - $DATE - manifest.json"
 
 echo "Fetching manifest from R2..."
 if ! wrangler r2 object get "$BUCKET/$MANIFEST_KEY" --file "$MANIFEST_FILE" --remote; then
@@ -68,7 +68,7 @@ if ! wrangler r2 object get "$BUCKET/$MANIFEST_KEY" --file "$MANIFEST_FILE" --re
   echo "Error: could not fetch manifest at $BUCKET/$MANIFEST_KEY" >&2
   echo "Has the episode for $DATE finished generating? Check status with:" >&2
   echo "  curl -H \"Authorization: Bearer \$RUN_SECRET\" \\" >&2
-  echo "    \"https://weeklycupgenerator.itsmiarosemathews.workers.dev/status?date=$DATE\"" >&2
+  echo "    \"https://themorningcupgenerator.itsmiarosemathews.workers.dev/status?date=$DATE\"" >&2
   exit 1
 fi
 
@@ -96,7 +96,7 @@ for i in $(seq -f "%03g" 1 "$COUNT"); do
     SKIPPED=$((SKIPPED+1))
     continue
   fi
-  KEY="weekly-cup/$DATE/chunks/The Morning Cup - Weekly Rewind - $DATE - $i.mp3"
+  KEY="morning-cup/$DATE/chunks/The Morning Cup - $DATE - $i.mp3"
   echo "  $i.mp3"
   wrangler r2 object get "$BUCKET/$KEY" --file "$LOCAL" --remote
   DOWNLOADED=$((DOWNLOADED+1))
@@ -107,4 +107,4 @@ echo "Done: $DOWNLOADED downloaded, $SKIPPED already present."
 echo ""
 ls -la "$DEST"
 echo ""
-echo "Next: open DaVinci Resolve, then Workspace > Scripts > Edit > build-weekly-rewind"
+echo "Next: open DaVinci Resolve, then Workspace > Scripts > Edit > build-morning-cup"

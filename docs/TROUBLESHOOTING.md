@@ -34,7 +34,7 @@ Code is at `src/index.ts` — search for `await runEpisode`.
 
 **Symptom:** Worker fetch to OpenAI never returns; eventually the whole worker times out. No retry, no clear error.
 
-**Root cause:** Non-streaming Responses API calls buffer the entire response server-side before sending the first byte. For long structured-JSON outputs (6400+ word script) that's ~60-120 seconds of zero bytes, which Cloudflare treats as a stalled subrequest and kills.
+**Root cause:** Non-streaming Responses API calls buffer the entire response server-side before sending the first byte. For long structured-JSON outputs (3300+ word script) that's ~60-120 seconds of zero bytes, which Cloudflare treats as a stalled subrequest and kills.
 
 **Fix:** Stream the response (`stream: true` in the request body). Bytes flow continuously as the model generates, so the platform never sees an idle subrequest. SSE events are accumulated from `response.output_text.delta` and finalized on `response.output_text.done` / `response.completed`. There's also an 8-minute per-attempt `AbortController` so a genuinely hung call surfaces an error instead of hanging forever.
 
@@ -42,12 +42,12 @@ Code is at `src/index.ts` — search for `await runEpisode`.
 
 **Symptom:** Logs show:
 ```
-"validation failed — attempting repair","errors":["Word count 1420 is below MIN_SCRIPT_WORDS 6400", ...]
+"validation failed — attempting repair","errors":["Word count 1420 is below MIN_SCRIPT_WORDS 3300", ...]
 ```
 Sometimes the repair pass fixes it, sometimes it also underwrites and the run lands at `"failed"`.
 
 **Root causes:**
-- gpt-4.1 is generally too terse for 6400+ word structured JSON outputs.
+- gpt-4.1 is generally too terse for 3300+ word structured JSON outputs.
 - Even gpt-5-mini sometimes returns 2900 words on the first pass.
 
 **Fixes that helped, in order:**
@@ -79,7 +79,7 @@ Cost: web_search adds ~$0.03/call × 8-15 calls per episode = ~$0.30-0.50/run.
 
 **Symptom:**
 ```
-✘ [ERROR] Unknown argument: weekly-cup/2026-04-30/The Morning Cup - Weekly Rewind - 2026-04-30 - manifest.json
+✘ [ERROR] Unknown argument: morning-cup/2026-04-30/The Morning Cup - 2026-04-30 - manifest.json
 ```
 
 **Root cause:** Wrangler 4.x changed the CLI: bucket and key are now combined into one positional argument (`{bucket}/{key}`), and remote operations require `--remote` (default is local).
@@ -116,7 +116,7 @@ The script gets to `dvr_script.scriptapp("Resolve")` and gets `None` back — Re
 
 **Fix:** Use `build-episode.sh` (ffmpeg-only) instead. It does the same job with no Resolve dependency at all. See [EDITING.md](./EDITING.md). Resolve becomes optional — useful only if you want to hand-edit a project file before exporting.
 
-### "Python 2.7 was not found" popup when launching Workspace > Scripts > Edit > build-weekly-rewind
+### "Python 2.7 was not found" popup when launching Workspace > Scripts > Edit > build-morning-cup
 
 **Root cause:** Resolve's menu launcher tries Python 2.7 first by default. If 2.7 isn't installed (deprecated since 2020), this popup appears. After you dismiss it, Resolve tries Python 3 — but on **free Resolve** the script still can't access the API.
 
@@ -145,7 +145,7 @@ We left them visible by default because suppressing could hide real future issue
 **Verification:**
 ```bash
 ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \
-  "$HOME/Documents/The Morning Cup - Weekly Rewind/Episodes/The Morning Cup - Weekly Rewind - 2026-04-30.mp3"
+  "$HOME/Documents/The Morning Cup/Episodes/The Morning Cup - 2026-04-30.mp3"
 ```
 Compare to the manifest's `estimated_runtime_minutes`. The total should equal manifest runtime + intro song length + outro length + (chunks − 1) × section-sting length.
 
@@ -156,22 +156,22 @@ Compare to the manifest's `estimated_runtime_minutes`. The total should equal ma
 ```bash
 # Worker status for any date
 curl -H "Authorization: Bearer $RUN_SECRET" \
-  "https://weeklycupgenerator.<sub>.workers.dev/status?date=2026-05-01"
+  "https://themorningcupgenerator.<sub>.workers.dev/status?date=2026-05-01"
 
 # Live worker logs
-wrangler tail weeklycupgenerator --format pretty
+wrangler tail themorningcupgenerator --format pretty
 
 # Latest deployments
-wrangler deployments list --name weeklycupgenerator | head -20
+wrangler deployments list --name themorningcupgenerator | head -20
 
 # Object listing in R2 for a date
-wrangler r2 object list weekly-cup --prefix "weekly-cup/2026-04-30/" --remote
+wrangler r2 object list morning-cup --prefix "morning-cup/2026-04-30/" --remote
 
 # Verify ID3 tags on a finished episode
-mdls "$HOME/Documents/The Morning Cup - Weekly Rewind/Episodes/The Morning Cup - Weekly Rewind - 2026-04-30.mp3" \
+mdls "$HOME/Documents/The Morning Cup/Episodes/The Morning Cup - 2026-04-30.mp3" \
   | grep -iE 'title|author|copyright|year|artist|album|publisher'
 
 # Quick duration check
 ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \
-  "$HOME/Documents/The Morning Cup - Weekly Rewind/Episodes/The Morning Cup - Weekly Rewind - 2026-04-30.mp3"
+  "$HOME/Documents/The Morning Cup/Episodes/The Morning Cup - 2026-04-30.mp3"
 ```

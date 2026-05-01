@@ -1,6 +1,6 @@
 # Editing & Compiling Automation
 
-How the weekly MP3 actually gets stitched together. This is the "post-production" half of the pipeline — the worker handles writing and synthesizing, this side handles editing and rendering.
+How the daily MP3 actually gets stitched together. This is the "post-production" half of the pipeline — the worker handles writing and synthesizing, this side handles editing and rendering.
 
 ## The timeline shape
 
@@ -12,9 +12,9 @@ Every episode is assembled in this exact order:
 3.  Cream or sugar, hon?.mp3              ← cloned-voice greeting line
 4.  intro-sting.wav                       ← "now the news begins" sting
 5.  chunk-001.mp3                         ← first news section
-6.  weekly-rewind-sting.wav                 ← section transition sting
+6.  morning-cup-sting.wav                 ← section transition sting
 7.  chunk-002.mp3
-8.  weekly-rewind-sting.wav
+8.  morning-cup-sting.wav
 …
 N.  chunk-NNN.mp3                         ← last news section
 N+1.The Morning Cup - Thank You.wav       ← outro thank-you bed
@@ -36,7 +36,7 @@ Result: each chunk roughly maps to one news section (politics, economy, immigrat
 The simplest path. Pure ffmpeg, ~5 seconds, works on any Mac.
 
 ```bash
-"$HOME/Documents/The Morning Cup - Weekly Rewind/Scripts/build-episode.sh" [YYYY-MM-DD]
+"$HOME/Documents/The Morning Cup/Scripts/build-episode.sh" [YYYY-MM-DD]
 ```
 
 Steps:
@@ -45,7 +45,7 @@ Steps:
 3. Normalizes every input clip (mixed WAV + MP3 at varying sample rates) into uniform MP3 (44.1 kHz stereo, 192 kbps) in a temp folder.
 4. Concats all normalized clips with ffmpeg's concat demuxer using `-c copy` (no re-encode of the concat output).
 5. Writes ID3v2.3 tags inline.
-6. Saves to `~/Documents/The Morning Cup - Weekly Rewind/Episodes/The Morning Cup - Weekly Rewind - <DATE>.mp3`.
+6. Saves to `~/Documents/The Morning Cup/Episodes/The Morning Cup - <DATE>.mp3`.
 
 Why normalize first: ffmpeg's concat demuxer requires all inputs to have identical codec, sample rate, and channel layout. Sounds in your library are at varying rates; chunks are at 44.1 kHz from ElevenLabs. The pre-normalize step makes them uniform so concat just works.
 
@@ -58,14 +58,14 @@ Drives DaVinci Resolve to build the same timeline programmatically and render vi
 Two ways to run it:
 
 **From Resolve menu** (one click):
-- After [symlinking](./SETUP.md#8-optional-davinci-resolve-menu-integration), it appears under **Workspace > Scripts > Edit > build-weekly-rewind**.
+- After [symlinking](./SETUP.md#8-optional-davinci-resolve-menu-integration), it appears under **Workspace > Scripts > Edit > build-morning-cup**.
 
 **From Terminal** (Studio only):
 ```bash
 export RESOLVE_SCRIPT_API="/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting"
 export RESOLVE_SCRIPT_LIB="/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/Libraries/Fusion/fusionscript.so"
 export PYTHONPATH="$PYTHONPATH:$RESOLVE_SCRIPT_API/Modules/"
-python3 "$HOME/Documents/The Morning Cup - Weekly Rewind/Scripts/build-weekly-rewind.py"
+python3 "$HOME/Documents/The Morning Cup/Scripts/build-morning-cup.py"
 ```
 
 The script imports all assets to the media pool, builds an ordered timeline, queues an MP3 render, and tags via mutagen.
@@ -76,7 +76,7 @@ All from the manifest, falling back to defaults if a field is missing.
 
 | ID3 frame | Source | Example |
 |-----------|--------|---------|
-| `TIT2` (title) | `manifest.title` | `The Morning Cup - Weekly Rewind - 2026-04-30` |
+| `TIT2` (title) | `manifest.title` | `The Morning Cup - 2026-04-30` |
 | `TPE1` (artist) | `manifest.publisher` | `The Penny Tribune` |
 | `TALB` (album) | `manifest.show_name` | `The Morning Cup` |
 | `TYER` (year) / `TDRC` (date) | `manifest.year` / episode_date | `2026` / `2026-04-30` |
@@ -96,7 +96,7 @@ INTRO_SONG="$SOUNDS/The Morning Cup - Song.wav"
 COFFEE_POUR="$SOUNDS/Coffee Pour.wav"
 CREAM_OR_SUGAR="$SOUNDS/Cream or sugar, hon?.mp3"
 INTRO_STING="$SOUNDS/intro-sting.wav"
-SECTION_STING="$SOUNDS/weekly-rewind-sting.wav"
+SECTION_STING="$SOUNDS/morning-cup-sting.wav"
 OUTRO="$SOUNDS/The Morning Cup - Thank You.wav"
 ```
 
@@ -145,14 +145,14 @@ ffmpeg supports `afade=t=in:st=0:d=2` and `afade=t=out:st=N:d=2` filters. Easies
 ```bash
 # Basic info
 ffprobe -v error -show_entries format=duration,bit_rate,size,tags \
-  "$HOME/Documents/The Morning Cup - Weekly Rewind/Episodes/The Morning Cup - Weekly Rewind - 2026-04-30.mp3"
+  "$HOME/Documents/The Morning Cup/Episodes/The Morning Cup - 2026-04-30.mp3"
 
 # macOS Finder metadata
-mdls "$HOME/Documents/The Morning Cup - Weekly Rewind/Episodes/The Morning Cup - Weekly Rewind - 2026-04-30.mp3" \
+mdls "$HOME/Documents/The Morning Cup/Episodes/The Morning Cup - 2026-04-30.mp3" \
   | grep -iE 'title|author|copyright|year|artist|album|publisher'
 
 # Listen
-open "$HOME/Documents/The Morning Cup - Weekly Rewind/Episodes/The Morning Cup - Weekly Rewind - 2026-04-30.mp3"
+open "$HOME/Documents/The Morning Cup/Episodes/The Morning Cup - 2026-04-30.mp3"
 ```
 
 ## What the dts warnings mean

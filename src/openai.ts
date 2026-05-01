@@ -1,7 +1,7 @@
 // OpenAI Responses API client using structured JSON output.
 //
-// Long structured generations (6400-7200 word weekly scripts) take ~90-180s.
-// A non-streaming fetch buffers the entire response server-side before any
+// Long structured generations (3300-3700 word scripts) take ~60-120s. A
+// non-streaming fetch buffers the entire response server-side before any
 // bytes are sent, so the Cloudflare Workers runtime can drop the subrequest
 // for inactivity, leaving the run stuck mid-flight. Streaming the SSE
 // response keeps bytes flowing continuously and lets us fail fast via
@@ -79,7 +79,7 @@ async function callResponses(
         content: [{ type: "input_text", text: opts.userInput }],
       },
     ],
-    max_output_tokens: opts.maxOutputTokens ?? 24000,
+    max_output_tokens: opts.maxOutputTokens ?? 16000,
     text: {
       format: {
         type: "json_schema",
@@ -274,10 +274,10 @@ export async function generateEpisode(
 ): Promise<OpenAiResult> {
   const { raw } = await callResponses(env, config, {
     systemInstruction:
-      "You are a senior weekly news producer. Return strict JSON matching the provided schema. No markdown. No commentary outside JSON.",
+      "You are a senior morning news producer. Return strict JSON matching the provided schema. No markdown. No commentary outside JSON.",
     userInput: userPrompt,
     temperature: 0.4,
-    maxOutputTokens: 24000,
+    maxOutputTokens: 16000,
   });
   const json = safeParseEpisodeJson(raw);
   if (!json) {
@@ -308,7 +308,7 @@ ${JSON.stringify(prior)}`;
       "You are repairing a structured JSON podcast script. Fix only the listed errors. Preserve unchanged content verbatim. Return strict JSON only.",
     userInput: repairInput,
     temperature: 0.3,
-    maxOutputTokens: 24000,
+    maxOutputTokens: 16000,
   });
   const json = safeParseEpisodeJson(raw);
   if (!json) {
@@ -328,27 +328,26 @@ export async function extendEpisode(
   minWords: number,
   userPrompt: string,
 ): Promise<OpenAiResult> {
-  const wordsNeeded = Math.max(minWords - validation.word_count, 800);
+  const wordsNeeded = Math.max(minWords - validation.word_count, 400);
 
   const extendInput = `${userPrompt}
 
 LENGTH-EXTEND PASS (mandatory).
 
-Your previous draft is too short. It is ${validation.word_count} spoken words and ~${validation.estimated_runtime_minutes} minutes of speech. The hard floor is ${minWords} words and 40 minutes of speech. You MUST add at least ${wordsNeeded} more spoken words to the elevenlabs_script.
+Your previous draft is too short. It is ${validation.word_count} spoken words and ~${validation.estimated_runtime_minutes} minutes of speech. The hard floor is ${minWords} words and 20 minutes. You MUST add at least ${wordsNeeded} more spoken words to the elevenlabs_script.
 
-DO NOT shorten or remove anything that is already in the script. ADD substantial new content to the underweight sections. Preserve the existing structure (positive opening, events and holidays, weather today and tomorrow, U.S. politics, political trends, crime, immigration, California governor's race, House/Senate primaries, business/economy, trade, technology, healthcare, environment/climate, positive science, international, Iran, Gaza, social/culture, What Got Ignored This Week, Who Won / Who Lost This Week, Number of the Week, riddle, positive closing, closing summary, outro, riddle answer) and the [TEN-SECOND SECTION SPACER] markers between every major section.
+DO NOT shorten or remove anything that is already in the script. ADD substantial new content to the underweight sections. Preserve the existing structure (positive opening, weather, politics, political trends, crime, immigration, California governor's race, House/Senate primaries, business/economy, trade, technology, healthcare, environment/climate, positive science, international, Iran, Gaza, social/culture, riddle, positive closing, closing summary, outro, riddle answer) and the [TEN-SECOND SECTION SPACER] markers between every major section.
 
-Use the web_search tool to find more substantive material from the past 7 days to deepen these sections specifically:
-- U.S. politics + political trends (target combined ≥ 1,400 words; expand on power, who pays, policy effect)
-- Business/economy + trade + labor + housing (target combined ≥ 900 words; expand on labor impact, who benefits)
-- Healthcare + environment/climate (target combined ≥ 900 words; expand on patient/community impact)
-- International + Iran + Gaza (target combined ≥ 1,200 words; expand on civilian impact and policy stakes)
-- What Got Ignored This Week + Who Won / Who Lost This Week + Number of the Week (each must have real reported substance, not filler)
-- Closing summary (extend to a fuller wrap-up that revisits the week's through-lines)
+Use the web_search tool to find more substantive yesterday's-news material to deepen these sections specifically:
+- U.S. politics + political trends (target combined ≥ 800 words; expand on power, who pays, policy effect)
+- Business/economy + trade (target combined ≥ 500 words; expand on labor impact, who benefits)
+- Healthcare + environment/climate (target combined ≥ 500 words; expand on patient/community impact)
+- International + Iran + Gaza (target combined ≥ 800 words; expand on civilian impact and policy stakes)
+- Closing summary (extend to a fuller wrap-up that revisits the day's through-lines)
 
 Stay strictly factual — verify any new claims with web_search. Do not invent. Apply the same leftist, working-class-centered editorial lens.
 
-Return strict JSON only — same schema. The elevenlabs_script must be at least ${minWords} spoken words and 40 minutes of speech. Update self_validation accordingly.
+Return strict JSON only — same schema. The elevenlabs_script must be at least ${minWords} spoken words and 20 minutes of speech. Update self_validation accordingly.
 
 PREVIOUS VALIDATION ERRORS:
 ${validation.errors.map((e) => `- ${e}`).join("\n")}
@@ -361,7 +360,7 @@ ${JSON.stringify(prior)}`;
       "You are extending a structured JSON podcast script that is too short. Preserve every line of existing content. ADD new substantive material to the listed sections until the script clears the word-count floor. Use web_search to ground new content in real reporting. Return strict JSON only.",
     userInput: extendInput,
     temperature: 0.4,
-    maxOutputTokens: 24000,
+    maxOutputTokens: 16000,
   });
   const json = safeParseEpisodeJson(raw);
   if (!json) {
