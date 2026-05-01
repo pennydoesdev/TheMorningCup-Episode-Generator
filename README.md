@@ -17,6 +17,7 @@ in Cloudflare R2, and emails you the script, metadata, and chunk links.
 | [docs/CHAPTERS.md](./docs/CHAPTERS.md) | How MP3 chapter markers work + which podcast platforms read them |
 | [docs/TRANSCRIPTS.md](./docs/TRANSCRIPTS.md) | Where the script lives, how to fetch + search the .txt / .html / .json transcripts |
 | [docs/APPLE-SHORTCUTS.md](./docs/APPLE-SHORTCUTS.md) | Run the pipeline from the menu bar / Spotlight / hotkey via Apple Shortcuts |
+| [docs/TEAM-SHARING.md](./docs/TEAM-SHARING.md) | One-command onboarding, asset distribution, secret management, offboarding |
 | [docs/PROMPTS.md](./docs/PROMPTS.md) | ElevenLabs prompts that have worked (stings, voice lines) |
 | [docs/TUNING.md](./docs/TUNING.md) | All the config knobs and what's safe to change |
 | [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) | Real issues we hit + the fixes that worked |
