@@ -24,7 +24,8 @@ Folder layout the script expects (under ~/Documents/The Morning Cup/):
     Chunks/<YYYY-MM-DD>/             ← chunk MP3s + manifest for one episode
         001.mp3 ... NNN.mp3
         The Morning Cup - <YYYY-MM-DD> - manifest.json
-    The Morning Cup - <YYYY-MM-DD>.mp3  ← rendered output
+    Episodes/                          ← rendered + tagged final MP3s
+        The Morning Cup - <YYYY-MM-DD>.mp3
 
 Episode date selection:
 - If EPISODE_DATE is set below, that's used.
@@ -83,7 +84,7 @@ EPISODE_DATE = None  # e.g. "2026-04-30"
 ROOT_DIR = os.path.expanduser("~/Documents/The Morning Cup")
 SOUNDS_DIR = os.path.join(ROOT_DIR, "Sounds")
 CHUNKS_BASE_DIR = os.path.join(ROOT_DIR, "Chunks")
-OUTPUT_DIR = ROOT_DIR
+OUTPUT_DIR = os.path.join(ROOT_DIR, "Episodes")
 # ==============================================================================
 
 INTRO_SONG_FILENAME = "The Morning Cup - Song.wav"
