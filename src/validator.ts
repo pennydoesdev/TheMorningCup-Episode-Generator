@@ -68,12 +68,10 @@ export function validateEpisode(
   if (runtime < 20) {
     errors.push(`Estimated runtime ${runtime.toFixed(1)} min is below 20-minute floor`);
   }
-  if (runtime > 25) {
-    if (wordCount > config.maxScriptWords) {
-      errors.push(`Estimated runtime ${runtime.toFixed(1)} min exceeds 25-minute ceiling`);
-    } else {
-      warnings.push(`Estimated runtime ${runtime.toFixed(1)} min slightly over 25 minutes`);
-    }
+  if (runtime > 30) {
+    errors.push(`Estimated runtime ${runtime.toFixed(1)} min exceeds 30-minute ceiling`);
+  } else if (runtime > 25) {
+    warnings.push(`Estimated runtime ${runtime.toFixed(1)} min above 25-minute target (soft limit 30 min)`);
   }
 
   if (!/^Good morning, today is\b/i.test(script.trimStart())) {
