@@ -1,9 +1,9 @@
-# The Morning Cup — Full Pipeline
+# Pipeline — Full Architecture
 
-End-to-end picture of how a single episode goes from "5 AM cron tick" to
-"published on the website" with zero human touch other than a final review
-click. Components below the dotted line in the architecture diagram are
-planned but not built yet — see the bottom of this doc for status.
+End-to-end picture of how a single episode goes from "cron tick" to
+"published on the website" with zero human touch other than a final
+review click. Replace `<show-key>`, `<Show Title>`, `<host-name>`, and
+`<DATE>` with your show's actual values when reading.
 
 > **PDF version:** mermaid diagrams render natively on GitHub. To export
 > this page as a PDF, open it on GitHub and use your browser's *File →
@@ -12,9 +12,7 @@ planned but not built yet — see the bottom of this doc for status.
 > ```bash
 > # On macOS:
 > brew install pandoc librsvg basictex
-> # Cache fonts:
 > sudo tlmgr install collection-fontsrecommended
-> # Render:
 > pandoc docs/PIPELINE.md -o pipeline.pdf \
 >   --pdf-engine=xelatex \
 >   --filter=mermaid-filter
@@ -26,8 +24,8 @@ planned but not built yet — see the bottom of this doc for status.
 
 ```mermaid
 flowchart TD
-  Cron(["Cloudflare Cron — 5 AM ET"]) --> Worker
-  subgraph Worker["Cloudflare Worker (themorningcupgenerator)"]
+  Cron(["Cloudflare Cron — show's configured schedule"]) --> Worker
+  subgraph Worker["Cloudflare Worker (one per show)"]
     Gen[Generate script via OpenAI + web_search]
     Val[Validate word count / structure]
     Rep[Repair pass]
@@ -36,16 +34,16 @@ flowchart TD
     Pub[Publish step]
     Gen --> Val --> Rep --> Ext --> TTS --> Pub
   end
-  Worker --> R2C[(R2 — chunks/manifest/txt/html/json)]
+  Worker --> R2C[(R2 — show-key prefix\nchunks/manifest/txt/html/json)]
   Worker --> OpenAI2[OpenAI — body gen]
-  Worker --> Drive1[(Google Drive folder)]
+  Worker --> Drive1[(Google Drive folder per show)]
   Worker --> WP1[WordPress — serve_episode draft]
 
-  R2C -.->|fetch-chunks.sh| Mac
-  subgraph Mac["Local Mac"]
-    Build[build-episode.sh]
+  R2C -.->|fetch-chunks.sh show-key| Mac
+  subgraph Mac["Producer's Mac"]
+    Build[build-episode.sh show-key]
     Build --> FF[ffmpeg concat + ID3 + chapters]
-    FF --> Final[(Final MP3 in Episodes/)]
+    FF --> Final[(Final MP3 in Episodes/show-key/)]
     FF --> PushDrive[push-final-to-drive.py]
     FF --> UploadAudio[upload-audio.py]
   end
@@ -53,10 +51,10 @@ flowchart TD
   UploadAudio --> S3A[(S3 audio bucket — Apollo plugin)]
   UploadAudio --> WP2[WP draft updated with _ep_audio_url + meta]
 
-  WP2 --> Reviewer{Penelope reviews + clicks Publish}
+  WP2 --> Reviewer{Producer reviews + clicks Publish}
   Reviewer --> RSS[RSS feed publishes]
   Reviewer --> SocialPlanned[Publer plugin — auto social drafts]
-  RSS --> Listeners[Listeners — Apple, Spotify, etc.]
+  RSS --> Listeners[Listeners — Apple, Spotify, Overcast, etc.]
   SocialPlanned -.->|future| Social[Facebook / Threads / Instagram / X drafts in Publer]
 
   classDef future stroke-dasharray: 5 5,fill:#fff8e1
@@ -69,9 +67,10 @@ flowchart TD
 
 ### 1. Cloudflare Worker — content generation
 
-Runs once daily at 5:00 AM `America/New_York`. The cron handler in
-`src/index.ts:scheduled` ticks every UTC hour 9–11 and fires only when
-the local hour is 5 (handles DST automatically).
+Each show runs as its own Cloudflare worker. Cron schedule is set in
+the show's `wrangler.<show-key>.toml`. The cron handler in
+`src/index.ts:scheduled` fires only when the local hour matches the
+show's `LOCAL_FIRE_HOUR` (handles DST automatically).
 
 ```mermaid
 sequenceDiagram
@@ -82,9 +81,9 @@ sequenceDiagram
   participant V as Validator
   participant Rep as Repair / Extend
   participant EL as ElevenLabs TTS
-  participant R2 as Cloudflare R2 (morning-cup)
+  participant R2 as Cloudflare R2
 
-  Cron->>W: 5 AM ET trigger
+  Cron->>W: scheduled trigger
   W->>OAI: generate strict-JSON script (with web_search)
   OAI-->>W: episode JSON
   W->>V: validate (word count, runtime, structure)
@@ -108,19 +107,22 @@ sequenceDiagram
   EL-->>R2: ordered MP3 chunks
 ```
 
-**Output to R2** under `morning-cup/<DATE>/`:
+**Output to R2** under `<show-key>/<DATE>/`:
 - `chunks/001.mp3 … NNN.mp3`
-- `The Morning Cup - <DATE>.txt` (clean script for show notes)
-- `The Morning Cup - <DATE>.html`
-- `The Morning Cup - <DATE>.json` (full episode object including chapters)
-- `The Morning Cup - <DATE> - manifest.json` (canonical metadata)
+- `<Show Title> - <DATE>.txt` (clean script for show notes)
+- `<Show Title> - <DATE>.html`
+- `<Show Title> - <DATE>.json` (full episode object including chapters)
+- `<Show Title> - <DATE> - manifest.json` (canonical metadata)
 - `run.json` (run state record)
+
+The `<show-key>/` prefix isolates each show's data within R2, even if
+multiple shows share the same bucket.
 
 ### 2. Cloudflare Worker — publish step
 
 Immediately after a successful run, the worker pushes artifacts out and
-creates a WordPress draft. All sub-steps are best-effort; a failure here
-does NOT fail the worker run.
+creates a WordPress draft. All sub-steps are best-effort; a failure
+here does NOT fail the worker run.
 
 ```mermaid
 sequenceDiagram
@@ -133,31 +135,31 @@ sequenceDiagram
   W->>OAI: generate 400–500 word post body
   OAI-->>W: body text
 
-  Note over W,GD: Service-account JWT auth
-  W->>GD: create folder <DATE>/
+  Note over W,GD: Service-account JWT auth (shared)
+  W->>GD: create folder <DATE>/ inside show's Drive folder
   W->>GD: upload txt, html, json, manifest
   W->>GD: create chunks/ subfolder
   loop each chunk
     W->>GD: upload chunk MP3
   end
 
-  Note over W,WP: Basic auth (Application Password)
+  Note over W,WP: Basic auth (shared Application Password)
   W->>WP: POST /wp-json/wp/v2/serve_episode
-  Note right of WP: title, status=draft, content (body),<br/>excerpt (main social post),<br/>serve_podcast_category=[term-id],<br/>meta._ep_podcast_id=2616,<br/>meta._ep_episode_type="full",<br/>meta._ep_explicit=false
+  Note right of WP: title, status=draft, content (body),<br/>excerpt (main social post),<br/>serve_podcast_category=[term-id],<br/>meta._ep_podcast_id=<show's parent ID>,<br/>meta._ep_episode_type="full",<br/>meta._ep_explicit=false
   WP-->>W: { id, link }
 ```
 
-### 3. Local Mac — assembly and upload
+### 3. Producer's Mac — assembly and upload
 
-You (or the daily Apple Shortcut) runs the local pipeline after the
-worker finishes. ~30 seconds of human time.
+The producer runs the local pipeline after the worker finishes. ~30
+seconds of human time per show.
 
 ```mermaid
 sequenceDiagram
   autonumber
-  participant U as You (or Shortcut)
+  participant U as Producer
   participant FC as fetch-chunks.sh
-  participant R2 as R2 (morning-cup)
+  participant R2 as R2
   participant BE as build-episode.sh
   participant FF as ffmpeg
   participant Tag as write-chapters.py
@@ -167,18 +169,18 @@ sequenceDiagram
   participant S3A as S3 (audio bucket)
   participant WP as WordPress REST
 
-  U->>FC: fetch-chunks.sh <DATE>
-  FC->>R2: download manifest + 22 chunks
-  R2-->>FC: files into Chunks/<DATE>/
-  U->>BE: build-episode.sh <DATE>
-  BE->>FF: normalize + concat (Sounds/ + Chunks/)
-  FF-->>BE: Episodes/The Morning Cup - <DATE>.mp3
-  BE->>Tag: write CTOC + CHAP markers
+  U->>FC: fetch-chunks.sh <show-key> <DATE>
+  FC->>R2: download manifest + N chunks under <show-key>/<DATE>/
+  R2-->>FC: files into Chunks/<show-key>/<DATE>/
+  U->>BE: build-episode.sh <show-key> <DATE>
+  BE->>FF: normalize + concat (assets/sounds/<show-key>/ + chunks)
+  FF-->>BE: Episodes/<show-key>/<Show Title> - <DATE>.mp3
+  BE->>Tag: write CTOC + CHAP markers from manifest.chapters
   Tag-->>BE: chapters embedded
   BE->>PD: push-final-to-drive.py
   PD->>GD: upload final MP3 into <DATE>/
-  BE->>UA: upload-audio.py <DATE>
-  UA->>S3A: PUT audio/YYYY/MM/the-morning-cup-<DATE>-<ts>.mp3
+  BE->>UA: upload-audio.py <show-key> <DATE>
+  UA->>S3A: PUT audio/<show-key>/<YYYY>/<MM>/<show-title>-<DATE>-<ts>.mp3
   UA->>WP: search serve_episode draft by title
   WP-->>UA: { id }
   UA->>WP: POST .../serve_episode/<id> with _ep_audio_url + meta
@@ -189,9 +191,9 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-  Draft[serve_episode draft\nstatus=draft\n_ep_podcast_id=2616\n_ep_audio_url set] -->|review + publish| Pub[serve_episode published]
-  Pub --> RSS[/feed/podcast/the-morning-cup/]
-  Pub --> Hub[Custom media hub UI]
+  Draft[serve_episode draft\nstatus=draft\n_ep_podcast_id=<show ID>\n_ep_audio_url set] -->|review + publish| Pub[serve_episode published]
+  Pub --> RSS[/feed/podcast/<show-feed-slug>/]
+  Pub --> Hub[Apollo plugin admin UI]
   RSS --> Apple[Apple Podcasts]
   RSS --> Spotify[Spotify]
   RSS --> Overcast[Overcast]
@@ -203,11 +205,11 @@ these meta fields exposed to the REST API:
 
 | Meta key | Set by | Value |
 |----------|--------|-------|
-| `_ep_podcast_id` | Worker | `2616` (parent serve_podcast: The Morning Cup) |
-| `_ep_episode_type` | Worker | `"full"` |
-| `_ep_explicit` | Worker | `false` |
-| `_ep_audio_url` | Local upload-audio.py | `https://<cf>.cloudfront.net/audio/2026/05/...mp3` |
-| `_ep_audio_r2_key` | Local upload-audio.py | `audio/2026/05/the-morning-cup-2026-05-01-…mp3` (key name is legacy in the Apollo plugin) |
+| `_ep_podcast_id` | Worker | Parent `serve_podcast` post ID for this show |
+| `_ep_episode_type` | Worker | `"full"` (or `"trailer"` / `"bonus"` per config) |
+| `_ep_explicit` | Worker | `false` (or per show config) |
+| `_ep_audio_url` | Local upload-audio.py | `https://<cf>.cloudfront.net/audio/<show-key>/...mp3` |
+| `_ep_audio_r2_key` | Local upload-audio.py | `audio/<show-key>/<YYYY>/<MM>/<title>-<DATE>-…mp3` |
 | `_ep_file_size` | Local upload-audio.py | bytes |
 | `_ep_mime_type` | Local upload-audio.py | `audio/mpeg` |
 | `_ep_duration_sec` | Local upload-audio.py | seconds (ffprobe) |
@@ -220,7 +222,7 @@ A separate plugin (`tpt-publer-auto-social-drafts`) hooks the
 schedules a WP-Cron job that:
 
 1. Generates a [Short.io](https://short.io) link from the permalink (or
-   the configured Podcast Landing Page URL for podcast post types).
+   the show's configured podcast landing page URL).
 2. Calls OpenAI / Gemini to produce platform-specific copy (Facebook,
    Threads, Instagram, X) with hashtags, topic suggestions, etc.
 3. Creates **draft** posts in Publer for each enabled platform — both a
@@ -228,8 +230,8 @@ schedules a WP-Cron job that:
 4. Saves Publer job IDs back to post meta for de-duplication.
 
 Status: **specced, not built.** When ready, will live as its own GitHub
-repo + WP plugin so other Penny Tribune post types (articles, videos,
-elections) get the same treatment.
+repo + WP plugin so other post types (articles, videos, elections) get
+the same treatment.
 
 ---
 
@@ -237,81 +239,83 @@ elections) get the same treatment.
 
 ```mermaid
 flowchart TB
-  WT[wrangler.toml vars] --> W
-  WS[wrangler secrets] --> W
-  ENV[~/Documents/The Morning Cup/.env] --> Local[Local scripts]
-  SVC[~/.../.secrets/google-drive-key.json] --> Local
+  WT[wrangler.<show-key>.toml vars] --> W
+  WS[wrangler secrets per worker] --> W
+  ENV[~/.auto-episode/.env] --> Local[Local scripts]
+  SVC[~/.auto-episode/google-drive-key.json] --> Local
+  SHOWS[shows/<show-key>/config.ts<br/>shows/<show-key>/prompt.ts] --> W
   WPCONF[wp-config.php constants] --> WPS[WordPress / Apollo plugin]
   DBO[wp_options] --> WPS
 
   W[Worker]
-  Local --> R2A
+  Local --> S3A
   Local --> WP
   W --> R2C
   W --> Drive
   W --> WP
 
   classDef cfg fill:#e3f2fd
-  class WT,WS,ENV,SVC,WPCONF,DBO cfg
+  class WT,WS,ENV,SVC,SHOWS,WPCONF,DBO cfg
 ```
 
-### Worker side (`wrangler.toml` + `wrangler secret put`)
+### Worker side (`wrangler.<show-key>.toml` + `wrangler secret put`)
 
-| Variable | Type | Purpose |
-|----------|------|---------|
-| `OPENAI_MODEL` | var | Currently `gpt-5-mini` |
-| `WORKER_TIMEZONE` | var | `America/New_York` |
-| `MIN_SCRIPT_WORDS` / `TARGET_*` | var | Validator thresholds |
-| `MAX_TTS_CHARS_PER_CHUNK` | var | ElevenLabs chunking limit |
-| `ENABLE_PUBLISHING` | var | `true` to push Drive + create WP drafts |
-| `GOOGLE_DRIVE_FOLDER_ID` | var | Shared destination folder ID |
-| `WP_URL` / `WP_USERNAME` | var | WordPress endpoint + login |
-| `WP_CPT_SLUG` | var | `serve_episode` |
-| `WP_PODCAST_SHOW_TAXONOMY` | var | `serve_podcast_category` |
-| `WP_PODCAST_SHOW_TERM` | var | `The Morning Cup` |
-| `WP_PARENT_PODCAST_ID` | var | `2616` |
-| `HOST_NAME` | var | `Penelope Rose` |
-| `PUBLISHER` / `COPYRIGHT_HOLDER` | var | ID3 metadata defaults |
-| **secret** `OPENAI_API_KEY` | secret | OpenAI auth |
-| **secret** `ELEVENLABS_API_KEY` / `ELEVENLABS_VOICE_ID` | secret | TTS auth |
-| **secret** `GOOGLE_SERVICE_ACCOUNT_KEY` | secret | Drive auth (full JSON) |
-| **secret** `WP_APP_PASSWORD` | secret | WordPress draft creation |
-| **secret** `RUN_SECRET` | secret | Gates `POST /run` |
+| Variable | Scope | Purpose |
+|----------|-------|---------|
+| `SHOW_KEY` | per show (var) | Selects which show this worker runs |
+| `OPENAI_MODEL` | shared (var) | e.g. `gpt-5-mini` |
+| `WORKER_TIMEZONE` | shared (var) | e.g. `America/New_York` |
+| `ENABLE_PUBLISHING` | shared (var) | `true` to push Drive + create WP drafts |
+| `WP_URL` / `WP_USERNAME` | shared (vars) | WordPress endpoint + login |
+| `WP_CPT_SLUG` | shared (var) | `serve_episode` |
+| `WP_PODCAST_SHOW_TAXONOMY` | shared (var) | `serve_podcast_category` |
+| `OPENAI_API_KEY` | shared (secret) | OpenAI auth (same key per worker) |
+| `ELEVENLABS_API_KEY` | shared (secret) | TTS auth (same key per worker) |
+| `ELEVENLABS_VOICE_ID` | per show (secret) | The cloned voice for this host |
+| `GOOGLE_SERVICE_ACCOUNT_KEY` | shared (secret) | Drive auth (same JSON per worker) |
+| `WP_APP_PASSWORD` | shared (secret) | WP draft creation (same value per worker) |
+| `RUN_SECRET` | per show (secret) | Gates `POST /run` for this worker |
 
-### Local side (`~/Documents/The Morning Cup/.env`)
+### Show config (`shows/<show-key>/config.ts`)
+
+| Field | Purpose |
+|-------|---------|
+| `showKey`, `showTitle`, `hostName` | Identity |
+| `publisher`, `copyrightHolder`, `podcastGenre` | iTunes / RSS metadata |
+| `openingTemplate`, `closingTemplate` | Spoken intro/outro lines |
+| `minScriptWords` / `targetScriptWordsMin/Max` / `maxScriptWords` | Length targets |
+| `maxTtsCharsPerChunk`, `wordsPerMinute` | Pipeline tuning |
+| `sounds.intro`, `sounds.sectionSting`, `sounds.outro` | Audio file list |
+| `topicFlow` | Section order |
+| `wpParentPodcastId`, `wpPodcastShowTerm` | WP linkage |
+| `googleDriveFolderId` | Drive destination |
+
+### Local side (`~/.auto-episode/.env`)
 
 | Variable | Purpose |
 |----------|---------|
-| `RUN_SECRET` | Same value as Cloudflare; used by `morning-cup.sh` to fire the worker manually |
-| `GOOGLE_DRIVE_FOLDER_ID` | Same value as Cloudflare; used by `push-final-to-drive.py` |
+| `RUN_SECRET` | Same value as the show's worker secret; used for manual triggers |
 | `GOOGLE_DRIVE_KEY_PATH` | Path to the service-account JSON locally |
-| `R2_ACCOUNT_ID` | Cloudflare account ID (for the `morning-cup` chunks bucket, used by the worker; not needed for audio upload) |
-| `S3_ACCESS_KEY` | AWS access key with PutObject on the audio bucket |
-| `S3_SECRET_KEY` | matching AWS secret |
-| `S3_REGION` | e.g. `us-east-1` |
-| `S3_BUCKET` | Audio bucket name (same as `APOLLO_S3_BUCKET` in wp-config) |
-| `S3_CF_URL` | CloudFront URL (e.g. `https://d1abc.cloudfront.net`) — falls back to direct S3 URL if empty |
-| `WP_URL` | `https://thepennytribune.com` |
-| `WP_USERNAME` | `systems` |
-| `WP_APP_PASSWORD` | Application Password (same value as the worker secret) |
+| `S3_ACCESS_KEY` / `S3_SECRET_KEY` / `S3_REGION` / `S3_BUCKET` / `S3_CF_URL` | AWS audio bucket (shared) |
+| `WP_URL` / `WP_USERNAME` / `WP_APP_PASSWORD` | WordPress credentials (shared) |
 
 ---
 
-## Daily ops flow (the actual human routine)
+## Daily ops flow per show
 
 ```mermaid
 journey
-  title Penelope's morning
+  title Producer's morning
   section Background (no human touch)
-    5:00 AM cron fires: 5: Worker
+    Cron fires at the show's scheduled hour: 5: Worker
     Generation + TTS: 5: Worker
     Drive folder created: 5: Worker
     WP draft created: 5: Worker
-  section Penelope's 1 minute
-    Run Apple Shortcut (⌃⌥⌘ B): 4: Penelope
-    build-episode.sh assembles + uploads: 5: Mac
-    Open WP draft: 4: Penelope
-    Review + publish: 5: Penelope
+  section Producer's 1 minute
+    fetch-chunks.sh <show-key>: 4: Producer
+    build-episode.sh <show-key>: 5: Mac
+    Open WP draft: 4: Producer
+    Review + publish: 5: Producer
   section After publish (auto)
     RSS feed updates: 5: Apollo
     Listeners hear it: 5: Listeners
@@ -334,7 +338,7 @@ flowchart LR
   P -->|WP 401| RotatePW[Rotate WP App Password]
   P -->|WP 404| ConfirmCPT[Confirm WP_CPT_SLUG matches]
 
-  L[Local upload failed] -->|R2 auth| FixR2[Check .env R2 keys]
+  L[Local upload failed] -->|S3 auth| FixS3[Check ~/.auto-episode/.env S3 keys]
   L -->|WP draft missing| Wait[Worker hasn't created it yet — wait or re-fire]
   L -->|wrong post matched| RenameCheck[Title format must match — see upload-audio.py]
 ```
@@ -343,10 +347,10 @@ Detailed troubleshooting matrix: [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
 
 ---
 
-## Cost summary
+## Cost summary (per show, daily cadence)
 
-| Line | Per run | Per month (daily) |
-|------|---------|-------------------|
+| Line | Per run | Per month |
+|------|---------|-----------|
 | OpenAI (gpt-5-mini, ~7k in / 6k out) | ~$0.05 | ~$1.50 |
 | OpenAI web_search (8–15 calls) | ~$0.30–0.50 | ~$10–15 |
 | OpenAI body gen | ~$0.01 | ~$0.30 |
@@ -354,10 +358,9 @@ Detailed troubleshooting matrix: [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
 | Cloudflare Workers + R2 + KV | ~$0 | <$1 |
 | Google Drive API | $0 | $0 |
 | WordPress REST | $0 | $0 |
-| **Total compute** | | **~$30–115** |
-| Publer subscription (when added) | — | $9–24 |
-| Short.io subscription (when added) | — | $0–20 |
+| **Total compute per show** | | **~$30–115** |
+| Publer subscription (when added) | — | $9–24 (org-wide) |
+| Short.io subscription (when added) | — | $0–20 (org-wide) |
 
-ElevenLabs is the dominant variable. At Pro tier (`$99/mo`, 500k chars
-included) you'll be slightly under or just over depending on episode
-length.
+ElevenLabs is the dominant variable. Multiple shows share the same
+ElevenLabs account, so character usage stacks on a single subscription.
