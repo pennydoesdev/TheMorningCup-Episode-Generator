@@ -17,7 +17,7 @@
 # DATE defaults to today in America/New_York.
 #
 
-set -euo pipefail
+set -eo pipefail
 
 ROOT="$HOME/Documents/The Morning Cup"
 EPISODES="$ROOT/Episodes"
