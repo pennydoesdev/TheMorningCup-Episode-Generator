@@ -20,8 +20,12 @@
 set -euo pipefail
 
 ROOT="$HOME/Documents/The Morning Cup"
-SCRIPTS="$ROOT/Scripts"
 EPISODES="$ROOT/Episodes"
+
+# Resolve the directory this script lives in so sister scripts are found
+# regardless of where the user invokes from.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPTS="$SCRIPT_DIR"
 
 # Apple Shortcuts' Run Shell Script doesn't load your interactive shell's
 # PATH. Add the common locations for tools we need (ffmpeg, wrangler).
@@ -59,16 +63,42 @@ require_secret() {
 cmd_make() {
   local DATE="${1:-$(today_iso)}"
   require_secret
-  echo "→ Triggering worker run for $DATE…"
+
+  # 1. Check current run state. If the cron already ran today, /run will
+  # return "completed" instantly and we skip straight to fetch/build.
+  echo "→ Checking run state for $DATE…"
+  local RESPONSE STATUS
   RESPONSE=$(curl -sS --max-time 1500 -X POST \
     -H "Authorization: Bearer $RUN_SECRET" \
     "$WORKER_URL/run?date=$DATE&force=true")
   STATUS=$(echo "$RESPONSE" | python3 -c \
-    "import json,sys; r=json.load(sys.stdin).get('record',{}); print(r.get('status','unknown'))")
+    "import json,sys; r=json.load(sys.stdin).get('record',{}); print(r.get('status','unknown'))" \
+    2>/dev/null || echo "unknown")
 
+  # 2. If the worker is mid-run, poll /status until it's done. Cap at 30 min.
+  if [ "$STATUS" != "completed" ] && [ "$STATUS" != "failed" ]; then
+    echo "→ Worker is $STATUS — polling until completed (max 30 min)…"
+    local DEADLINE=$(( $(date +%s) + 1800 ))
+    while [ "$STATUS" != "completed" ] && [ "$STATUS" != "failed" ]; do
+      if [ "$(date +%s)" -ge "$DEADLINE" ]; then
+        echo "Timed out after 30 minutes. Last status: $STATUS" >&2
+        exit 1
+      fi
+      sleep 20
+      STATUS=$(curl -sS -H "Authorization: Bearer $RUN_SECRET" \
+        "$WORKER_URL/status?date=$DATE" \
+        | python3 -c "import json,sys; print(json.load(sys.stdin).get('status','unknown'))" \
+        2>/dev/null || echo "unknown")
+      printf "  %s — status=%s\n" "$(date +%H:%M:%S)" "$STATUS"
+    done
+  fi
+
+  if [ "$STATUS" = "failed" ]; then
+    echo "Worker run FAILED. Run \`$0 status $DATE\` for details." >&2
+    exit 1
+  fi
   if [ "$STATUS" != "completed" ]; then
-    echo "Worker run did not complete cleanly. status=$STATUS" >&2
-    echo "$RESPONSE" | python3 -m json.tool >&2
+    echo "Worker run ended in unexpected state: $STATUS" >&2
     exit 1
   fi
 
