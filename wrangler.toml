@@ -3,10 +3,13 @@ main = "src/index.ts"
 compatibility_date = "2026-04-30"
 compatibility_flags = ["nodejs_compat"]
 
-# Hourly cron between 09:00 and 11:00 UTC. Code checks America/New_York
-# local time and only runs once when the local hour is 5 (handles DST).
-[triggers]
-crons = ["0 9-11 * * *"]
+# Cron disabled — worker only runs on manual POST /run requests.
+# To re-enable, uncomment the [triggers] block below. The scheduled
+# handler in src/index.ts already guards against double-runs, DST, and
+# already-completed days, so re-enabling is safe.
+#
+# [triggers]
+# crons = ["0 9-11 * * *"]
 
 [[r2_buckets]]
 binding = "MORNING_CUP_BUCKET"
