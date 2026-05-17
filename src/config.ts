@@ -49,9 +49,11 @@ export interface Config {
   enablePublishing: boolean;
   googleDriveFolderId: string;
   wpUrl: string;
+  // CPT slug for the Vicinity News OS plugin — always "vicinity_episode".
+  // Override via WP_CPT_SLUG env var only if your site uses a custom slug.
   wpCptSlug: string;
-  wpPodcastShowTaxonomy: string;
-  wpPodcastShowTerm: string;
+  // Post ID of the parent `vicinity_podcast` post on your WordPress site.
+  // Find it in WP Admin → Podcasts → hover the show title and read post=XXXX.
   wpParentPodcastId: number;
 
   voice: {
@@ -95,10 +97,8 @@ export function loadConfig(env: Env): Config {
     enablePublishing: bool(env.ENABLE_PUBLISHING, false),
     googleDriveFolderId: str(env.GOOGLE_DRIVE_FOLDER_ID, ""),
     wpUrl: str(env.WP_URL, ""),
-    wpCptSlug: str(env.WP_CPT_SLUG, "serve_episode"),
-    wpPodcastShowTaxonomy: str(env.WP_PODCAST_SHOW_TAXONOMY, "serve_podcast_category"),
-    wpPodcastShowTerm: str(env.WP_PODCAST_SHOW_TERM, "The Morning Cup"),
-    wpParentPodcastId: num(env.WP_PARENT_PODCAST_ID, 0),
+    wpCptSlug: str(env.WP_CPT_SLUG, "vicinity_episode"),
+    wpParentPodcastId: num(env.WP_PARENT_PODCAST_ID, 2616),
 
     voice: {
       stability: num(env.VOICE_STABILITY, 0.35),
