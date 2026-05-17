@@ -296,35 +296,19 @@ export async function uploadEpisodeToDrive(
 }
 
 // ---------------------------------------------------------------------------
-// 3. WordPress draft creation
+// 3. WordPress draft creation — Vicinity News OS plugin
+//
+// CPT:  vicinity_episode
+// Meta: _vnews_ep_* fields (defined in vnewsos-plugin cpt.php)
+//
+// Audio fields (_vicinity_audio_url, _vnews_ep_r2_key, _vnews_ep_file_size,
+// _vnews_ep_duration) are intentionally left blank here — the local
+// build-episode.sh script fills them after the final stitched MP3 is ready.
 // ---------------------------------------------------------------------------
 
 interface WPCreateResult {
   id: number;
   link: string;
-}
-
-async function wpResolveTaxonomyTermId(
-  config: Config,
-  basicAuth: string,
-  termName: string,
-): Promise<number | null> {
-  if (!config.wpPodcastShowTaxonomy) return null;
-  const base = `${config.wpUrl.replace(/\/+$/, "")}/wp-json/wp/v2/${config.wpPodcastShowTaxonomy}`;
-  const res = await fetch(`${base}?search=${encodeURIComponent(termName)}&per_page=10`, {
-    headers: { Authorization: basicAuth },
-  });
-  if (!res.ok) {
-    logger.warn("wp taxonomy lookup failed", { status: res.status });
-    return null;
-  }
-  const terms = (await res.json()) as Array<{ id: number; name: string; slug: string }>;
-  const exact = terms.find(
-    (t) =>
-      t.name.toLowerCase() === termName.toLowerCase() ||
-      t.slug === termName.toLowerCase().replace(/\s+/g, "-"),
-  );
-  return exact?.id ?? terms[0]?.id ?? null;
 }
 
 export async function createWordPressDraft(
@@ -350,16 +334,15 @@ export async function createWordPressDraft(
   });
   const title = `${manifest.show_name} — ${weekday}, ${spokenDateFromIso(episodeIso)}`;
 
-  // Apollo plugin _ep_* meta. _ep_podcast_id ties this episode to its
-  // parent serve_podcast show; the audio meta is intentionally left blank
-  // here — the local build-episode.sh fills _ep_audio_url + _ep_audio_r2_key
-  // after the final MP3 is rendered.
+  // Vicinity News OS episode meta (_vnews_ep_* fields from cpt.php).
+  // _vnews_ep_podcast_id ties this episode to its parent vicinity_podcast post.
+  // Audio meta is left blank here — filled by build-episode.sh after stitching.
   const epMeta: Record<string, unknown> = {
-    _ep_episode_type: "full",
-    _ep_explicit: false,
+    _vnews_ep_episode_type: "full",
+    _vnews_ep_explicit: "no",
   };
   if (config.wpParentPodcastId > 0) {
-    epMeta._ep_podcast_id = config.wpParentPodcastId;
+    epMeta._vnews_ep_podcast_id = config.wpParentPodcastId;
   }
 
   const payload: Record<string, unknown> = {
@@ -369,18 +352,6 @@ export async function createWordPressDraft(
     excerpt: episode.social_copy?.main_post ?? "",
     meta: epMeta,
   };
-
-  // Try to resolve and attach the "Podcast Show" taxonomy term.
-  if (config.wpPodcastShowTaxonomy && config.wpPodcastShowTerm) {
-    const termId = await wpResolveTaxonomyTermId(
-      config,
-      basicAuth,
-      config.wpPodcastShowTerm,
-    );
-    if (termId !== null) {
-      payload[config.wpPodcastShowTaxonomy] = [termId];
-    }
-  }
 
   const endpoint = `${config.wpUrl.replace(/\/+$/, "")}/wp-json/wp/v2/${config.wpCptSlug}`;
   const res = await fetch(endpoint, {
@@ -397,6 +368,56 @@ export async function createWordPressDraft(
   }
   const created = (await res.json()) as { id: number; link: string };
   return { id: created.id, link: created.link };
+}
+
+// ---------------------------------------------------------------------------
+// 4. WordPress episode audio update
+//
+// Call this after the stitched MP3 is available to wire up the audio player
+// and RSS feed. Patches the existing draft with all audio meta fields.
+// ---------------------------------------------------------------------------
+
+export async function updateWordPressEpisodeAudio(
+  env: Env,
+  config: Config,
+  postId: number,
+  audioUrl: string,
+  r2Key: string,
+  fileSizeBytes: number,
+  durationHms: string,
+): Promise<void> {
+  if (!config.wpUrl || !env.WP_USERNAME || !env.WP_APP_PASSWORD) {
+    logger.warn("WP audio update skipped — credentials missing");
+    return;
+  }
+
+  const basicAuth =
+    "Basic " + btoa(`${env.WP_USERNAME}:${env.WP_APP_PASSWORD}`);
+
+  const payload = {
+    meta: {
+      _vicinity_audio_url:  audioUrl,       // Read by the player template + RSS feed
+      _vnews_ep_r2_key:     r2Key,          // R2 object key for the audio file
+      _vnews_ep_file_size:  fileSizeBytes,  // Bytes — used in RSS <enclosure>
+      _vnews_ep_duration:   durationHms,    // HH:MM:SS — used in <itunes:duration>
+    },
+  };
+
+  const endpoint = `${config.wpUrl.replace(/\/+$/, "")}/wp-json/wp/v2/${config.wpCptSlug}/${postId}`;
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      Authorization: basicAuth,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    logger.error("WP audio update failed", { status: res.status, body: t.slice(0, 300) });
+  } else {
+    logger.info("WP episode audio updated", { postId, audioUrl });
+  }
 }
 
 function spokenDateFromIso(yyyymmdd: string): string {
