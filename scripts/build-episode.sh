@@ -172,22 +172,6 @@ ffmpeg -y -loglevel error -f concat -safe 0 -i "$LIST" \
   -metadata comment="$COMMENT" \
   "$OUTPUT"
 
-# --- push final MP3 to Google Drive (optional) -------------------------------
-
-PUSH_DRIVE_PY="$(dirname "$0")/push-final-to-drive.py"
-if [ -f "$PUSH_DRIVE_PY" ] && [ -f "$ROOT/.env" ]; then
-  # Pull env values (GOOGLE_DRIVE_FOLDER_ID, GOOGLE_DRIVE_KEY_PATH) from .env.
-  set -o allexport
-  # shellcheck disable=SC1091
-  source "$ROOT/.env"
-  set +o allexport
-  if [ -n "${GOOGLE_DRIVE_FOLDER_ID:-}" ]; then
-    echo "Pushing final MP3 to Google Drive..."
-    python3 "$PUSH_DRIVE_PY" "$OUTPUT" "$DATE" || \
-      echo "Warning: Drive upload failed; episode is still saved locally." >&2
-  fi
-fi
-
 # --- chapter markers (CTOC + CHAP ID3 frames) --------------------------------
 
 WRITE_CHAPTERS_PY="$(dirname "$0")/write-chapters.py"
@@ -196,21 +180,6 @@ if [ -f "$WRITE_CHAPTERS_PY" ]; then
     echo "Warning: chapter-marker writing failed; episode is still rendered." >&2
 else
   echo "Warning: write-chapters.py not found alongside build-episode.sh; skipping chapter markers." >&2
-fi
-
-# --- upload audio to R2 + attach to WP draft (optional) ----------------------
-
-UPLOAD_AUDIO_PY="$(dirname "$0")/upload-audio.py"
-if [ -f "$UPLOAD_AUDIO_PY" ] && [ -f "$ROOT/.env" ]; then
-  set -o allexport
-  # shellcheck disable=SC1091
-  source "$ROOT/.env"
-  set +o allexport
-  if [ -n "${S3_BUCKET:-}" ] && [ -n "${WP_URL:-}" ]; then
-    echo "Uploading audio to S3 + attaching to WP draft..."
-    python3 "$UPLOAD_AUDIO_PY" "$DATE" || \
-      echo "Warning: audio upload / WP attach failed; episode is still saved locally." >&2
-  fi
 fi
 
 # --- summary -----------------------------------------------------------------

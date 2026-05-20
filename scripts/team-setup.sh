@@ -123,12 +123,8 @@ fi
 
 # Python deps for the local pipeline:
 #   mutagen       — ID3 tag + chapter marker writing (write-chapters.py)
-#   cryptography  — JWT signing for Google service-account auth
-#                   (push-final-to-drive.py)
-#   boto3         — S3 audio uploads (upload-audio.py)
-#   requests      — WordPress REST API calls (upload-audio.py)
 need_install=()
-for pkg in mutagen cryptography boto3 requests; do
+for pkg in mutagen; do
   if python3 -c "import $pkg" >/dev/null 2>&1; then
     green "✓ $pkg present"
   else

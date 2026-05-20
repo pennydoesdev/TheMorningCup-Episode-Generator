@@ -45,17 +45,6 @@ export interface Config {
   podcastGenre: string;
   hostName: string;
 
-  // Publishing pipeline
-  enablePublishing: boolean;
-  googleDriveFolderId: string;
-  wpUrl: string;
-  // CPT slug for the Vicinity News OS plugin — always "vicinity_episode".
-  // Override via WP_CPT_SLUG env var only if your site uses a custom slug.
-  wpCptSlug: string;
-  // Post ID of the parent `vicinity_podcast` post on your WordPress site.
-  // Find it in WP Admin → Podcasts → hover the show title and read post=XXXX.
-  wpParentPodcastId: number;
-
   voice: {
     stability: number;
     similarityBoost: number;
@@ -93,12 +82,6 @@ export function loadConfig(env: Env): Config {
     copyrightHolder: str(env.COPYRIGHT_HOLDER, "The Penny Tribune"),
     podcastGenre: str(env.PODCAST_GENRE, "News"),
     hostName: str(env.HOST_NAME, "Penelope Rose"),
-
-    enablePublishing: bool(env.ENABLE_PUBLISHING, false),
-    googleDriveFolderId: str(env.GOOGLE_DRIVE_FOLDER_ID, ""),
-    wpUrl: str(env.WP_URL, ""),
-    wpCptSlug: str(env.WP_CPT_SLUG, "vicinity_episode"),
-    wpParentPodcastId: num(env.WP_PARENT_PODCAST_ID, 2616),
 
     voice: {
       stability: num(env.VOICE_STABILITY, 0.35),
