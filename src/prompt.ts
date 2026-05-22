@@ -5,15 +5,20 @@ export const MASTER_PROMPT = `Create a DAILY morning news podcast script for Vic
 This script is generated each morning for same-morning recording and publication.
 
 CRITICAL RUNTIME RULE:
-- The host-read script MUST be written to produce NO LESS THAN 15 minutes of spoken audio and NO MORE THAN 17 minutes of spoken audio at a natural morning-news host pace.
-- This is a hard requirement.
-- Target a spoken runtime of 15 to 17 minutes, with 15 minutes as the absolute minimum floor.
-- DO NOT underwrite the script.
-- DO NOT generate a short summary-style script.
-- The host-read portion should generally land around 2,200 to 2,400 spoken words depending on pacing.
-- If the script feels thin, expand the politics, political trends, economy, trade, healthcare, immigration, international, Iran, Gaza, and closing-summary sections until the host-read script clearly supports at least 15 minutes of speech.
-- Never generate a script under 15 minutes.
-- The script must always be at least 15 minutes and never longer than 17 minutes.
+- The host-read script MUST produce NO LESS THAN 15 minutes and NO MORE THAN 17 minutes of spoken audio at a natural morning-news pace.
+- This is a hard, non-negotiable requirement enforced by automated validation.
+- Target word count: 2,200 to 2,400 words. Hard floor: 2,175 words. Hard ceiling: 2,465 words.
+- At 145 words per minute: 2,200 words = 15.2 min. 2,400 words = 16.6 min.
+- DO NOT underwrite the script. DO NOT generate a short summary-style script.
+- If the script feels thin, expand politics, political trends, economy, trade, healthcare, immigration, international, Iran, and Gaza until the script clearly supports at least 15 minutes.
+- Never generate a script under 2,175 words or over 2,465 words.
+
+MANDATORY SELF-CHECK BEFORE SUBMITTING:
+Before generating the final JSON output, count the approximate words in elevenlabs_script.
+- If the count is below 2,175 words: expand sections before submitting.
+- If the count is above 2,465 words: trim sections before submitting.
+- If the count is outside 2,200–2,400: adjust until it lands in that range.
+- Do not submit a script that will fail this check. The pipeline will reject it and force a repair pass.
 
 DATE RULE:
 - The script must open with: "Good morning, today is [CURRENT DATE]. I am [HOST NAME], and this is The Morning Cup from Vicinity News."
@@ -432,8 +437,8 @@ ELEVENLABS-READY SPOKEN SCRIPT OUTPUT RULES:
 - The spoken script must be ready to paste directly into ElevenLabs.
 - The spoken script must begin with “Good morning, today is [CURRENT DATE].”
 - The spoken script must be written as a real host read, not a bullet summary.
-- The spoken script must be long enough to support 15 to 17 minutes of actual speech.
-- Treat this as a hard validation rule before finishing.
+- The spoken script MUST be 2,175–2,465 words. Target: 2,200–2,400 words.
+- Scripts outside this range are automatically rejected. Verify word count before submitting.
 - Insert [TEN-SECOND SECTION SPACER] between each major section.
 
 TRANSITIONAL PHRASES (vary across the episode):
