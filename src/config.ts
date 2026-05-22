@@ -72,8 +72,8 @@ export function loadConfig(env: Env): Config {
 
     r2PublicBaseUrl: str(env.R2_PUBLIC_BASE_URL, ""),
 
-    publisher: str(env.PUBLISHER, "The Penny Tribune"),
-    copyrightHolder: str(env.COPYRIGHT_HOLDER, "The Penny Tribune"),
+    publisher: str(env.PUBLISHER, "Vicinity News"),
+    copyrightHolder: str(env.COPYRIGHT_HOLDER, "Vicinity News"),
     podcastGenre: str(env.PODCAST_GENRE, "News"),
     hostName: str(env.HOST_NAME, "Penelope Rose"),
 

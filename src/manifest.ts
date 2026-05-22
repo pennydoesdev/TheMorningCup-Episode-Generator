@@ -12,8 +12,8 @@ export interface ManifestInputs {
   episodeIso: string; // YYYY-MM-DD
   sourceIso: string; // YYYY-MM-DD
   baseTitle: string; // "The Morning Cup"
-  publisher: string; // "The Penny Tribune"
-  copyrightHolder: string; // "The Penny Tribune"
+  publisher: string; // "Vicinity News"
+  copyrightHolder: string; // "Vicinity News"
   genre: string; // "Podcast" / "News"
   wordCount: number;
   estimatedRuntimeMinutes: number;

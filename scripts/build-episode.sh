@@ -99,8 +99,8 @@ read_manifest() {
 YEAR="${DATE:0:4}"
 TITLE=$(read_manifest title "The Morning Cup - $DATE")
 SHOW=$(read_manifest show_name "The Morning Cup")
-PUBLISHER=$(read_manifest publisher "The Penny Tribune")
-COPYRIGHT=$(read_manifest copyright "Copyright $YEAR - The Penny Tribune")
+PUBLISHER=$(read_manifest publisher "Vicinity News")
+COPYRIGHT=$(read_manifest copyright "Copyright $YEAR - Vicinity News")
 GENRE=$(read_manifest genre "News")
 WORD_COUNT=$(read_manifest word_count "?")
 RUNTIME=$(read_manifest estimated_runtime_minutes "?")
