@@ -104,7 +104,7 @@ python3 -c "import mutagen, requests; print('all good')"
 cd "$HOME/Documents/The Morning Cup/Generator"
 wrangler login   # browser window opens, approve it
 npm install
-npx wrangler deploy
+wrangler deploy
 ```
 
 ## Step 7 — Set your local `.env` file
