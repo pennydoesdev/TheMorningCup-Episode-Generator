@@ -62,12 +62,11 @@ fi
 
 INTRO_SONG="$SOUNDS/The Morning Cup - Song.wav"
 COFFEE_POUR="$SOUNDS/Coffee Pour.wav"
-CREAM_OR_SUGAR="$SOUNDS/Cream or sugar, hon?.mp3"
 INTRO_STING="$SOUNDS/intro-sting.wav"
 SECTION_STING="$SOUNDS/morning-cup-sting.wav"
 OUTRO="$SOUNDS/The Morning Cup - Thank You.wav"
 
-REQUIRED=("$INTRO_SONG" "$COFFEE_POUR" "$CREAM_OR_SUGAR" "$SECTION_STING" "$OUTRO")
+REQUIRED=("$INTRO_SONG" "$COFFEE_POUR" "$SECTION_STING" "$OUTRO")
 for f in "${REQUIRED[@]}"; do
   if [ ! -f "$f" ]; then
     echo "Error: missing required asset: $f" >&2
@@ -110,7 +109,7 @@ COMMENT="Generated $GEN_AT — ~$RUNTIME min / $WORD_COUNT words"
 
 # --- build ordered input list ------------------------------------------------
 
-INPUTS=("$INTRO_SONG" "$COFFEE_POUR" "$CREAM_OR_SUGAR")
+INPUTS=("$INTRO_SONG" "$COFFEE_POUR")
 [ -f "$INTRO_STING" ] && INPUTS+=("$INTRO_STING")
 for i in "${!CHUNKS_LIST[@]}"; do
   INPUTS+=("${CHUNKS_LIST[$i]}")
