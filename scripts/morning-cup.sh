@@ -19,6 +19,7 @@
 #     --dry-run             print what would happen, don't execute
 #     --skip-preflight      skip dependency checks (not recommended)
 #     --no-color            disable ANSI colors
+#     --force               re-generate even if today's episode is already completed
 #
 # DATE defaults to today in America/New_York. All output is ASCII so it
 # survives any terminal locale.
@@ -46,6 +47,7 @@ export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 DRY_RUN=0
 SKIP_PREFLIGHT=0
 USE_COLOR=1
+FORCE=0
 ARGS=()
 
 for arg in "$@"; do
@@ -53,6 +55,7 @@ for arg in "$@"; do
     --dry-run)        DRY_RUN=1 ;;
     --skip-preflight) SKIP_PREFLIGHT=1 ;;
     --no-color)       USE_COLOR=0 ;;
+    --force)          FORCE=1 ;;
     *)                ARGS+=("$arg") ;;
   esac
 done
@@ -310,7 +313,7 @@ cmd_make() {
   STATUS=$(worker_status "$DATE" | parse_status)
   log "current status: $STATUS"
 
-  if [ "$STATUS" = "absent" ] || [ "$STATUS" = "unknown" ] || [ "$STATUS" = "failed" ]; then
+  if [ "$STATUS" = "absent" ] || [ "$STATUS" = "unknown" ] || [ "$STATUS" = "failed" ] || [ "$FORCE" = "1" ]; then
     step "step 1b: triggering /run (force=true)..."
     worker_run "$DATE" >/dev/null || die "/run failed (network or auth error)"
     sleep 3
