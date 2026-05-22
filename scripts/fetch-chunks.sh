@@ -16,7 +16,8 @@
 set -euo pipefail
 
 ROOT="$HOME/Documents/The Morning Cup"
-BUCKET="morning-cup"
+BUCKET="vicinity"
+R2_PREFIX="Generators/Podcasts/TheMorningCup"
 
 # --- argument parsing --------------------------------------------------------
 
@@ -25,11 +26,10 @@ if [ $# -ge 1 ]; then
   case "$1" in
     --latest)
       # Discover the most recent date by listing the bucket.
-      DATE=$(wrangler r2 object list "$BUCKET" --prefix "morning-cup/" --remote 2>/dev/null \
-        | grep -oE 'morning-cup/[0-9]{4}-[0-9]{2}-[0-9]{2}/' \
+      DATE=$(wrangler r2 object list "$BUCKET" --prefix "$R2_PREFIX/" --remote 2>/dev/null \
+        | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' \
         | sort -u \
-        | tail -1 \
-        | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')
+        | tail -1)
       if [ -z "$DATE" ]; then
         echo "Could not auto-detect a date from R2 listing." >&2
         exit 1
@@ -60,7 +60,7 @@ mkdir -p "$DEST"
 # --- pull manifest first; the chunk count comes from it ----------------------
 
 MANIFEST_FILE="$DEST/The Morning Cup - $DATE - manifest.json"
-MANIFEST_KEY="morning-cup/$DATE/The Morning Cup - $DATE - manifest.json"
+MANIFEST_KEY="$R2_PREFIX/$DATE/The Morning Cup - $DATE - manifest.json"
 
 echo "Fetching manifest from R2..."
 if ! wrangler r2 object get "$BUCKET/$MANIFEST_KEY" --file "$MANIFEST_FILE" --remote; then
@@ -96,7 +96,7 @@ for i in $(seq -f "%03g" 1 "$COUNT"); do
     SKIPPED=$((SKIPPED+1))
     continue
   fi
-  KEY="morning-cup/$DATE/chunks/The Morning Cup - $DATE - $i.mp3"
+  KEY="$R2_PREFIX/$DATE/chunks/The Morning Cup - $DATE - $i.mp3"
   echo "  $i.mp3"
   wrangler r2 object get "$BUCKET/$KEY" --file "$LOCAL" --remote
   DOWNLOADED=$((DOWNLOADED+1))
@@ -107,4 +107,4 @@ echo "Done: $DOWNLOADED downloaded, $SKIPPED already present."
 echo ""
 ls -la "$DEST"
 echo ""
-echo "Next: open DaVinci Resolve, then Workspace > Scripts > Edit > build-morning-cup"
+echo "Next: run scripts/build-episode.sh $DATE"

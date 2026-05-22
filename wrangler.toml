@@ -13,7 +13,7 @@ compatibility_flags = ["nodejs_compat"]
 
 [[r2_buckets]]
 binding = "MORNING_CUP_BUCKET"
-bucket_name = "morning-cup"
+bucket_name = "vicinity"
 
 [[kv_namespaces]]
 binding = "MORNING_CUP_KV"
@@ -30,28 +30,15 @@ TARGET_SCRIPT_WORDS_MAX = "3700"
 MAX_SCRIPT_WORDS = "4350"
 WORDS_PER_MINUTE = "145"
 MAX_TTS_CHARS_PER_CHUNK = "2500"
-ENABLE_EMAIL = "false"
 ENABLE_SOURCE_DIGEST = "true"
 ENABLE_REPAIR_PASS = "true"
 STRIP_PACING_TAGS_FOR_TTS = "true"
 STATUS_PUBLIC = "false"
-EMAIL_FROM = "The Penny Tribune <morningcup@yourdomain.com>"
-EMAIL_TO = "your-email@example.com"
 R2_PUBLIC_BASE_URL = ""
 PUBLISHER = "The Penny Tribune"
 COPYRIGHT_HOLDER = "The Penny Tribune"
 PODCAST_GENRE = "News"
 HOST_NAME = "Penelope Rose"
-
-# Publishing pipeline (auto-publish to Google Drive + WordPress draft after each run)
-ENABLE_PUBLISHING = "true"
-GOOGLE_DRIVE_FOLDER_ID = "1FNlBn7-pYJLnd3ORFCDeli5f7Z9C8yoM"
-WP_URL = "https://thepennytribune.com"
-WP_USERNAME = "systems"
-WP_CPT_SLUG = "serve_episode"
-WP_PODCAST_SHOW_TAXONOMY = "serve_podcast_category"
-WP_PODCAST_SHOW_TERM = "The Morning Cup"
-WP_PARENT_PODCAST_ID = "2616"
 VOICE_STABILITY = "0.35"
 VOICE_SIMILARITY_BOOST = "0.85"
 VOICE_STYLE = "0.7"
@@ -61,7 +48,4 @@ VOICE_USE_SPEAKER_BOOST = "true"
 #   OPENAI_API_KEY
 #   ELEVENLABS_API_KEY
 #   ELEVENLABS_VOICE_ID
-#   RESEND_API_KEY
 #   RUN_SECRET
-#   GOOGLE_SERVICE_ACCOUNT_KEY  (full contents of the service account JSON)
-#   WP_APP_PASSWORD             (WordPress Application Password)

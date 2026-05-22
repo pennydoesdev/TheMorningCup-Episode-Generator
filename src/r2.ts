@@ -63,7 +63,7 @@ export async function listEpisodeObjects(
   env: Env,
   episodeIso: string,
 ): Promise<R2Object[]> {
-  const prefix = `morning-cup/${episodeIso}/`;
+  const prefix = `Generators/Podcasts/TheMorningCup/${episodeIso}/`;
   const out: R2Object[] = [];
   let cursor: string | undefined = undefined;
   for (let i = 0; i < 10; i++) {

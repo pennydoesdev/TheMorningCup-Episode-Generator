@@ -148,7 +148,7 @@ preflight() {
   fi
 
   # Python modules (only the ones the local pipeline needs)
-  for mod in mutagen requests boto3 cryptography; do
+  for mod in mutagen requests; do
     if python3 -c "import $mod" 2>/dev/null; then
       ok "python: $mod"
     else
@@ -220,7 +220,7 @@ preflight() {
       fails=$((fails+1))
     fi
   done
-  for s in push-final-to-drive.py write-chapters.py upload-audio.py; do
+  for s in write-chapters.py; do
     if [ -f "$SCRIPT_DIR/$s" ]; then
       ok "script: $s"
     else
