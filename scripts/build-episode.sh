@@ -103,6 +103,7 @@ COPYRIGHT=$(read_manifest copyright "Copyright $YEAR - Vicinity News")
 GENRE=$(read_manifest genre "News")
 WORD_COUNT=$(read_manifest word_count "?")
 RUNTIME=$(read_manifest estimated_runtime_minutes "?")
+EPISODE_NUM=$(python3 -c "from datetime import date; d=date.fromisoformat('$DATE'); print(d.timetuple().tm_yday)")
 
 GEN_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 COMMENT="Generated $GEN_AT — ~$RUNTIME min / $WORD_COUNT words"
@@ -193,7 +194,20 @@ ffmpeg -y -loglevel error -f concat -safe 0 -i "$LIST" \
   -metadata genre="$GENRE" \
   -metadata publisher="$PUBLISHER" \
   -metadata comment="$COMMENT" \
+  -metadata track="$EPISODE_NUM" \
+  -metadata disc="$YEAR" \
   "$OUTPUT"
+
+# --- copy metadata file to Episodes ------------------------------------------
+
+METADATA_SRC="$CHUNKS/The Morning Cup - $DATE - Metadata.txt"
+METADATA_OUT="$EPISODES/The Morning Cup - $DATE - Metadata.txt"
+if [ -f "$METADATA_SRC" ]; then
+  cp "$METADATA_SRC" "$METADATA_OUT"
+  echo "Metadata: $METADATA_OUT"
+else
+  echo "Warning: metadata file not found in chunks folder; run fetch-chunks.sh first." >&2
+fi
 
 # --- chapter markers (CTOC + CHAP ID3 frames) --------------------------------
 
@@ -225,3 +239,5 @@ echo "  date:      $YEAR"
 echo "  copyright: $COPYRIGHT"
 echo "  genre:     $GENRE"
 echo "  comment:   $COMMENT"
+echo "  track:     $EPISODE_NUM  (day of year)"
+echo "  disc:      $YEAR  (season)"

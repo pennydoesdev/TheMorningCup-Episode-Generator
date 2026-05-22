@@ -104,6 +104,22 @@ done
 
 echo ""
 echo "Done: $DOWNLOADED downloaded, $SKIPPED already present."
+
+# --- pull metadata file (for podcast upload) ---------------------------------
+
+METADATA_LOCAL="$DEST/The Morning Cup - $DATE - Metadata.txt"
+METADATA_KEY="$R2_PREFIX/$DATE/The Morning Cup - $DATE - Metadata.txt"
+
+if [ ! -f "$METADATA_LOCAL" ]; then
+  echo ""
+  echo "Fetching metadata file..."
+  if wrangler r2 object get "$BUCKET/$METADATA_KEY" --file "$METADATA_LOCAL" --remote 2>/dev/null; then
+    echo "  Saved: $METADATA_LOCAL"
+  else
+    echo "  (metadata file not found in R2 — skipping)"
+  fi
+fi
+
 echo ""
 ls -la "$DEST"
 echo ""

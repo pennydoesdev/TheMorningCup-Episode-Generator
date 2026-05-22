@@ -11,6 +11,7 @@
 #     status [DATE]         show the worker's current run record
 #     fetch [DATE]          R2 chunks + manifest only
 #     build [DATE]          ffmpeg assembly only (assumes chunks are local)
+#     transcribe [DATE]     Whisper transcript -> .vtt alongside the MP3
 #     latest                open the most-recently-rendered MP3
 #     open [DATE]           open a specific date's MP3
 #
@@ -219,7 +220,7 @@ preflight() {
       fails=$((fails+1))
     fi
   done
-  for s in write-chapters.py; do
+  for s in write-chapters.py transcribe-episode.py; do
     if [ -f "$SCRIPT_DIR/$s" ]; then
       ok "script: $s"
     else
@@ -367,6 +368,16 @@ cmd_build() {
   "$SCRIPT_DIR/build-episode.sh" "$DATE"
 }
 
+cmd_transcribe() {
+  local DATE
+  DATE="$(resolve_date "${1:-}")"
+  load_env
+  if ! command -v python3 >/dev/null 2>&1; then
+    die "python3 not found"
+  fi
+  python3 "$SCRIPT_DIR/transcribe-episode.py" "$DATE"
+}
+
 cmd_latest() {
   local LATEST
   LATEST=$(ls -t "$EPISODES"/*.mp3 2>/dev/null | head -1 || true)
@@ -395,8 +406,9 @@ case "${1:-}" in
   preflight) shift; cmd_preflight ;;
   make)      shift; cmd_make   "${1:-}" ;;
   status)    shift; cmd_status "${1:-}" ;;
-  fetch)     shift; cmd_fetch  "${1:-}" ;;
-  build)     shift; cmd_build  "${1:-}" ;;
+  fetch)      shift; cmd_fetch      "${1:-}" ;;
+  build)      shift; cmd_build      "${1:-}" ;;
+  transcribe) shift; cmd_transcribe "${1:-}" ;;
   latest)    cmd_latest ;;
   open)      shift; cmd_open   "${1:-}" ;;
   -h|--help|"") usage ;;

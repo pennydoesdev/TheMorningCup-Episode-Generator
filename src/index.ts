@@ -11,6 +11,7 @@ import type {
 import { loadConfig, type Config } from "./config";
 import { logger } from "./logger";
 import {
+  dayOfYear,
   getZonedNow,
   isoDate,
   isValidIsoDate,
@@ -34,6 +35,7 @@ import {
   putText,
 } from "./r2";
 import { buildEpisodeHtml } from "./html";
+import { generateDescription, buildMetadataTxt } from "./description";
 import { buildFilesTxt, buildManifest } from "./manifest";
 import {
   isCompleted,
@@ -232,6 +234,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
     const jsonKey = `${baseDir}${baseTitle} - ${episodeIso}.json`;
     const manifestKey = `${baseDir}${baseTitle} - ${episodeIso} - manifest.json`;
     const filesTxtKey = `${baseDir}${baseTitle} - ${episodeIso} - files.txt`;
+    const metadataKey = `${baseDir}${baseTitle} - ${episodeIso} - Metadata.txt`;
 
     const cleanForTxt = normalizeWhitespace(
       stripSpacerMarker(stripPacingTags(episode.elevenlabs_script)),
@@ -247,6 +250,24 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
     await putText(env, htmlKey, html, { contentType: "text/html; charset=utf-8" });
 
     await putJson(env, jsonKey, episode);
+
+    // Generate episode description + metadata file for podcast upload.
+    const description = await generateDescription(env, config, episode);
+    const metadataTxt = buildMetadataTxt({
+      episodeIso,
+      spokenDate: spokenDate(episodeIso),
+      episodeNumber: dayOfYear(episodeIso),
+      season: Number(episodeIso.slice(0, 4)),
+      hostName: config.hostName,
+      publisher: config.publisher,
+      copyrightHolder: config.copyrightHolder,
+      genre: config.podcastGenre,
+      estimatedRuntimeMinutes: validation.estimated_runtime_minutes,
+      wordCount: validation.word_count,
+      description,
+      episode,
+    });
+    await putText(env, metadataKey, metadataTxt);
 
     // 5. Chunk + TTS
     stage = "tts";
@@ -355,6 +376,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       txt_key: txtKey,
       html_key: htmlKey,
       json_key: jsonKey,
+      metadata_key: metadataKey,
     });
 
     logger.info("run complete", {
