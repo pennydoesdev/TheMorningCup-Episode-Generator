@@ -35,7 +35,7 @@ import {
   putText,
 } from "./r2";
 import { buildEpisodeHtml } from "./html";
-import { generateDescription, buildMetadataTxt } from "./description";
+import { generateEpisodeCopy, buildMetadataTxt } from "./description";
 import { buildFilesTxt, buildManifest } from "./manifest";
 import {
   isCompleted,
@@ -251,11 +251,12 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
 
     await putJson(env, jsonKey, episode);
 
-    // Generate episode description + metadata file for podcast upload.
-    const description = await generateDescription(env, config, episode);
+    // Generate episode title + description, then write the metadata file.
+    const copy = await generateEpisodeCopy(env, config, episode);
     const metadataTxt = buildMetadataTxt({
       episodeIso,
       spokenDate: spokenDate(episodeIso),
+      episodeTitle: copy.title,
       episodeNumber: dayOfYear(episodeIso),
       season: Number(episodeIso.slice(0, 4)),
       hostName: config.hostName,
@@ -264,7 +265,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       genre: config.podcastGenre,
       estimatedRuntimeMinutes: validation.estimated_runtime_minutes,
       wordCount: validation.word_count,
-      description,
+      description: copy.description,
       episode,
     });
     await putText(env, metadataKey, metadataTxt);
@@ -350,6 +351,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       episodeIso,
       sourceIso,
       baseTitle,
+      episodeTitle: copy.title || undefined,
       publisher: config.publisher,
       copyrightHolder: config.copyrightHolder,
       genre: config.podcastGenre,

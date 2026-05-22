@@ -82,7 +82,8 @@ TITLE=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1])).get('tit
 WORDS=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1])).get('word_count','?'))" "$MANIFEST_FILE")
 RUNTIME=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1])).get('estimated_runtime_minutes','?'))" "$MANIFEST_FILE")
 
-echo "Manifest: $TITLE — $WORDS words, ~$RUNTIME min, $COUNT chunks"
+echo "Manifest: $TITLE"
+echo "          $WORDS words, ~$RUNTIME min, $COUNT chunks"
 echo "Destination: $DEST"
 echo ""
 

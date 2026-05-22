@@ -1,28 +1,42 @@
-// Generates a podcast episode description via a lightweight OpenAI call, then
-// assembles the full metadata .txt that gets saved alongside the episode.
+// Generates a podcast episode title + description via a single lightweight
+// OpenAI call, then assembles the full metadata .txt saved alongside the episode.
 
 import type { Config } from "./config";
 import type { Env, EpisodeJson } from "./types";
 import { logger } from "./logger";
 
-export async function generateDescription(
+export interface EpisodeCopy {
+  title: string;       // ≤10-word subtitle, e.g. "Housing Costs, AI Bills & Your Morning Riddle"
+  description: string; // 2–3 paragraph podcast directory description
+}
+
+export async function generateEpisodeCopy(
   env: Env,
   config: Config,
   episode: EpisodeJson,
-): Promise<string> {
+): Promise<EpisodeCopy> {
   const chapters = (episode.chapters ?? [])
     .map((c, i) => `${i + 1}. ${c.title}`)
     .join("\n");
 
+  const fallback: EpisodeCopy = {
+    title: "",
+    description: episode.social_copy?.main_post ?? "",
+  };
+
   const prompt =
-    `You are writing a podcast episode description for "The Morning Cup," ` +
-    `a daily morning news podcast hosted by ${config.hostName} for ${config.publisher}.\n\n` +
-    `Using the social summary and chapter list below, write a 2–3 paragraph ` +
-    `episode description (150–220 words) for a podcast directory listing.\n` +
-    `- Paragraph 1: A hook capturing the main theme or feel of today's episode (2–3 sentences)\n` +
-    `- Paragraph 2: Preview the main topics covered, drawn from the chapter list\n` +
-    `- Paragraph 3: A short warm invite for listeners to tune in\n\n` +
-    `Tone: warm, conversational, approachable. Return only the description text with no labels or headers.\n\n` +
+    `You are a podcast producer for "The Morning Cup," a daily morning news show ` +
+    `hosted by ${config.hostName} for ${config.publisher}.\n\n` +
+    `Using the social summary and chapter list below, produce two things:\n\n` +
+    `1. TITLE: A catchy episode subtitle of 10 words or fewer that captures today's main stories. ` +
+    `Do NOT start with "The Morning Cup" — just the subtitle. ` +
+    `Use "&" not "and". Example: "Housing Costs, AI Regulation & a Puzzling Riddle"\n\n` +
+    `2. DESCRIPTION: A 2–3 paragraph episode description (150–220 words) for a podcast directory.\n` +
+    `   - Paragraph 1: A hook capturing the main theme or feel of today's episode (2–3 sentences)\n` +
+    `   - Paragraph 2: Preview the main topics covered, drawn from the chapter list\n` +
+    `   - Paragraph 3: A short warm invite for listeners to tune in\n` +
+    `   Tone: warm, conversational, approachable.\n\n` +
+    `Return a JSON object with exactly two keys: "title" and "description". No markdown, no extra text.\n\n` +
     `Social summary: ${episode.social_copy?.main_post ?? ""}\n\n` +
     `Chapters:\n${chapters}`;
 
@@ -36,27 +50,34 @@ export async function generateDescription(
       body: JSON.stringify({
         model: "gpt-4o-mini",
         temperature: 0.7,
-        max_tokens: 400,
+        max_tokens: 600,
+        response_format: { type: "json_object" },
         messages: [{ role: "user", content: prompt }],
       }),
     });
 
     if (!res.ok) {
-      logger.warn("description generation failed", { status: res.status });
-      return episode.social_copy?.main_post ?? "";
+      logger.warn("episode copy generation failed", { status: res.status });
+      return fallback;
     }
 
     const data = await res.json() as { choices: { message: { content: string } }[] };
-    return data.choices?.[0]?.message?.content?.trim() ?? episode.social_copy?.main_post ?? "";
+    const raw = data.choices?.[0]?.message?.content?.trim() ?? "";
+    const parsed = JSON.parse(raw) as { title?: string; description?: string };
+    return {
+      title: (parsed.title ?? "").trim(),
+      description: (parsed.description ?? fallback.description).trim(),
+    };
   } catch (err) {
-    logger.warn("description generation error", { err: String(err) });
-    return episode.social_copy?.main_post ?? "";
+    logger.warn("episode copy generation error", { err: String(err) });
+    return fallback;
   }
 }
 
 export function buildMetadataTxt(opts: {
   episodeIso: string;
   spokenDate: string;
+  episodeTitle: string;
   episodeNumber: number;
   season: number;
   hostName: string;
@@ -70,6 +91,9 @@ export function buildMetadataTxt(opts: {
 }): string {
   const year = opts.episodeIso.slice(0, 4);
   const divider = "-".repeat(60);
+  const fullTitle = opts.episodeTitle
+    ? `The Morning Cup: ${opts.episodeTitle}`
+    : `The Morning Cup — ${opts.spokenDate}`;
 
   const chapters =
     (opts.episode.chapters ?? [])
@@ -91,7 +115,8 @@ export function buildMetadataTxt(opts: {
   const lines = [
     `THE MORNING CUP — EPISODE METADATA`,
     ``,
-    `Title:      The Morning Cup — ${opts.spokenDate}`,
+    `Title:      ${fullTitle}`,
+    `Subtitle:   ${opts.episodeTitle || opts.spokenDate}`,
     `Episode:    ${opts.episodeNumber}`,
     `Season:     ${opts.season}`,
     `Date:       ${opts.episodeIso}`,

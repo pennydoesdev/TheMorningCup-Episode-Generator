@@ -96,8 +96,13 @@ read_manifest() {
 }
 
 YEAR="${DATE:0:4}"
-TITLE=$(read_manifest title "The Morning Cup - $DATE")
 SHOW=$(read_manifest show_name "The Morning Cup")
+EPISODE_SUBTITLE=$(read_manifest episode_title "")
+if [ -n "$EPISODE_SUBTITLE" ]; then
+  TITLE="The Morning Cup: $EPISODE_SUBTITLE"
+else
+  TITLE=$(read_manifest title "The Morning Cup - $DATE")
+fi
 PUBLISHER=$(read_manifest publisher "Vicinity News")
 COPYRIGHT=$(read_manifest copyright "Copyright $YEAR - Vicinity News")
 GENRE=$(read_manifest genre "News")

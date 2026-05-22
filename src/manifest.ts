@@ -12,6 +12,7 @@ export interface ManifestInputs {
   episodeIso: string; // YYYY-MM-DD
   sourceIso: string; // YYYY-MM-DD
   baseTitle: string; // "The Morning Cup"
+  episodeTitle?: string; // short subtitle, e.g. "Housing Costs & AI Regulation"
   publisher: string; // "Vicinity News"
   copyrightHolder: string; // "Vicinity News"
   genre: string; // "Podcast" / "News"
@@ -35,10 +36,15 @@ export function buildManifest(inputs: ManifestInputs): Manifest {
 
   const year = Number(inputs.episodeIso.slice(0, 4));
 
+  const fullTitle = inputs.episodeTitle
+    ? `${inputs.baseTitle}: ${inputs.episodeTitle}`
+    : `${inputs.baseTitle} - ${inputs.episodeIso}`;
+
   return {
     episode_date: inputs.episodeIso,
     source_date: inputs.sourceIso,
-    title: `${inputs.baseTitle} - ${inputs.episodeIso}`,
+    title: fullTitle,
+    episode_title: inputs.episodeTitle,
     show_name: inputs.baseTitle,
     publisher: inputs.publisher,
     copyright: `Copyright ${year} - ${inputs.copyrightHolder}`,

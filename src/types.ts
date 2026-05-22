@@ -126,6 +126,7 @@ export interface Manifest {
   episode_date: string;
   source_date: string;
   title: string;
+  episode_title?: string;
   show_name: string;
   publisher: string;
   copyright: string;
