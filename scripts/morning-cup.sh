@@ -190,7 +190,7 @@ preflight() {
     "The Morning Cup - Song.wav"
     "Coffee Pour.wav"
     "Cream or sugar, hon?.mp3"
-    "morning-cup-sting.wav"
+    "Topic Transition.mp3"
     "The Morning Cup - Thank You.wav"
   )
   for s in "${required_sounds[@]}"; do
