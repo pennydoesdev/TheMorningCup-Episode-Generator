@@ -12,8 +12,8 @@ Usage:
 
 The script:
   1. Loads the manifest to get the chapters list and chunk metadata.
-  2. Measures durations of intro song, coffee pour, cream-or-sugar, intro
-     sting, each chunk, the section sting, and the outro.
+  2. Measures durations of intro song, coffee pour, optional intro sting,
+     each chunk, and the section sting (inserted at section boundaries only).
   3. Walks the timeline (matching build-episode.sh's order) and computes
      each chapter's start timestamp.
   4. Writes ID3v2.3 CTOC (table of contents) + CHAP frames to the MP3.
@@ -68,25 +68,25 @@ def main(mp3_path: str, manifest_path: str, sounds_dir: str, chunks_dir: str):
         print("Manifest has no chunks; skipping chapter markers.")
         return
 
-    # Sound clip filenames must match build-episode.sh
-    intro_song   = os.path.join(sounds_dir, "The Morning Cup - Song.wav")
-    coffee_pour  = os.path.join(sounds_dir, "Coffee Pour.wav")
-    cream_or_sug = os.path.join(sounds_dir, "Cream or sugar, hon?.mp3")
-    intro_sting  = os.path.join(sounds_dir, "intro-sting.wav")
-    section_st   = os.path.join(sounds_dir, "morning-cup-sting.wav")
+    # Sound clip filenames must match build-episode.sh exactly.
+    intro_song  = os.path.join(sounds_dir, "Spark.mp3")
+    coffee_pour = os.path.join(sounds_dir, "Coffee Pour.wav")
+    intro_sting = os.path.join(sounds_dir, "intro-sting.wav")
+    section_st  = os.path.join(sounds_dir, "Topic Transition.mp3")
 
-    intro_song_ms   = ffprobe_duration_ms(intro_song)
-    coffee_pour_ms  = ffprobe_duration_ms(coffee_pour)
-    cream_or_sug_ms = ffprobe_duration_ms(cream_or_sug)
-    intro_sting_ms  = ffprobe_duration_ms(intro_sting) if os.path.isfile(intro_sting) else 0
-    section_st_ms   = ffprobe_duration_ms(section_st)
+    intro_song_ms  = ffprobe_duration_ms(intro_song)
+    coffee_pour_ms = ffprobe_duration_ms(coffee_pour)
+    intro_sting_ms = ffprobe_duration_ms(intro_sting) if os.path.isfile(intro_sting) else 0
+    section_st_ms  = ffprobe_duration_ms(section_st)
 
     # Build per-chunk full-path list, sorted by chunk order (manifest is
     # already ordered, but be defensive).
     sorted_chunks = sorted(chunks, key=lambda c: c["order"])
 
     # Walk the assembled timeline to find each chunk's start offset (ms).
-    cursor_ms = intro_song_ms + coffee_pour_ms + cream_or_sug_ms + intro_sting_ms
+    # Mirrors build-episode.sh: Spark.mp3 → Coffee Pour → [intro-sting] →
+    # chunk[0] → [sting if chunk[1] starts a section] → chunk[1] → ...
+    cursor_ms = intro_song_ms + coffee_pour_ms + intro_sting_ms
     chunk_starts_ms = []
     chunk_durations_ms = []
     for idx, ch in enumerate(sorted_chunks):
@@ -102,9 +102,14 @@ def main(mp3_path: str, manifest_path: str, sounds_dir: str, chunks_dir: str):
         chunk_starts_ms.append(cursor_ms)
         chunk_durations_ms.append(dur)
         cursor_ms += dur
-        # Section sting between chunks (not after the last)
+        # Insert section sting only when the next chunk begins a new section
+        # (starts_section_indices is non-empty). Matches smart sting logic in
+        # build-episode.sh. Falls back to always inserting if no manifest data.
         if idx < len(sorted_chunks) - 1:
-            cursor_ms += section_st_ms
+            next_chunk = sorted_chunks[idx + 1]
+            starts_section = next_chunk.get("starts_section_indices", None)
+            if starts_section is None or starts_section:
+                cursor_ms += section_st_ms
 
     # Map each chapter index to its start timestamp.
     # A chunk's `starts_section_indices` lists section indices that begin in
