@@ -270,6 +270,9 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       estimatedRuntimeMinutes: validation.estimated_runtime_minutes,
       wordCount: validation.word_count,
       description: copy.description,
+      seoTitle: copy.seoTitle,
+      seoDescription: copy.seoDescription,
+      tags: copy.tags,
       episode,
     });
     await putText(env, metadataKey, metadataTxt);
