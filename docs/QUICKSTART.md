@@ -125,14 +125,14 @@ chmod 600 "$HOME/Documents/The Morning Cup/.env"
 
 ```bash
 cd "$HOME/Documents/The Morning Cup/Generator"
-wrangler secret list
+wrangler versions secret list
 ```
 
 You should see: `OPENAI_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`, `RUN_SECRET`.
 
 If any are missing:
 ```bash
-wrangler secret put <SECRET_NAME>
+wrangler versions secret put <SECRET_NAME>
 ```
 
 ## Step 8 — Daily workflow

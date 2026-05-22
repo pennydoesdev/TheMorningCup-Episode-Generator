@@ -163,11 +163,11 @@ npx wrangler kv namespace create MORNING_CUP_KV
 ## 8. Set secrets
 
 ```bash
-npx wrangler secret put OPENAI_API_KEY
-npx wrangler secret put ELEVENLABS_API_KEY
-npx wrangler secret put ELEVENLABS_VOICE_ID
-npx wrangler secret put RESEND_API_KEY
-npx wrangler secret put RUN_SECRET
+npx wrangler versions secret put OPENAI_API_KEY
+npx wrangler versions secret put ELEVENLABS_API_KEY
+npx wrangler versions secret put ELEVENLABS_VOICE_ID
+npx wrangler versions secret put RESEND_API_KEY
+npx wrangler versions secret put RUN_SECRET
 ```
 
 `RUN_SECRET` is the bearer token required by `POST /run`. Choose a long random
@@ -287,7 +287,7 @@ Common causes:
 ## 18. Security notes
 
 - **No secrets in `wrangler.toml`** — only Workers Secrets via
-  `wrangler secret put`.
+  `wrangler versions secret put`.
 - `POST /run` requires `Authorization: Bearer ${RUN_SECRET}`. The Worker
   rejects 401 if the secret is missing or wrong.
 - `/health` is public.

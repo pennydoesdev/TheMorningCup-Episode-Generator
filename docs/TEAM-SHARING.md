@@ -143,7 +143,7 @@ When someone leaves:
 □ Remove them from the Cloudflare account (revokes R2 + worker access)
 □ Remove them from the GitHub repo (Settings → Collaborators)
 □ Rotate RUN_SECRET if it was shared:
-    wrangler secret put RUN_SECRET
+    wrangler versions secret put RUN_SECRET
 □ Send the new RUN_SECRET to remaining teammates
 □ If using inline-secret Shortcuts, distribute updated Shortcuts
 ```

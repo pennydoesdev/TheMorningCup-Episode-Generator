@@ -133,10 +133,10 @@ npm install
 wrangler login            # browser auth
 
 # Set these secrets — one at a time, paste value at prompt:
-wrangler secret put OPENAI_API_KEY
-wrangler secret put ELEVENLABS_API_KEY
-wrangler secret put ELEVENLABS_VOICE_ID
-wrangler secret put RUN_SECRET            # any random string; gates POST /run
+wrangler versions secret put OPENAI_API_KEY
+wrangler versions secret put ELEVENLABS_API_KEY
+wrangler versions secret put ELEVENLABS_VOICE_ID
+wrangler versions secret put RUN_SECRET            # any random string; gates POST /run
 
 wrangler deploy
 ```
