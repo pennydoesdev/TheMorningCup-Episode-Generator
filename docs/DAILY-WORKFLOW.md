@@ -7,100 +7,114 @@ After [setup](./SETUP.md), your morning takes about 30 seconds of human time.
 The Cloudflare cron triggers daily at **5:00 AM America/New_York**:
 
 1. Worker builds source digest (web search via OpenAI, optionally RSS).
-2. Calls OpenAI Responses API with the master prompt.
+2. Calls OpenAI with the master prompt; checks last 7 days of covered topics to avoid repeating stories.
 3. Validates word count and structure; runs one repair pass if needed.
-4. Splits the script into TTS-friendly chunks at section spacers.
-5. Synthesizes 4 chunks in parallel via ElevenLabs.
-6. Writes everything to R2.
-7. (Optional) Emails completion summary via Resend.
+4. Generates 3 episode title options + full description + SEO title + SEO description + tags via `gpt-4o-mini`.
+5. Splits the script into TTS-friendly chunks at section spacers.
+6. Synthesizes 4 chunks in parallel via ElevenLabs.
+7. Writes everything (chunks, manifest, metadata .txt, script files) to R2.
 
 By ~5:08-5:12 AM ET, the episode is complete in R2.
 
-## Your two commands
+## Your one command
 
 ```bash
-"$HOME/Documents/The Morning Cup/Scripts/fetch-chunks.sh"
-"$HOME/Documents/The Morning Cup/Scripts/build-episode.sh"
+"$HOME/Documents/The Morning Cup/Scripts/morning-cup.sh" make
 ```
 
-That's it.
+That's it. `make` does: preflight → trigger worker → poll until complete → fetch chunks from R2 → assemble MP3 → transcribe.
 
-The tagged MP3 lands at `~/Documents/The Morning Cup/Episodes/The Morning Cup - <today>.mp3`.
+The tagged, loudness-normalized MP3 lands at:
+`~/Documents/The Morning Cup/Episodes/The Morning Cup - <today>.mp3`
 
-## What each command does
+Alongside it you'll also get:
+- `The Morning Cup - <DATE> - Metadata.txt` — post title, SEO title, SEO description, tags, episode description, chapters, sources, riddle, social posts
+- `The Morning Cup - <DATE>.srt` — timestamped transcript for your podcast host
+- `The Morning Cup - <DATE>.vtt` — timestamped transcript for web players
 
-### `fetch-chunks.sh`
+(Transcription runs automatically if `GROQ_API_KEY` or `OPENAI_API_KEY` is in your `.env`.)
 
-Pulls the manifest + chunk MP3s from R2 into `~/Documents/The Morning Cup/Chunks/<DATE>/`.
+## What each step does
+
+### `morning-cup.sh make`
+
+All-in-one pipeline. Equivalent to running these in sequence:
 
 ```bash
-# Today's date in America/New_York (default)
-fetch-chunks.sh
-
-# Specific date
-fetch-chunks.sh 2026-05-01
-
-# Auto-detect newest in R2
-fetch-chunks.sh --latest
+morning-cup.sh preflight       # check deps, secrets, sound assets
+                               # trigger worker POST /run, poll /status
+morning-cup.sh fetch [DATE]    # pull manifest + chunks from R2
+morning-cup.sh build [DATE]    # ffmpeg assemble + loudnorm + tag + chapters
+morning-cup.sh transcribe [DATE]  # Whisper → .srt + .vtt
 ```
 
-Idempotent — re-running it after a partial download skips chunks already on disk.
+### `morning-cup.sh fetch`
 
-### `build-episode.sh`
-
-ffmpeg-based assembler. Concatenates intro + chunks + stings + outro into one MP3 and writes ID3 tags from the manifest.
+Pulls the manifest + chunk MP3s from R2 into `~/Documents/The Morning Cup/Chunks/<DATE>/`. Also downloads the Metadata.txt.
 
 ```bash
-# Auto-detect newest dated folder in Chunks/ (default)
-build-episode.sh
-
-# Specific date
-build-episode.sh 2026-05-01
+morning-cup.sh fetch           # today's date in ET
+morning-cup.sh fetch 2026-05-01
 ```
 
-Output: `~/Documents/The Morning Cup/Episodes/The Morning Cup - <DATE>.mp3` with full ID3 metadata.
+Idempotent — re-running after a partial download skips chunks already on disk.
 
-Takes ~5 seconds for a typical 24-minute episode.
+### `morning-cup.sh build`
+
+ffmpeg-based assembler. Concatenates intro + chunks + stings + outro → loudness-normalizes to -16 LUFS → writes ID3 tags + chapter markers.
+
+```bash
+morning-cup.sh build           # auto-detect newest folder in Chunks/
+morning-cup.sh build 2026-05-01
+```
+
+Output: `~/Documents/The Morning Cup/Episodes/The Morning Cup - <DATE>.mp3`
+
+Takes ~10 seconds for a typical episode.
+
+### `morning-cup.sh transcribe`
+
+Runs Whisper on the finished MP3 and writes a `.srt` and `.vtt` transcript.
+
+```bash
+morning-cup.sh transcribe       # today's date
+morning-cup.sh transcribe 2026-05-01
+```
+
+Provider auto-selection: Groq ($0.01) → mlx-whisper (free) → faster-whisper (free) → OpenAI ($0.10).
+Add `GROQ_API_KEY="gsk_..."` to your `.env` for the cheapest/fastest option.
+
+### `morning-cup.sh status`
+
+Check the worker's current run record without triggering anything.
+
+```bash
+morning-cup.sh status
+morning-cup.sh status 2026-05-01
+```
+
+Returns the run record JSON: `pending` / `generating` / `validating` / `tts` / `completed` / `failed` plus timestamps and word/chunk counts.
 
 ## Manual override scenarios
 
 ### "I want to re-run today's generation"
 
 ```bash
-RUN_SECRET="<your-secret>"
-TODAY=$(TZ=America/New_York date +%Y-%m-%d)
-curl --max-time 900 -X POST \
-  -H "Authorization: Bearer $RUN_SECRET" \
-  "https://themorningcupgenerator.<subdomain>.workers.dev/run?date=$TODAY&force=true"
+"$HOME/Documents/The Morning Cup/Scripts/morning-cup.sh" make
 ```
 
-`force=true` overwrites any existing run record for that date.
+If today's run already completed and you want to force a regeneration, the `/run?force=true` flag is used automatically by `make`.
 
 ### "I want to generate for a specific past date"
 
-Same call, change `date=`:
-
 ```bash
-curl --max-time 900 -X POST \
-  -H "Authorization: Bearer $RUN_SECRET" \
-  "https://themorningcupgenerator.<subdomain>.workers.dev/run?date=2026-04-25&force=true"
+"$HOME/Documents/The Morning Cup/Scripts/morning-cup.sh" make 2026-05-01
 ```
-
-The episode for `2026-04-25` will summarize **April 24th** news (one day prior).
-
-### "I want to check status without triggering"
-
-```bash
-curl -H "Authorization: Bearer $RUN_SECRET" \
-  "https://themorningcupgenerator.<subdomain>.workers.dev/status?date=2026-05-01"
-```
-
-Returns the run record JSON: `pending` / `generating` / `validating` / `tts` / `completed` / `failed` plus timestamps and word/chunk counts.
 
 ### "Health check (no auth needed)"
 
 ```bash
-curl "https://themorningcupgenerator.<subdomain>.workers.dev/health"
+curl "https://themorningcupgenerator.itsmiarosemathews.workers.dev/health"
 ```
 
 ## Timing budget
@@ -111,13 +125,14 @@ Typical run on `gpt-5-mini`:
 |-------|-----------|
 | Generation (OpenAI + web_search) | 60-180 s |
 | Repair pass (if first pass underwrites) | +60-120 s |
-| Validation, R2 writes | <5 s |
-| TTS (parallel ×4 across ~19 chunks) | 60-120 s |
-| **Total worker run** | **3-7 min** |
+| Validation, R2 writes, metadata generation | <10 s |
+| TTS (parallel ×4 across ~12-19 chunks) | 60-120 s |
 | `fetch-chunks.sh` | 10-30 s (network speed) |
-| `build-episode.sh` | 5-10 s |
+| `build-episode.sh` (assemble + loudnorm) | 10-15 s |
+| Transcription (Groq) | ~16 s |
+| **Total `morning-cup.sh make`** | **~5-8 min** |
 
-Total wall time from blank slate to playable MP3 is ~8 minutes if run manually right now, or zero minutes of your time if the cron fires while you sleep.
+Total wall time from blank slate to playable MP3 is ~5-8 minutes if run manually, or zero minutes of your time if the cron fires while you sleep.
 
 ## Where things live
 
@@ -129,6 +144,9 @@ Total wall time from blank slate to playable MP3 is ~8 minutes if run manually r
 | Validation rules | `src/validator.ts` |
 | Chunker (section split) | `src/chunker.ts` |
 | ElevenLabs voice settings | `src/config.ts` |
-| Run records | KV (binding `MORNING_CUP_KV`) + durable copy in R2 at `morning-cup/<DATE>/run.json` |
-| Audio chunks | R2 at `morning-cup/<DATE>/chunks/` |
-| Manifest (canonical metadata) | R2 at `morning-cup/<DATE>/The Morning Cup - <DATE> - manifest.json` |
+| Episode copy / metadata generation | `src/description.ts` |
+| Topic memory (dedup) | `src/topics.ts` |
+| Run records | KV (binding `MORNING_CUP_KV`) |
+| Audio chunks | R2 at `Generators/Podcasts/TheMorningCup/<DATE>/chunks/` |
+| Manifest | R2 at `Generators/Podcasts/TheMorningCup/<DATE>/The Morning Cup - <DATE> - manifest.json` |
+| Metadata .txt | R2 at `Generators/Podcasts/TheMorningCup/<DATE>/The Morning Cup - <DATE> - Metadata.txt` |
