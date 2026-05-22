@@ -44,8 +44,9 @@ export async function generateEpisodeCopy(
     `   - Paragraph 2: Preview the main topics covered, drawn from the chapter list\n` +
     `   - Paragraph 3: A short warm invite for listeners to tune in\n` +
     `   Tone: warm, conversational, approachable.\n\n` +
-    `3. SEO_TITLE: A single WordPress post/SEO title, 60 characters or fewer. ` +
-    `Format: "[Subtitle] | The Morning Cup". Keyword-rich and descriptive.\n\n` +
+    `3. SEO_TITLE: A WordPress post/SEO title, up to 50 characters (NOT including the show prefix). ` +
+    `Return ONLY the subtitle portion — e.g. "Housing Costs, AI Bills & a Morning Riddle". ` +
+    `The episode number and show name will be prepended automatically.\n\n` +
     `4. SEO_DESCRIPTION: A meta description for the WordPress post, 150–160 characters. ` +
     `Hook the reader; include the show name and 1–2 key topics.\n\n` +
     `5. TAGS: 10–14 comma-separated tags for the WordPress post. ` +
@@ -95,7 +96,7 @@ export async function generateEpisodeCopy(
         (rawTitles[2] ?? "").trim(),
       ] as [string, string, string],
       description: (parsed.description ?? fallback.description).trim(),
-      seoTitle: (parsed.seo_title ?? fallback.seoTitle).trim().slice(0, 60),
+      seoTitle: (parsed.seo_title ?? fallback.seoTitle).trim().slice(0, 50),
       seoDescription: (parsed.seo_description ?? fallback.seoDescription).trim().slice(0, 160),
       tags: (parsed.tags ?? fallback.tags).trim(),
     };
@@ -155,18 +156,28 @@ export function buildMetadataTxt(opts: {
     .filter(Boolean)
     .join("\n");
 
+  // Build full SEO title: "Ep. 142: Subtitle | The Morning Cup" (≤60 chars)
+  const seoTitleFull = (() => {
+    const base = opts.seoTitle?.trim() ?? t1 ?? "";
+    const full = `Ep. ${opts.episodeNumber}: ${base} | The Morning Cup`;
+    return full.length <= 60 ? full : full.slice(0, 57) + "...";
+  })();
+
   const lines = [
     `THE MORNING CUP — EPISODE METADATA`,
     ``,
-    `Title:      ${primaryTitle}`,
-    `Episode:    ${opts.episodeNumber}`,
-    `Season:     ${opts.season}`,
-    `Date:       ${opts.episodeIso}`,
-    `Host:       ${opts.hostName}`,
-    `Publisher:  ${opts.publisher}`,
-    `Runtime:    ~${opts.estimatedRuntimeMinutes.toFixed(1)} min  (${opts.wordCount} words)`,
-    `Copyright:  Copyright ${year} — ${opts.copyrightHolder}`,
-    `Genre:      ${opts.genre}`,
+    `Title:           ${primaryTitle}`,
+    `Episode:         ${opts.episodeNumber}  (Season ${opts.season})`,
+    `Date:            ${opts.episodeIso}  —  ${opts.spokenDate}`,
+    `Host:            ${opts.hostName}`,
+    `Publisher:       ${opts.publisher}`,
+    `Runtime:         ~${opts.estimatedRuntimeMinutes.toFixed(1)} min  (${opts.wordCount} words)`,
+    `Copyright:       Copyright ${year} — ${opts.copyrightHolder}`,
+    `Genre:           ${opts.genre}`,
+    ``,
+    `SEO Title:       ${seoTitleFull}`,
+    `SEO Description: ${opts.seoDescription ?? ""}`,
+    `Tags:            ${opts.tags ?? ""}`,
     ``,
     divider,
     `TITLE OPTIONS (pick one for your podcast host)`,
@@ -179,19 +190,6 @@ export function buildMetadataTxt(opts: {
     divider,
     ``,
     opts.description,
-    ``,
-    divider,
-    `SEO (WordPress / OpenPodcast)`,
-    divider,
-    ``,
-    `  SEO Title:`,
-    `  ${opts.seoTitle ?? ""}`,
-    ``,
-    `  SEO Meta Description (paste into Yoast / RankMath):`,
-    `  ${opts.seoDescription ?? ""}`,
-    ``,
-    `  Tags (comma-separated, paste into WordPress Tags field):`,
-    `  ${opts.tags ?? ""}`,
     ``,
     divider,
     `CHAPTERS`,
