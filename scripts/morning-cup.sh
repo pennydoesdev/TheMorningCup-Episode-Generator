@@ -78,7 +78,7 @@ die()   { fail "$*"; exit 1; }
 # --- env loading -------------------------------------------------------------
 
 load_env() {
-  if [ -z "${RUN_SECRET:-}" ] && [ -f "$ENV_FILE" ]; then
+  if [ -f "$ENV_FILE" ]; then
     set -o allexport
     # shellcheck disable=SC1090
     source "$ENV_FILE"
