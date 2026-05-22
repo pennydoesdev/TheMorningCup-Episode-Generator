@@ -263,9 +263,12 @@ try:
     d = json.loads(sys.stdin.read())
 except Exception:
     print('unknown'); sys.exit(0)
-if not d or d.get('error') == 'not_found' or d.get('status') == 'not_found':
+if not d:
+    print('unknown'); sys.exit(0)
+record = d.get('record')
+if not record:
     print('absent'); sys.exit(0)
-print(d.get('status', 'unknown'))
+print(record.get('status', 'unknown'))
 "
 }
 
