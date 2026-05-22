@@ -57,10 +57,10 @@ export function loadConfig(env: Env): Config {
     elevenLabsOutputFormat: str(env.ELEVENLABS_OUTPUT_FORMAT, "mp3_44100_128"),
     workerTimezone: str(env.WORKER_TIMEZONE, "America/New_York"),
 
-    minScriptWords: num(env.MIN_SCRIPT_WORDS, 3300),
-    targetScriptWordsMin: num(env.TARGET_SCRIPT_WORDS_MIN, 3300),
-    targetScriptWordsMax: num(env.TARGET_SCRIPT_WORDS_MAX, 3700),
-    maxScriptWords: num(env.MAX_SCRIPT_WORDS, 3900),
+    minScriptWords: num(env.MIN_SCRIPT_WORDS, 2175),
+    targetScriptWordsMin: num(env.TARGET_SCRIPT_WORDS_MIN, 2200),
+    targetScriptWordsMax: num(env.TARGET_SCRIPT_WORDS_MAX, 2400),
+    maxScriptWords: num(env.MAX_SCRIPT_WORDS, 2465),
     wordsPerMinute: num(env.WORDS_PER_MINUTE, 145),
 
     maxTtsCharsPerChunk: num(env.MAX_TTS_CHARS_PER_CHUNK, 2500),

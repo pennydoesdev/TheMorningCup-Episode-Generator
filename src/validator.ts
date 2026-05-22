@@ -65,13 +65,11 @@ export function validateEpisode(
     );
   }
 
-  if (runtime < 20) {
-    errors.push(`Estimated runtime ${runtime.toFixed(1)} min is below 20-minute floor`);
+  if (runtime < 15) {
+    errors.push(`Estimated runtime ${runtime.toFixed(1)} min is below 15-minute floor`);
   }
-  if (runtime > 30) {
-    errors.push(`Estimated runtime ${runtime.toFixed(1)} min exceeds 30-minute ceiling`);
-  } else if (runtime > 25) {
-    warnings.push(`Estimated runtime ${runtime.toFixed(1)} min above 25-minute target (soft limit 30 min)`);
+  if (runtime > 17) {
+    errors.push(`Estimated runtime ${runtime.toFixed(1)} min exceeds 17-minute ceiling`);
   }
 
   if (!/^Good morning, today is\b/i.test(script.trimStart())) {
@@ -90,8 +88,8 @@ export function validateEpisode(
 
   if (!script.includes("[TEN-SECOND SECTION SPACER]")) {
     errors.push("Script is missing [TEN-SECOND SECTION SPACER] markers");
-  } else if (spacerCount < 20) {
-    errors.push(`Found only ${spacerCount} spacer markers; need at least 20`);
+  } else if (spacerCount < 12) {
+    errors.push(`Found only ${spacerCount} spacer markers; need at least 12`);
   }
 
   // Riddle section before outro, riddle answer at end.

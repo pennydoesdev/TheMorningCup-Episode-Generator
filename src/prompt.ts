@@ -5,15 +5,15 @@ export const MASTER_PROMPT = `Create a DAILY morning news podcast script for Vic
 This script is generated each morning for same-morning recording and publication.
 
 CRITICAL RUNTIME RULE:
-- The host-read script MUST be written to produce NO LESS THAN 20 minutes of spoken audio and NO MORE THAN 25 minutes of spoken audio at a natural morning-news host pace.
+- The host-read script MUST be written to produce NO LESS THAN 15 minutes of spoken audio and NO MORE THAN 17 minutes of spoken audio at a natural morning-news host pace.
 - This is a hard requirement.
-- Target a spoken runtime of 22 to 25 minutes, with 20 minutes as the absolute minimum floor.
+- Target a spoken runtime of 15 to 17 minutes, with 15 minutes as the absolute minimum floor.
 - DO NOT underwrite the script.
 - DO NOT generate a short summary-style script.
-- The host-read portion should generally land around 3,300 to 3,700 spoken words depending on pacing.
-- If the script feels thin, expand the politics, political trends, economy, trade, healthcare, immigration, international, Iran, Gaza, and closing-summary sections until the host-read script clearly supports at least 20 minutes of speech.
-- Never generate a 10-minute style script.
-- The script must always be at least 20 minutes and never longer than 25 minutes.
+- The host-read portion should generally land around 2,200 to 2,400 spoken words depending on pacing.
+- If the script feels thin, expand the politics, political trends, economy, trade, healthcare, immigration, international, Iran, Gaza, and closing-summary sections until the host-read script clearly supports at least 15 minutes of speech.
+- Never generate a script under 15 minutes.
+- The script must always be at least 15 minutes and never longer than 17 minutes.
 
 DATE RULE:
 - The script must open with: "Good morning, today is [CURRENT DATE]. I am [HOST NAME], and this is The Morning Cup from Vicinity News."
@@ -111,12 +111,13 @@ Use this order unless there is a very strong editorial reason to adjust it:
 28. Riddle answer
 
 SECTION DEPTH TARGETS:
-- Politics plus political trends combined: at least 800 words.
-- Business/economy plus trade combined: at least 500 words.
-- Healthcare plus environment/climate combined: at least 500 words.
-- International plus Iran plus Gaza combined: at least 800 words.
+- Politics plus political trends combined: at least 450 words.
+- Business/economy plus trade combined: at least 275 words.
+- Healthcare plus environment/climate combined: at least 275 words.
+- International plus Iran plus Gaza combined: at least 450 words.
 - Do not satisfy the section list with one-line summaries.
 - Each major news section must contain enough context, analysis, and working-class impact to support the runtime.
+- For a 15–17 minute show, keep each section tight and focused — one or two key developments per section, not exhaustive coverage.
 
 EMOTIONAL ARC:
 The episode should feel like it has three acts:
@@ -431,7 +432,7 @@ ELEVENLABS-READY SPOKEN SCRIPT OUTPUT RULES:
 - The spoken script must be ready to paste directly into ElevenLabs.
 - The spoken script must begin with “Good morning, today is [CURRENT DATE].”
 - The spoken script must be written as a real host read, not a bullet summary.
-- The spoken script must be long enough to support 20 to 25 minutes of actual speech.
+- The spoken script must be long enough to support 15 to 17 minutes of actual speech.
 - Treat this as a hard validation rule before finishing.
 - Insert [TEN-SECOND SECTION SPACER] between each major section.
 
@@ -524,7 +525,7 @@ The full episode should feel like one complete morning briefing with a clear emo
 - include political race updates, political trend analysis, immigration updates, crime headlines, and positive science/oceans/environment news when relevant
 - include a short riddle near the end and reveal the answer at the very end
 - be formatted for ElevenLabs-ready narration
-- produce a host-read script that is ALWAYS at least 20 minutes and NEVER longer than 25 minutes
+- produce a host-read script that is ALWAYS at least 15 minutes and NEVER longer than 17 minutes
 - include [TEN-SECOND SECTION SPACER] between all major sections
 - end grounded, constructive, and positive`;
 
