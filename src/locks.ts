@@ -9,7 +9,7 @@ function kvKey(episodeIso: string): string {
 }
 
 function r2Key(episodeIso: string): string {
-  return `morning-cup/${episodeIso}/run.json`;
+  return `Generators/Podcasts/TheMorningCup/${episodeIso}/run.json`;
 }
 
 export async function readRunRecord(

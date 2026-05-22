@@ -1,26 +1,31 @@
 // Master prompt for The Morning Cup. Do not modify the prompt body.
 
-export const MASTER_PROMPT = `Create a DAILY morning news podcast script for The Penny Tribune called “The Morning Cup.”
+export const MASTER_PROMPT = `Create a DAILY morning news podcast script for Vicinity News called “The Morning Cup.”
 
 This script is generated each morning for same-morning recording and publication.
 
 CRITICAL RUNTIME RULE:
-- The host-read script MUST be written to produce NO LESS THAN 20 minutes of spoken audio and NO MORE THAN 25 minutes of spoken audio at a natural morning-news host pace.
-- This is a hard requirement.
-- Target a spoken runtime of 22 to 25 minutes, with 20 minutes as the absolute minimum floor.
-- DO NOT underwrite the script.
-- DO NOT generate a short summary-style script.
-- The host-read portion should generally land around 3,300 to 3,700 spoken words depending on pacing.
-- If the script feels thin, expand the politics, political trends, economy, trade, healthcare, immigration, international, Iran, Gaza, and closing-summary sections until the host-read script clearly supports at least 20 minutes of speech.
-- Never generate a 10-minute style script.
-- The script must always be at least 20 minutes and never longer than 25 minutes.
+- The host-read script MUST produce NO LESS THAN 15 minutes and NO MORE THAN 17 minutes of spoken audio at a natural morning-news pace.
+- This is a hard, non-negotiable requirement enforced by automated validation.
+- Target word count: 2,200 to 2,400 words. Hard floor: 2,175 words. Hard ceiling: 2,465 words.
+- At 145 words per minute: 2,200 words = 15.2 min. 2,400 words = 16.6 min.
+- DO NOT underwrite the script. DO NOT generate a short summary-style script.
+- If the script feels thin, expand politics, political trends, economy, trade, healthcare, immigration, international, Iran, and Gaza until the script clearly supports at least 15 minutes.
+- Never generate a script under 2,175 words or over 2,465 words.
+
+MANDATORY SELF-CHECK BEFORE SUBMITTING:
+Before generating the final JSON output, count the approximate words in elevenlabs_script.
+- If the count is below 2,175 words: expand sections before submitting.
+- If the count is above 2,465 words: trim sections before submitting.
+- If the count is outside 2,200–2,400: adjust until it lands in that range.
+- Do not submit a script that will fail this check. The pipeline will reject it and force a repair pass.
 
 DATE RULE:
-- The script must open with: "Good morning, today is [CURRENT DATE]. I am [HOST NAME], and this is The Morning Cup from The Penny Tribune."
+- The script must open with: "Good morning, today is [CURRENT DATE]. I am [HOST NAME], and this is The Morning Cup from Vicinity News."
 - [HOST NAME] is the value of HOST in the user-prompt context below — substitute it directly.
 - The spoken date must always be the current date of the morning the episode is being recorded or published.
 - The news content must summarize the PREVIOUS DAY'S news.
-- Example: if generated on the morning of April 16, 2026 with HOST="Penelope Rose", the script should open: "Good morning, today is April 16th, 2026. I am Penelope Rose, and this is The Morning Cup from The Penny Tribune."
+- Example: if generated on the morning of April 16, 2026 with HOST="Penelope Rose", the script should open: "Good morning, today is April 16th, 2026. I am Penelope Rose, and this is The Morning Cup from Vicinity News."
 
 OUTRO IDENTITY RULE:
 - The script must end with a sign-off that includes the host's name and thanks the listener.
@@ -111,12 +116,13 @@ Use this order unless there is a very strong editorial reason to adjust it:
 28. Riddle answer
 
 SECTION DEPTH TARGETS:
-- Politics plus political trends combined: at least 800 words.
-- Business/economy plus trade combined: at least 500 words.
-- Healthcare plus environment/climate combined: at least 500 words.
-- International plus Iran plus Gaza combined: at least 800 words.
+- Politics plus political trends combined: at least 450 words.
+- Business/economy plus trade combined: at least 275 words.
+- Healthcare plus environment/climate combined: at least 275 words.
+- International plus Iran plus Gaza combined: at least 450 words.
 - Do not satisfy the section list with one-line summaries.
 - Each major news section must contain enough context, analysis, and working-class impact to support the runtime.
+- For a 15–17 minute show, keep each section tight and focused — one or two key developments per section, not exhaustive coverage.
 
 EMOTIONAL ARC:
 The episode should feel like it has three acts:
@@ -431,14 +437,35 @@ ELEVENLABS-READY SPOKEN SCRIPT OUTPUT RULES:
 - The spoken script must be ready to paste directly into ElevenLabs.
 - The spoken script must begin with “Good morning, today is [CURRENT DATE].”
 - The spoken script must be written as a real host read, not a bullet summary.
-- The spoken script must be long enough to support 20 to 25 minutes of actual speech.
-- Treat this as a hard validation rule before finishing.
+- The spoken script MUST be 2,175–2,465 words. Target: 2,200–2,400 words.
+- Scripts outside this range are automatically rejected. Verify word count before submitting.
 - Insert [TEN-SECOND SECTION SPACER] between each major section.
 
 TRANSITIONAL PHRASES (vary across the episode):
-- After every [TEN-SECOND SECTION SPACER], the host introduces the next
-  section by name with a brief transitional phrase. This signals to the
-  listener what's coming next and pairs with the audio sting.
+- After every [TEN-SECOND SECTION SPACER], the host MUST introduce the
+  next section by name with a brief transitional phrase.
+- The transition phrase MUST appear AFTER the spacer marker, never before it.
+  The spacer is a silent gap in audio — a sting sound plays over it.
+  The first words the listener hears after the sting are the transition.
+- Required format for every section transition:
+
+    [end of previous section content]
+
+    [TEN-SECOND SECTION SPACER]
+
+    [Transition phrase], [Section Name].
+
+    [Section content begins here...]
+
+- Example:
+    ...that is the situation on the ground in Gaza.
+
+    [TEN-SECOND SECTION SPACER]
+
+    Up next, the Riddle.
+
+    Here is this morning's riddle...
+
 - VARY the transitional phrases across the episode — do NOT use the same
   phrase twice in a single show. Pick from this list at random for each
   section transition (or invent close variants in the same register):
@@ -462,15 +489,14 @@ TRANSITIONAL PHRASES (vary across the episode):
   18. "Up first today,..."
   19. "Let's spend a few minutes on..."
   20. "Heading into..."
-- Each section transition should feel like one sentence: phrase + section
-  name + period. For example:
+- Each transition is exactly one sentence: phrase + section name + period.
     "Up next, the Power Map."
     "Let's turn to our Cost of Living Check."
-    "Time for what comes next."
+    "Time for What Comes Next."
     "Now we go to today's riddle."
-- Do not stack two transitional phrases together. Pick one per section.
-- The very first section after the opening doesn't need a phrase from the
-  list — the opening line already sets up the show.
+- Do not stack two transitional phrases together. One per section.
+- Do not put any transitional phrase BEFORE the spacer marker.
+- The very first section after the opening does not need a transition phrase.
 
 SECTION LABELS — when to speak, when to silence:
 - DO speak each section's name as the host introduces it. Saying the
@@ -524,7 +550,7 @@ The full episode should feel like one complete morning briefing with a clear emo
 - include political race updates, political trend analysis, immigration updates, crime headlines, and positive science/oceans/environment news when relevant
 - include a short riddle near the end and reveal the answer at the very end
 - be formatted for ElevenLabs-ready narration
-- produce a host-read script that is ALWAYS at least 20 minutes and NEVER longer than 25 minutes
+- produce a host-read script that is ALWAYS at least 15 minutes and NEVER longer than 17 minutes
 - include [TEN-SECOND SECTION SPACER] between all major sections
 - end grounded, constructive, and positive`;
 
@@ -534,6 +560,7 @@ export interface PromptInputs {
   sourceDigestText: string;
   sourceLimited: boolean;
   hostName: string; // e.g. "Penelope Rose"
+  recentTopics?: { chapters: string[]; stories: string[] };
 }
 
 export function buildUserPrompt(inputs: PromptInputs): string {
@@ -542,12 +569,17 @@ export function buildUserPrompt(inputs: PromptInputs): string {
       ? `\nSUPPLEMENTAL CONTEXT (starting hints only — verify and expand with web_search before relying on any item):\n${inputs.sourceDigestText}\n`
       : "";
 
+  const recentTopicsBlock =
+    inputs.recentTopics && inputs.recentTopics.stories.length > 0
+      ? `\nRECENT STORIES (past 7 days — do NOT re-cover these same stories; choose fresh angles or entirely different news):\n${inputs.recentTopics.stories.map((s) => `- ${s}`).join("\n")}\n`
+      : "";
+
   return `${MASTER_PROMPT}
 
 HOST: ${inputs.hostName}
 CURRENT DATE (episode_date): ${inputs.episodeDateSpoken}
 SOURCE DATE (previous day to summarize): ${inputs.sourceDateSpoken}
-
+${recentTopicsBlock}
 RESEARCH INSTRUCTIONS:
 You have a web_search tool available. You MUST use it to research the actual news from ${inputs.sourceDateSpoken}. Run multiple targeted searches across the topic flow:
 - A genuine positive opening story (rescue, mutual aid, labor wins, conservation, ordinary people doing something kind)

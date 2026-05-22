@@ -2,8 +2,8 @@
 #
 # build-episode.sh - Assemble a Morning Cup episode with ffmpeg.
 #
-# Concatenates Sounds/Song.wav -> Coffee Pour -> "Cream or sugar, hon?" ->
-# intro-sting -> 001.mp3 -> morning-cup-sting -> 002.mp3 -> ... -> Thank You.wav
+# Concatenates Spark.mp3 -> Coffee Pour -> intro-sting ->
+# 001.mp3 -> Topic Transition -> 002.mp3 -> ... -> Thank You.wav
 # into one MP3, writes ID3 tags from the manifest, saves to:
 #     ~/Documents/The Morning Cup/Episodes/The Morning Cup - <DATE>.mp3
 #
@@ -60,14 +60,13 @@ fi
 
 # --- assets ------------------------------------------------------------------
 
-INTRO_SONG="$SOUNDS/The Morning Cup - Song.wav"
+INTRO_SONG="$SOUNDS/Spark.mp3"
 COFFEE_POUR="$SOUNDS/Coffee Pour.wav"
-CREAM_OR_SUGAR="$SOUNDS/Cream or sugar, hon?.mp3"
 INTRO_STING="$SOUNDS/intro-sting.wav"
-SECTION_STING="$SOUNDS/morning-cup-sting.wav"
+SECTION_STING="$SOUNDS/Topic Transition.mp3"
 OUTRO="$SOUNDS/The Morning Cup - Thank You.wav"
 
-REQUIRED=("$INTRO_SONG" "$COFFEE_POUR" "$CREAM_OR_SUGAR" "$SECTION_STING" "$OUTRO")
+REQUIRED=("$INTRO_SONG" "$COFFEE_POUR" "$SECTION_STING" "$OUTRO")
 for f in "${REQUIRED[@]}"; do
   if [ ! -f "$f" ]; then
     echo "Error: missing required asset: $f" >&2
@@ -97,25 +96,55 @@ read_manifest() {
 }
 
 YEAR="${DATE:0:4}"
-TITLE=$(read_manifest title "The Morning Cup - $DATE")
 SHOW=$(read_manifest show_name "The Morning Cup")
-PUBLISHER=$(read_manifest publisher "The Penny Tribune")
-COPYRIGHT=$(read_manifest copyright "Copyright $YEAR - The Penny Tribune")
+EPISODE_SUBTITLE=$(read_manifest episode_title "")
+if [ -n "$EPISODE_SUBTITLE" ]; then
+  TITLE="The Morning Cup: $EPISODE_SUBTITLE"
+else
+  TITLE=$(read_manifest title "The Morning Cup - $DATE")
+fi
+PUBLISHER=$(read_manifest publisher "Vicinity News")
+COPYRIGHT=$(read_manifest copyright "Copyright $YEAR - Vicinity News")
 GENRE=$(read_manifest genre "News")
 WORD_COUNT=$(read_manifest word_count "?")
 RUNTIME=$(read_manifest estimated_runtime_minutes "?")
+EPISODE_NUM=$(python3 -c "from datetime import date; d=date.fromisoformat('$DATE'); print(d.timetuple().tm_yday)")
 
 GEN_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 COMMENT="Generated $GEN_AT — ~$RUNTIME min / $WORD_COUNT words"
 
+# --- detect section boundaries from manifest (smart sting placement) ---------
+#
+# Chunks with starts_section_indices = [] are continuations of a split section.
+# The sting should only play before chunks that begin a new section, not before
+# continuations. Falls back to always inserting the sting if manifest is absent.
+
+CHUNK_STARTS_SECTION=()
+if [ -f "$MANIFEST" ]; then
+  while IFS= read -r line; do
+    CHUNK_STARTS_SECTION+=("$line")
+  done < <(python3 -c "
+import json, sys
+manifest = json.load(open(sys.argv[1]))
+chunks = sorted(manifest.get('chunks', []), key=lambda c: c['order'])
+for chunk in chunks:
+    print('1' if chunk.get('starts_section_indices') else '0')
+" "$MANIFEST")
+fi
+
 # --- build ordered input list ------------------------------------------------
 
-INPUTS=("$INTRO_SONG" "$COFFEE_POUR" "$CREAM_OR_SUGAR")
+INPUTS=("$INTRO_SONG" "$COFFEE_POUR")
 [ -f "$INTRO_STING" ] && INPUTS+=("$INTRO_STING")
 for i in "${!CHUNKS_LIST[@]}"; do
   INPUTS+=("${CHUNKS_LIST[$i]}")
   if [ $i -lt $((CHUNK_COUNT - 1)) ]; then
-    INPUTS+=("$SECTION_STING")
+    NEXT_IDX=$((i + 1))
+    # Insert sting only when the next chunk starts a new section.
+    # If manifest data is unavailable (fallback 1), always insert.
+    if [ "${CHUNK_STARTS_SECTION[$NEXT_IDX]:-1}" = "1" ]; then
+      INPUTS+=("$SECTION_STING")
+    fi
   fi
 done
 INPUTS+=("$OUTRO")
@@ -170,22 +199,34 @@ ffmpeg -y -loglevel error -f concat -safe 0 -i "$LIST" \
   -metadata genre="$GENRE" \
   -metadata publisher="$PUBLISHER" \
   -metadata comment="$COMMENT" \
+  -metadata track="$EPISODE_NUM" \
+  -metadata disc="$YEAR" \
   "$OUTPUT"
 
-# --- push final MP3 to Google Drive (optional) -------------------------------
+# --- loudness normalization to -16 LUFS (EBU R128 podcast standard) ----------
+#
+# Re-encodes the assembled episode to correct loudness. Most podcast distributors
+# (Apple Podcasts, Spotify) normalize on their end, but this ensures the file
+# sounds correct everywhere — especially on direct downloads and smart speakers.
 
-PUSH_DRIVE_PY="$(dirname "$0")/push-final-to-drive.py"
-if [ -f "$PUSH_DRIVE_PY" ] && [ -f "$ROOT/.env" ]; then
-  # Pull env values (GOOGLE_DRIVE_FOLDER_ID, GOOGLE_DRIVE_KEY_PATH) from .env.
-  set -o allexport
-  # shellcheck disable=SC1091
-  source "$ROOT/.env"
-  set +o allexport
-  if [ -n "${GOOGLE_DRIVE_FOLDER_ID:-}" ]; then
-    echo "Pushing final MP3 to Google Drive..."
-    python3 "$PUSH_DRIVE_PY" "$OUTPUT" "$DATE" || \
-      echo "Warning: Drive upload failed; episode is still saved locally." >&2
-  fi
+echo "Normalizing loudness to -16 LUFS..."
+LOUDNORM_TMP="$TMPDIR/loudnorm.mp3"
+ffmpeg -y -loglevel error \
+  -i "$OUTPUT" \
+  -filter:a "loudnorm=I=-16:TP=-1.5:LRA=11:print_format=none" \
+  -ar 44100 -ac 2 -b:a 192k -codec:a libmp3lame \
+  -map_metadata 0 -id3v2_version 3 \
+  "$LOUDNORM_TMP" && mv "$LOUDNORM_TMP" "$OUTPUT"
+
+# --- copy metadata file to Episodes ------------------------------------------
+
+METADATA_SRC="$CHUNKS/The Morning Cup - $DATE - Metadata.txt"
+METADATA_OUT="$EPISODES/The Morning Cup - $DATE - Metadata.txt"
+if [ -f "$METADATA_SRC" ]; then
+  cp "$METADATA_SRC" "$METADATA_OUT"
+  echo "Metadata: $METADATA_OUT"
+else
+  echo "Warning: metadata file not found in chunks folder; run fetch-chunks.sh first." >&2
 fi
 
 # --- chapter markers (CTOC + CHAP ID3 frames) --------------------------------
@@ -196,21 +237,6 @@ if [ -f "$WRITE_CHAPTERS_PY" ]; then
     echo "Warning: chapter-marker writing failed; episode is still rendered." >&2
 else
   echo "Warning: write-chapters.py not found alongside build-episode.sh; skipping chapter markers." >&2
-fi
-
-# --- upload audio to R2 + attach to WP draft (optional) ----------------------
-
-UPLOAD_AUDIO_PY="$(dirname "$0")/upload-audio.py"
-if [ -f "$UPLOAD_AUDIO_PY" ] && [ -f "$ROOT/.env" ]; then
-  set -o allexport
-  # shellcheck disable=SC1091
-  source "$ROOT/.env"
-  set +o allexport
-  if [ -n "${S3_BUCKET:-}" ] && [ -n "${WP_URL:-}" ]; then
-    echo "Uploading audio to S3 + attaching to WP draft..."
-    python3 "$UPLOAD_AUDIO_PY" "$DATE" || \
-      echo "Warning: audio upload / WP attach failed; episode is still saved locally." >&2
-  fi
 fi
 
 # --- summary -----------------------------------------------------------------
@@ -233,3 +259,5 @@ echo "  date:      $YEAR"
 echo "  copyright: $COPYRIGHT"
 echo "  genre:     $GENRE"
 echo "  comment:   $COMMENT"
+echo "  track:     $EPISODE_NUM  (day of year)"
+echo "  disc:      $YEAR  (season)"

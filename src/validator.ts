@@ -46,32 +46,33 @@ export function validateEpisode(
   const runtime = wordCount / Math.max(1, config.wordsPerMinute);
   const spacerCount = countSpacers(script);
 
+  // Word count — hard floor and ceiling aligned to 15-17 min at wordsPerMinute.
   if (wordCount < config.minScriptWords) {
     errors.push(
-      `Word count ${wordCount} is below MIN_SCRIPT_WORDS ${config.minScriptWords}`,
+      `Word count ${wordCount} is below minimum ${config.minScriptWords} words (15-minute floor). Script must be expanded.`,
+    );
+  } else if (wordCount < config.targetScriptWordsMin) {
+    warnings.push(
+      `Word count ${wordCount} is below target minimum ${config.targetScriptWordsMin}. Episode may run short.`,
     );
   }
 
   if (wordCount > config.maxScriptWords) {
     errors.push(
-      `Word count ${wordCount} exceeds MAX_SCRIPT_WORDS ${config.maxScriptWords}`,
+      `Word count ${wordCount} exceeds maximum ${config.maxScriptWords} words (17-minute ceiling). Script must be trimmed.`,
     );
-  } else if (
-    wordCount > config.targetScriptWordsMax &&
-    wordCount <= config.maxScriptWords
-  ) {
-    warnings.push(
-      `Word count ${wordCount} above target max ${config.targetScriptWordsMax} but within hard cap`,
+  } else if (wordCount > config.targetScriptWordsMax) {
+    errors.push(
+      `Word count ${wordCount} exceeds target max ${config.targetScriptWordsMax} words (16.5-minute target ceiling). Trim to stay well within 17 minutes.`,
     );
   }
 
-  if (runtime < 20) {
-    errors.push(`Estimated runtime ${runtime.toFixed(1)} min is below 20-minute floor`);
+  // Runtime — hard enforcement of 15-17 minute window.
+  if (runtime < 15) {
+    errors.push(`Estimated runtime ${runtime.toFixed(1)} min is below the 15-minute floor. Script must be longer.`);
   }
-  if (runtime > 30) {
-    errors.push(`Estimated runtime ${runtime.toFixed(1)} min exceeds 30-minute ceiling`);
-  } else if (runtime > 25) {
-    warnings.push(`Estimated runtime ${runtime.toFixed(1)} min above 25-minute target (soft limit 30 min)`);
+  if (runtime > 17) {
+    errors.push(`Estimated runtime ${runtime.toFixed(1)} min exceeds the 17-minute ceiling. Script must be shorter.`);
   }
 
   if (!/^Good morning, today is\b/i.test(script.trimStart())) {
@@ -90,8 +91,8 @@ export function validateEpisode(
 
   if (!script.includes("[TEN-SECOND SECTION SPACER]")) {
     errors.push("Script is missing [TEN-SECOND SECTION SPACER] markers");
-  } else if (spacerCount < 20) {
-    errors.push(`Found only ${spacerCount} spacer markers; need at least 20`);
+  } else if (spacerCount < 12) {
+    errors.push(`Found only ${spacerCount} spacer markers; need at least 12`);
   }
 
   // Riddle section before outro, riddle answer at end.

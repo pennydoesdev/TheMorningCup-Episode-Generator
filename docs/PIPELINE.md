@@ -255,7 +255,7 @@ flowchart TB
   class WT,WS,ENV,SVC,WPCONF,DBO cfg
 ```
 
-### Worker side (`wrangler.toml` + `wrangler secret put`)
+### Worker side (`wrangler.toml` + `wrangler versions secret put`)
 
 | Variable | Type | Purpose |
 |----------|------|---------|

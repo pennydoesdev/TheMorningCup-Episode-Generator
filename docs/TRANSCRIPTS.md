@@ -1,64 +1,124 @@
-# Transcripts
+# Transcripts & Episode Files
 
-Every successful run writes the script in three formats to R2. This page
-shows you how to view them, download them, and search through them.
+Every successful run writes script files to R2 and a Metadata.txt alongside the episode. The local pipeline also generates timestamped transcripts from the finished MP3.
 
-## What gets written
+---
 
-For every episode at `morning-cup/<DATE>/` in the R2 bucket:
+## What lands in `Episodes/` after a full run
 
-| File | Format | What's in it | When you'd use it |
-|------|--------|------|------|
-| `The Morning Cup - <DATE>.txt` | Plain text | Spoken script with pacing tags (`[pause]`, `[beat]`, `[firmer]`, etc.) and `[TEN-SECOND SECTION SPACER]` markers stripped — reads as clean prose | Show notes, transcript fields, archive, sharing, search |
-| `The Morning Cup - <DATE>.html` | HTML | Same content, formatted for web display | Web embed, blog post, share link |
-| `The Morning Cup - <DATE>.json` | JSON | The **full** episode object — script with all original tags/spacers intact, plus riddle Q+A, social copy, source URLs cited from web search, self-validation, **chapters list** | Programmatic re-use, audit, regeneration, social-media drafts |
-| `The Morning Cup - <DATE> - manifest.json` | JSON | Title, publisher, copyright, year, genre, runtime, word count, chunk metadata, chapter titles, validation result | Build pipeline, deploys, telemetry |
+```
+The Morning Cup - 2026-05-22.mp3            ← final tagged + loudness-normalized episode
+The Morning Cup - 2026-05-22 - Metadata.txt ← all upload metadata in one file
+The Morning Cup - 2026-05-22.srt            ← timestamped transcript (SubRip) — upload to podcast host
+The Morning Cup - 2026-05-22.vtt            ← timestamped transcript (WebVTT) — for web players
+```
 
-## Browsing transcripts
+## What's in the Metadata.txt
+
+The metadata file is your one-stop upload sheet. At the top:
+
+```
+THE MORNING CUP — EPISODE METADATA
+
+Post Title:      Housing Costs, AI Bills & Your Morning Riddle
+Feed Title:      The Morning Cup: Housing Costs & AI Bills  (used in MP3 tags + RSS)
+Episode:         142  (Season 2026)
+Date:            2026-05-22  —  May 22nd, 2026
+Host:            Penelope Rose
+Publisher:       Vicinity News
+Runtime:         ~8.5 min  (1420 words)
+Copyright:       Copyright 2026 — Vicinity News
+Genre:           News
+
+-- WordPress / OpenPodcast (Yoast or RankMath) --
+SEO Title:       Ep. 142: Housing Costs & AI Bills | The Morning Cup
+SEO Description: Start your morning with The Morning Cup — today we cover...
+Tags:            The Morning Cup, Vicinity News, daily news, morning briefing, housing costs, ...
+```
+
+Further down it contains:
+- 3 title options (pick any for your podcast host)
+- Full 2-3 paragraph episode description (paste into WordPress post body / show notes)
+- Chapter list
+- Show notes / sources with URLs
+- Today's riddle Q+A
+- Social media copy (main post + per-section posts)
+
+## What gets written to R2
+
+For every episode at `Generators/Podcasts/TheMorningCup/<DATE>/` in the R2 bucket:
+
+| File | Format | What's in it |
+|------|--------|------|
+| `The Morning Cup - <DATE>.txt` | Plain text | Spoken script, pacing tags stripped — clean prose |
+| `The Morning Cup - <DATE>.html` | HTML | Same content, formatted for web display |
+| `The Morning Cup - <DATE>.json` | JSON | Full episode object — script, riddle, social copy, sources, chapters |
+| `The Morning Cup - <DATE> - manifest.json` | JSON | Title, publisher, copyright, runtime, word count, chunk metadata, chapters |
+| `The Morning Cup - <DATE> - Metadata.txt` | Plain text | All upload metadata (same file that lands in `Episodes/`) |
+
+## Timestamped transcripts (.srt and .vtt)
+
+Generated locally by `scripts/transcribe-episode.py` after the episode is built.
+
+**SRT** (`.srt`) — SubRip format, accepted by most podcast hosts (Buzzsprout, Transistor, Spotify for Podcasters, Apple Podcasts Connect).
+
+**VTT** (`.vtt`) — WebVTT format, for web players and HTML5 `<track>` elements.
+
+Both are generated in the same run. The script auto-selects the cheapest/fastest available provider:
+
+| Provider | Cost | Speed | Requires |
+|----------|------|-------|---------|
+| Groq API | $0.01/episode | ~16 s | `GROQ_API_KEY` in `.env` |
+| mlx-whisper | free | ~2 min | `pip install mlx-whisper` (Apple Silicon) |
+| faster-whisper | free | ~3-5 min | `pip install faster-whisper` |
+| OpenAI API | $0.10/episode | ~60 s | `OPENAI_API_KEY` in `.env` |
+
+To add Groq (recommended):
+```bash
+echo 'GROQ_API_KEY="gsk_..."' >> "$HOME/Documents/The Morning Cup/.env"
+```
+
+To run transcription manually on an existing episode:
+```bash
+"$HOME/Documents/The Morning Cup/Scripts/morning-cup.sh" transcribe 2026-05-22
+```
+
+If both `.srt` and `.vtt` already exist, the script skips and prints "Transcripts already exist." Delete them to force a re-transcription.
+
+## Browsing R2 script files
 
 ### Option A: Cloudflare dashboard (visual)
 
 ```
-https://dash.cloudflare.com/<your-account>/r2/default/buckets/morning-cup/objects?prefix=morning-cup%2F<DATE>%2F
+https://dash.cloudflare.com/<your-account>/r2/default/buckets/vicinity/objects?prefix=Generators%2FPodcasts%2FTheMorningCup%2F<DATE>%2F
 ```
 
-Click any file, then "Download" or "Open."
+Click any file → Download or Open.
 
 ### Option B: Wrangler CLI (download to disk)
 
 ```bash
-DATE=2026-05-01
+DATE=2026-05-22
 
-# Plain-text transcript (recommended for show notes)
+# Plain-text script (for show notes)
 wrangler r2 object get \
-  "morning-cup/morning-cup/$DATE/The Morning Cup - $DATE.txt" \
+  "vicinity/Generators/Podcasts/TheMorningCup/$DATE/The Morning Cup - $DATE.txt" \
   --file ~/Downloads/episode.txt --remote
 
-# HTML transcript
+# Full episode JSON
 wrangler r2 object get \
-  "morning-cup/morning-cup/$DATE/The Morning Cup - $DATE.html" \
-  --file ~/Downloads/episode.html --remote
-
-# Full episode JSON (script + social copy + sources + chapters)
-wrangler r2 object get \
-  "morning-cup/morning-cup/$DATE/The Morning Cup - $DATE.json" \
+  "vicinity/Generators/Podcasts/TheMorningCup/$DATE/The Morning Cup - $DATE.json" \
   --file ~/Downloads/episode.json --remote
 
-# Open them
 open ~/Downloads/episode.txt
-open ~/Downloads/episode.html      # opens in your default browser
 ```
 
-> ℹ️ Wrangler 4.x takes the bucket and key as one positional in `bucket/key`
-> form; the `morning-cup/morning-cup/` repetition is correct (bucket name +
-> path inside the bucket).
-
-### Option C: One-liner pipe to terminal (no file save)
+### Option C: One-liner pipe to terminal
 
 ```bash
-DATE=2026-05-01
+DATE=2026-05-22
 wrangler r2 object get \
-  "morning-cup/morning-cup/$DATE/The Morning Cup - $DATE.txt" \
+  "vicinity/Generators/Podcasts/TheMorningCup/$DATE/The Morning Cup - $DATE.txt" \
   --pipe --remote
 ```
 
@@ -67,124 +127,55 @@ wrangler r2 object get \
 ### Single episode
 
 ```bash
-DATE=2026-05-01
-TRANSCRIPT=~/Downloads/episode.txt
+TRANSCRIPT=~/Documents/The\ Morning\ Cup/Episodes/The\ Morning\ Cup\ -\ 2026-05-22.srt
 
-# Case-insensitive match
-grep -in "iran" "$TRANSCRIPT"
-
-# Show 2 lines of context around the match
+grep -in "housing" "$TRANSCRIPT"
 grep -in -C 2 "supreme court" "$TRANSCRIPT"
-
-# Multiple search terms
-grep -inE "(rent|housing|tenants?)" "$TRANSCRIPT"
-
-# Count occurrences of a phrase
-grep -ic "working class" "$TRANSCRIPT"
 ```
 
-### All episodes you've already pulled
+### All downloaded episodes
 
 ```bash
-# Search every transcript across every chunks-folder you've downloaded
 grep -irn "ceasefire" ~/Documents/The\ Morning\ Cup/Chunks/
-
-# Find every mention of a topic in episode JSONs (full script + social copy + sources)
-grep -irln "tariff" ~/Documents/The\ Morning\ Cup/Chunks/ | xargs grep -in "tariff"
-```
-
-### Sharing a chunk with Claude or another tool
-
-Pipe a region into your clipboard and paste:
-```bash
-sed -n '60,120p' ~/Downloads/episode.txt | pbcopy
-```
-
-Or for a specific section, find the section header and grep around it:
-```bash
-grep -n "Cost of Living" ~/Downloads/episode.txt
-sed -n '180,260p' ~/Downloads/episode.txt | pbcopy
 ```
 
 ## Working with the JSON
 
-The full episode JSON is the most flexible. You can pull out any field with
-`jq`:
-
 ```bash
 JSON=~/Downloads/episode.json
 
-# Title
-jq -r .show_title "$JSON"
+# Episode title
+jq -r '.show_title' "$JSON"
 
-# Estimated runtime
-jq -r .estimated_runtime "$JSON"
-
-# Just the spoken script (with all pacing tags + spacers preserved)
-jq -r .elevenlabs_script "$JSON"
-
-# Riddle question + answer
+# Riddle
 jq -r '.riddle_question, .riddle_answer' "$JSON"
 
 # Social main post
 jq -r '.social_copy.main_post' "$JSON"
 
-# Per-section social posts (great for scheduling)
-jq -r '.social_copy.section_posts[] | "\(.section)\n  \(.post)\n"' "$JSON"
+# All cited source URLs
+jq -r '.source_notes[] | "[\(.category)] \(.title) — \(.url)"' "$JSON"
 
-# All cited source URLs (from web_search during generation)
-jq -r '.source_notes[] | "[\(.category)] \(.title) — \(.source) — \(.url)"' "$JSON"
-
-# Self-validation block (model's own structural checks)
-jq '.self_validation' "$JSON"
-
-# All 28 chapter titles in order
+# All chapter titles in order
 jq -r '.chapters[].title' "$JSON"
 ```
 
-## Auto-pulling transcripts alongside chunks
+## What's NOT in the script transcripts (but IS in the audio)
 
-If you'd rather have the .txt / .html / .json appear in
-`~/Documents/The Morning Cup/Chunks/<DATE>/` automatically when you run
-`fetch-chunks.sh`, edit the script and add lines like:
-
-```bash
-# (Optional) — pull the human-readable transcript files too
-for ext in txt html json; do
-  KEY="morning-cup/$DATE/The Morning Cup - $DATE.$ext"
-  LOCAL="$DEST/The Morning Cup - $DATE.$ext"
-  if [ ! -s "$LOCAL" ]; then
-    wrangler r2 object get "$BUCKET/$KEY" --file "$LOCAL" --remote || true
-  fi
-done
-```
-
-This is opt-in — most days you only need the chunks, but if you publish
-show notes daily it's worth adding.
-
-## What's NOT in the transcripts (but is in the audio)
-
-- Intro song
+- Intro song (`Spark.mp3`)
 - Coffee pour foley
-- "Cream or sugar, hon?" voice line
 - Intro sting
-- Section stings between sections
+- Section transition stings between sections
 - Outro thank-you bed
 
-These are added during local assembly by `build-episode.sh` from the
-`Sounds/` folder. The transcripts only contain the host-read narration —
-which is what you want for show notes.
+These are added during local assembly. The `.txt`/`.srt`/`.vtt` files contain only the host-read narration — which is what you want for show notes and captions.
 
 ## Searching with Claude
 
-Paste relevant content into chat and I can:
+Paste relevant content from the `.txt` or `.srt` and I can:
 
 - Pull quotes for social posts
 - Identify which sections cover which stories
-- Spot-check for editorial consistency, factual claims, or repeated phrasing
-- Generate alternate social copy or pull-quote slates
+- Spot-check for editorial consistency or repeated phrasing
+- Generate alternate social copy
 - Compare two days' coverage of the same ongoing story
-
-Tip: if the script is long, paste just one section at a time (split on
-`[TEN-SECOND SECTION SPACER]` boundaries in the JSON, or grep around a
-known section heading in the .txt).

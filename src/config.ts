@@ -30,31 +30,17 @@ export interface Config {
 
   maxTtsCharsPerChunk: number;
 
-  enableEmail: boolean;
   enableSourceDigest: boolean;
   enableRepairPass: boolean;
   stripPacingTagsForTts: boolean;
   statusPublic: boolean;
 
-  emailFrom: string;
-  emailTo: string;
   r2PublicBaseUrl: string;
 
   publisher: string;
   copyrightHolder: string;
   podcastGenre: string;
   hostName: string;
-
-  // Publishing pipeline
-  enablePublishing: boolean;
-  googleDriveFolderId: string;
-  wpUrl: string;
-  // CPT slug for the Vicinity News OS plugin — always "vicinity_episode".
-  // Override via WP_CPT_SLUG env var only if your site uses a custom slug.
-  wpCptSlug: string;
-  // Post ID of the parent `vicinity_podcast` post on your WordPress site.
-  // Find it in WP Admin → Podcasts → hover the show title and read post=XXXX.
-  wpParentPodcastId: number;
 
   voice: {
     stability: number;
@@ -71,34 +57,25 @@ export function loadConfig(env: Env): Config {
     elevenLabsOutputFormat: str(env.ELEVENLABS_OUTPUT_FORMAT, "mp3_44100_128"),
     workerTimezone: str(env.WORKER_TIMEZONE, "America/New_York"),
 
-    minScriptWords: num(env.MIN_SCRIPT_WORDS, 3300),
-    targetScriptWordsMin: num(env.TARGET_SCRIPT_WORDS_MIN, 3300),
-    targetScriptWordsMax: num(env.TARGET_SCRIPT_WORDS_MAX, 3700),
-    maxScriptWords: num(env.MAX_SCRIPT_WORDS, 3900),
+    minScriptWords: num(env.MIN_SCRIPT_WORDS, 2175),
+    targetScriptWordsMin: num(env.TARGET_SCRIPT_WORDS_MIN, 2200),
+    targetScriptWordsMax: num(env.TARGET_SCRIPT_WORDS_MAX, 2400),
+    maxScriptWords: num(env.MAX_SCRIPT_WORDS, 2465),
     wordsPerMinute: num(env.WORDS_PER_MINUTE, 145),
 
-    maxTtsCharsPerChunk: num(env.MAX_TTS_CHARS_PER_CHUNK, 2500),
+    maxTtsCharsPerChunk: num(env.MAX_TTS_CHARS_PER_CHUNK, 5000),
 
-    enableEmail: bool(env.ENABLE_EMAIL, true),
     enableSourceDigest: bool(env.ENABLE_SOURCE_DIGEST, true),
     enableRepairPass: bool(env.ENABLE_REPAIR_PASS, true),
     stripPacingTagsForTts: bool(env.STRIP_PACING_TAGS_FOR_TTS, true),
     statusPublic: bool(env.STATUS_PUBLIC, false),
 
-    emailFrom: str(env.EMAIL_FROM, ""),
-    emailTo: str(env.EMAIL_TO, ""),
     r2PublicBaseUrl: str(env.R2_PUBLIC_BASE_URL, ""),
 
-    publisher: str(env.PUBLISHER, "The Penny Tribune"),
-    copyrightHolder: str(env.COPYRIGHT_HOLDER, "The Penny Tribune"),
+    publisher: str(env.PUBLISHER, "Vicinity News"),
+    copyrightHolder: str(env.COPYRIGHT_HOLDER, "Vicinity News"),
     podcastGenre: str(env.PODCAST_GENRE, "News"),
     hostName: str(env.HOST_NAME, "Penelope Rose"),
-
-    enablePublishing: bool(env.ENABLE_PUBLISHING, false),
-    googleDriveFolderId: str(env.GOOGLE_DRIVE_FOLDER_ID, ""),
-    wpUrl: str(env.WP_URL, ""),
-    wpCptSlug: str(env.WP_CPT_SLUG, "vicinity_episode"),
-    wpParentPodcastId: num(env.WP_PARENT_PODCAST_ID, 2616),
 
     voice: {
       stability: num(env.VOICE_STABILITY, 0.35),

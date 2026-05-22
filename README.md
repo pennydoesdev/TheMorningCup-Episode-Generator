@@ -116,14 +116,14 @@ chunks/The Morning Cup - YYYY-MM-DD - 003.mp3
 ```bash
 npm install
 npm run typecheck
-npx wrangler login        # one time
-npx wrangler deploy
+wrangler login        # one time
+wrangler deploy
 ```
 
 ## 6. Create the R2 bucket
 
 ```bash
-npx wrangler r2 bucket create morning-cup
+wrangler r2 bucket create morning-cup
 ```
 
 (Optional) Make a small range of the bucket publicly readable through a
@@ -151,7 +151,7 @@ id = "REPLACE_ME"
 Create the KV namespace:
 
 ```bash
-npx wrangler kv namespace create MORNING_CUP_KV
+wrangler kv namespace create MORNING_CUP_KV
 # Paste the returned id into wrangler.toml.
 ```
 
@@ -163,11 +163,11 @@ npx wrangler kv namespace create MORNING_CUP_KV
 ## 8. Set secrets
 
 ```bash
-npx wrangler secret put OPENAI_API_KEY
-npx wrangler secret put ELEVENLABS_API_KEY
-npx wrangler secret put ELEVENLABS_VOICE_ID
-npx wrangler secret put RESEND_API_KEY
-npx wrangler secret put RUN_SECRET
+wrangler versions secret put OPENAI_API_KEY
+wrangler versions secret put ELEVENLABS_API_KEY
+wrangler versions secret put ELEVENLABS_VOICE_ID
+wrangler versions secret put RESEND_API_KEY
+wrangler versions secret put RUN_SECRET
 ```
 
 `RUN_SECRET` is the bearer token required by `POST /run`. Choose a long random
@@ -219,7 +219,7 @@ If `R2_PUBLIC_BASE_URL` is set, every email includes ordered chunk URLs.
 Otherwise, list R2 with the included keys:
 
 ```bash
-npx wrangler r2 object get morning-cup/2026-05-01/chunks/"The Morning Cup - 2026-05-01 - 001.mp3" --file 001.mp3
+wrangler r2 object get morning-cup/2026-05-01/chunks/"The Morning Cup - 2026-05-01 - 001.mp3" --file 001.mp3
 ```
 
 ## 13. Stitch chunks locally with ffmpeg
@@ -287,7 +287,7 @@ Common causes:
 ## 18. Security notes
 
 - **No secrets in `wrangler.toml`** — only Workers Secrets via
-  `wrangler secret put`.
+  `wrangler versions secret put`.
 - `POST /run` requires `Authorization: Bearer ${RUN_SECRET}`. The Worker
   rejects 401 if the secret is missing or wrong.
 - `/health` is public.

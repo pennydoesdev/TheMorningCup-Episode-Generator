@@ -11,6 +11,7 @@
 #     status [DATE]         show the worker's current run record
 #     fetch [DATE]          R2 chunks + manifest only
 #     build [DATE]          ffmpeg assembly only (assumes chunks are local)
+#     transcribe [DATE]     Whisper transcript -> .vtt alongside the MP3
 #     latest                open the most-recently-rendered MP3
 #     open [DATE]           open a specific date's MP3
 #
@@ -148,7 +149,7 @@ preflight() {
   fi
 
   # Python modules (only the ones the local pipeline needs)
-  for mod in mutagen requests boto3 cryptography; do
+  for mod in mutagen requests; do
     if python3 -c "import $mod" 2>/dev/null; then
       ok "python: $mod"
     else
@@ -187,10 +188,9 @@ preflight() {
   # Sound assets (build-episode.sh requires these)
   local missing_sounds=0
   local required_sounds=(
-    "The Morning Cup - Song.wav"
+    "Spark.mp3"
     "Coffee Pour.wav"
-    "Cream or sugar, hon?.mp3"
-    "morning-cup-sting.wav"
+    "Topic Transition.mp3"
     "The Morning Cup - Thank You.wav"
   )
   for s in "${required_sounds[@]}"; do
@@ -220,7 +220,7 @@ preflight() {
       fails=$((fails+1))
     fi
   done
-  for s in push-final-to-drive.py write-chapters.py upload-audio.py; do
+  for s in write-chapters.py transcribe-episode.py; do
     if [ -f "$SCRIPT_DIR/$s" ]; then
       ok "script: $s"
     else
@@ -263,9 +263,12 @@ try:
     d = json.loads(sys.stdin.read())
 except Exception:
     print('unknown'); sys.exit(0)
-if not d or d.get('error') == 'not_found' or d.get('status') == 'not_found':
+if not d:
+    print('unknown'); sys.exit(0)
+record = d.get('record')
+if not record:
     print('absent'); sys.exit(0)
-print(d.get('status', 'unknown'))
+print(record.get('status', 'unknown'))
 "
 }
 
@@ -340,6 +343,16 @@ cmd_make() {
   step "step 4/4: building final MP3..."
   "$SCRIPT_DIR/build-episode.sh" "$DATE"
 
+  # Auto-transcription: runs only if OPENAI_API_KEY is available.
+  echo ""
+  if [ -n "${OPENAI_API_KEY:-}" ]; then
+    step "step 5 (bonus): generating Whisper transcript..."
+    python3 "$SCRIPT_DIR/transcribe-episode.py" "$DATE" || \
+      warn "transcription failed — run 'morning-cup.sh transcribe $DATE' to retry"
+  else
+    log "  transcript: skipped (add OPENAI_API_KEY to $ENV_FILE to enable auto-transcription)"
+  fi
+
   echo ""
   step "make: done."
   log "  $EPISODES/The Morning Cup - $DATE.mp3"
@@ -363,6 +376,16 @@ cmd_build() {
   local DATE
   DATE="$(resolve_date "${1:-}")"
   "$SCRIPT_DIR/build-episode.sh" "$DATE"
+}
+
+cmd_transcribe() {
+  local DATE
+  DATE="$(resolve_date "${1:-}")"
+  load_env
+  if ! command -v python3 >/dev/null 2>&1; then
+    die "python3 not found"
+  fi
+  python3 "$SCRIPT_DIR/transcribe-episode.py" "$DATE"
 }
 
 cmd_latest() {
@@ -393,8 +416,9 @@ case "${1:-}" in
   preflight) shift; cmd_preflight ;;
   make)      shift; cmd_make   "${1:-}" ;;
   status)    shift; cmd_status "${1:-}" ;;
-  fetch)     shift; cmd_fetch  "${1:-}" ;;
-  build)     shift; cmd_build  "${1:-}" ;;
+  fetch)      shift; cmd_fetch      "${1:-}" ;;
+  build)      shift; cmd_build      "${1:-}" ;;
+  transcribe) shift; cmd_transcribe "${1:-}" ;;
   latest)    cmd_latest ;;
   open)      shift; cmd_open   "${1:-}" ;;
   -h|--help|"") usage ;;

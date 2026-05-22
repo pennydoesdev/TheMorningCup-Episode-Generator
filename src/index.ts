@@ -11,6 +11,7 @@ import type {
 import { loadConfig, type Config } from "./config";
 import { logger } from "./logger";
 import {
+  dayOfYear,
   getZonedNow,
   isoDate,
   isValidIsoDate,
@@ -34,23 +35,14 @@ import {
   putText,
 } from "./r2";
 import { buildEpisodeHtml } from "./html";
+import { generateEpisodeCopy, buildMetadataTxt } from "./description";
 import { buildFilesTxt, buildManifest } from "./manifest";
+import { fetchRecentTopics, saveEpisodeTopics } from "./topics";
 import {
   isCompleted,
   readRunRecord,
   updateRunStage,
 } from "./locks";
-import {
-  sendCompletionEmail,
-  sendFailureEmail,
-} from "./email";
-import {
-  createWordPressDraft,
-  generatePostBody,
-  uploadEpisodeToDrive,
-  type DriveArtifact,
-} from "./publish";
-import type { Manifest } from "./types";
 import {
   normalizeWhitespace,
   stripPacingTags,
@@ -184,13 +176,15 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
     const digest = await buildSourceDigest(env, sourceIso, config.enableSourceDigest);
     const digestText = renderDigestForPrompt(digest);
 
-    // 2. Build prompt + call OpenAI
+    // 2. Build prompt + call OpenAI (inject recent topics for dedup)
+    const recentTopics = await fetchRecentTopics(env, episodeIso);
     const userPrompt = buildUserPrompt({
       episodeDateSpoken: spokenDate(episodeIso),
       sourceDateSpoken: spokenDate(sourceIso),
       sourceDigestText: digestText,
       sourceLimited: !digest.available,
       hostName: config.hostName,
+      recentTopics,
     });
 
     const generated = await generateEpisode(env, config, userPrompt);
@@ -221,42 +215,29 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
 
     if (!validation.ok) {
       // Save rejected raw and email failure alert.
-      const rejectedKey = `morning-cup/rejected/${episodeIso}-${Date.now()}.json`;
+      const rejectedKey = `Generators/Podcasts/TheMorningCup/rejected/${episodeIso}-${Date.now()}.json`;
       await putJson(env, rejectedKey, {
         episode_iso: episodeIso,
         validation,
         episode,
         raw,
       });
-      const rejectedUrl = getPublicUrl(config, rejectedKey);
 
       await updateRunStage(env, episodeIso, {
         status: "failed",
         error: `Validation failed: ${validation.errors.join("; ")}`,
       });
-
-      try {
-        await sendFailureEmail(env, config, {
-          episodeIso,
-          stage: "validating",
-          error: "Script validation failed (incl. repair pass).",
-          validationErrors: validation.errors,
-          rejectedKey,
-          rejectedUrl,
-        });
-      } catch (err) {
-        logger.error("failure email failed", { err: String(err) });
-      }
       return;
     }
 
     // 4. Write TXT, HTML, JSON
-    const baseDir = `morning-cup/${episodeIso}/`;
+    const baseDir = `Generators/Podcasts/TheMorningCup/${episodeIso}/`;
     const txtKey = `${baseDir}${baseTitle} - ${episodeIso}.txt`;
     const htmlKey = `${baseDir}${baseTitle} - ${episodeIso}.html`;
     const jsonKey = `${baseDir}${baseTitle} - ${episodeIso}.json`;
     const manifestKey = `${baseDir}${baseTitle} - ${episodeIso} - manifest.json`;
     const filesTxtKey = `${baseDir}${baseTitle} - ${episodeIso} - files.txt`;
+    const metadataKey = `${baseDir}${baseTitle} - ${episodeIso} - Metadata.txt`;
 
     const cleanForTxt = normalizeWhitespace(
       stripSpacerMarker(stripPacingTags(episode.elevenlabs_script)),
@@ -272,6 +253,29 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
     await putText(env, htmlKey, html, { contentType: "text/html; charset=utf-8" });
 
     await putJson(env, jsonKey, episode);
+
+    // Generate episode titles (3 options) + description, write the metadata file.
+    const copy = await generateEpisodeCopy(env, config, episode);
+    const primaryTitle = copy.titles[0] || "";
+    const metadataTxt = buildMetadataTxt({
+      episodeIso,
+      spokenDate: spokenDate(episodeIso),
+      episodeTitles: copy.titles,
+      episodeNumber: dayOfYear(episodeIso),
+      season: Number(episodeIso.slice(0, 4)),
+      hostName: config.hostName,
+      publisher: config.publisher,
+      copyrightHolder: config.copyrightHolder,
+      genre: config.podcastGenre,
+      estimatedRuntimeMinutes: validation.estimated_runtime_minutes,
+      wordCount: validation.word_count,
+      description: copy.description,
+      seoTitle: copy.seoTitle,
+      seoDescription: copy.seoDescription,
+      tags: copy.tags,
+      episode,
+    });
+    await putText(env, metadataKey, metadataTxt);
 
     // 5. Chunk + TTS
     stage = "tts";
@@ -344,15 +348,6 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
         error: errMsg,
         chunk_count: partialCount,
       });
-      try {
-        await sendFailureEmail(env, config, {
-          episodeIso,
-          stage: "tts",
-          error: errMsg,
-        });
-      } catch (e) {
-        logger.error("failure email failed", { err: String(e) });
-      }
       return;
     }
 
@@ -363,6 +358,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       episodeIso,
       sourceIso,
       baseTitle,
+      episodeTitle: primaryTitle || undefined,
       publisher: config.publisher,
       copyrightHolder: config.copyrightHolder,
       genre: config.podcastGenre,
@@ -379,55 +375,9 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       contentType: "text/plain; charset=utf-8",
     });
 
-    // 6.5 Publishing — best-effort. Failures here do NOT fail the run; the
-    // chunks are already in R2 and recoverable.
-    if (config.enablePublishing) {
-      try {
-        await runPublishStep(env, config, {
-          episodeIso,
-          episode,
-          manifest,
-          txtKey,
-          htmlKey,
-          jsonKey,
-          manifestKey,
-          completedChunks,
-        });
-      } catch (err) {
-        logger.error("publishing failed", { err: String(err), episodeIso });
-      }
-    }
+    // 7. Save topics to KV for dedup on future episodes, then mark complete.
+    await saveEpisodeTopics(env, episodeIso, episode.chapters ?? [], episode.source_notes ?? []);
 
-    // 7. Email
-    try {
-      await sendCompletionEmail(env, config, {
-        episodeIso,
-        sourceIso,
-        wordCount: validation.word_count,
-        estimatedRuntimeMinutes: validation.estimated_runtime_minutes,
-        validationOk: validation.ok,
-        validationWarnings: validation.warnings,
-        chunkCount: completedChunks.length,
-        sourceLimited: !digest.available,
-        links: {
-          txt: getPublicUrl(config, txtKey),
-          html: getPublicUrl(config, htmlKey),
-          json: getPublicUrl(config, jsonKey),
-          manifest: getPublicUrl(config, manifestKey),
-          filesTxt: getPublicUrl(config, filesTxtKey),
-          chunks: completedChunks.map((c) => ({
-            order: c.order,
-            filename: c.filename,
-            url: c.public_url,
-            r2_key: c.r2_key,
-          })),
-        },
-      });
-    } catch (err) {
-      logger.error("completion email failed", { err: String(err) });
-    }
-
-    // 8. Mark complete
     await updateRunStage(env, episodeIso, {
       status: "completed",
       completed_at: new Date().toISOString(),
@@ -437,6 +387,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       txt_key: txtKey,
       html_key: htmlKey,
       json_key: jsonKey,
+      metadata_key: metadataKey,
     });
 
     logger.info("run complete", {
@@ -450,15 +401,6 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       status: "failed",
       error: String(err),
     });
-    try {
-      await sendFailureEmail(env, config, {
-        episodeIso,
-        stage,
-        error: String(err),
-      });
-    } catch (e) {
-      logger.error("failure email failed", { err: String(e) });
-    }
   }
 }
 
@@ -476,119 +418,6 @@ function checkAuth(req: Request, env: Env): { ok: true } | { ok: false; response
 
 function defaultEpisodeIso(config: Config): string {
   return isoDate(getZonedNow(config.workerTimezone));
-}
-
-interface PublishInputs {
-  episodeIso: string;
-  episode: EpisodeJson;
-  manifest: Manifest;
-  txtKey: string;
-  htmlKey: string;
-  jsonKey: string;
-  manifestKey: string;
-  completedChunks: ChunkPiece[];
-}
-
-async function r2GetBytes(env: Env, key: string): Promise<ArrayBuffer> {
-  const obj = await env.MORNING_CUP_BUCKET.get(key);
-  if (!obj) throw new Error(`R2 object not found: ${key}`);
-  return obj.arrayBuffer();
-}
-
-async function r2GetText(env: Env, key: string): Promise<string> {
-  const obj = await env.MORNING_CUP_BUCKET.get(key);
-  if (!obj) throw new Error(`R2 object not found: ${key}`);
-  return obj.text();
-}
-
-async function runPublishStep(
-  env: Env,
-  config: Config,
-  inputs: PublishInputs,
-): Promise<void> {
-  const { episodeIso, episode, manifest } = inputs;
-  logger.info("publish: start", { episodeIso });
-
-  // 1. Generate post body (OpenAI). Best-effort; falls back to social copy
-  // if body generation fails.
-  let postBody = "";
-  try {
-    postBody = await generatePostBody(env, config, episode, manifest);
-    logger.info("publish: body generated", {
-      length: postBody.length,
-    });
-  } catch (err) {
-    logger.error("publish: body generation failed", { err: String(err) });
-    postBody =
-      (episode.social_copy?.main_post ?? "") +
-      "\n\n" +
-      (episode.social_copy?.section_posts ?? [])
-        .map((s) => `**${s.section}** — ${s.post}`)
-        .join("\n\n");
-  }
-
-  // 2. Push artifacts to Google Drive.
-  if (config.googleDriveFolderId) {
-    try {
-      const baseTitle = `${manifest.show_name} - ${episodeIso}`;
-      const txt = await r2GetText(env, inputs.txtKey);
-      const html = await r2GetText(env, inputs.htmlKey);
-      const jsonStr = await r2GetText(env, inputs.jsonKey);
-      const manifestStr = await r2GetText(env, inputs.manifestKey);
-
-      const rootFiles: DriveArtifact[] = [
-        { name: `${baseTitle}.txt`, mimeType: "text/plain; charset=utf-8", body: txt },
-        { name: `${baseTitle}.html`, mimeType: "text/html; charset=utf-8", body: html },
-        { name: `${baseTitle}.json`, mimeType: "application/json; charset=utf-8", body: jsonStr },
-        { name: `${baseTitle} - manifest.json`, mimeType: "application/json; charset=utf-8", body: manifestStr },
-      ];
-
-      const chunkFiles: DriveArtifact[] = [];
-      for (const c of inputs.completedChunks) {
-        const bytes = await r2GetBytes(env, c.r2_key);
-        chunkFiles.push({
-          name: c.filename,
-          mimeType: "audio/mpeg",
-          body: bytes,
-        });
-      }
-
-      const folderId = await uploadEpisodeToDrive(
-        env,
-        config,
-        episodeIso,
-        rootFiles,
-        chunkFiles,
-      );
-      logger.info("publish: drive upload complete", { folderId });
-    } catch (err) {
-      logger.error("publish: drive upload failed", { err: String(err) });
-    }
-  } else {
-    logger.info("publish: drive skipped — no GOOGLE_DRIVE_FOLDER_ID");
-  }
-
-  // 3. Create WordPress draft.
-  if (config.wpUrl && env.WP_USERNAME && env.WP_APP_PASSWORD) {
-    try {
-      const result = await createWordPressDraft(
-        env,
-        config,
-        episodeIso,
-        episode,
-        manifest,
-        postBody,
-      );
-      logger.info("publish: wp draft created", {
-        id: result.id,
-        link: result.link,
-      });
-    } catch (err) {
-      logger.error("publish: wp draft failed", { err: String(err) });
-    }
-  } else {
-    logger.info("publish: wp skipped — credentials not set");
-  }
 }
 
 function json(body: unknown, status: number = 200): Response {

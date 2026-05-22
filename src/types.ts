@@ -9,7 +9,6 @@ export interface Env {
   OPENAI_API_KEY: string;
   ELEVENLABS_API_KEY: string;
   ELEVENLABS_VOICE_ID: string;
-  RESEND_API_KEY: string;
   RUN_SECRET: string;
 
   // Vars
@@ -23,32 +22,17 @@ export interface Env {
   MAX_SCRIPT_WORDS?: string;
   WORDS_PER_MINUTE?: string;
   MAX_TTS_CHARS_PER_CHUNK?: string;
-  ENABLE_EMAIL?: string;
   ENABLE_SOURCE_DIGEST?: string;
   ENABLE_REPAIR_PASS?: string;
   STRIP_PACING_TAGS_FOR_TTS?: string;
   STATUS_PUBLIC?: string;
 
-  EMAIL_FROM?: string;
-  EMAIL_TO?: string;
   R2_PUBLIC_BASE_URL?: string;
 
   PUBLISHER?: string;
   COPYRIGHT_HOLDER?: string;
   PODCAST_GENRE?: string;
   HOST_NAME?: string;
-
-  // Publishing pipeline
-  ENABLE_PUBLISHING?: string;
-  GOOGLE_DRIVE_FOLDER_ID?: string;
-  GOOGLE_SERVICE_ACCOUNT_KEY?: string; // secret: full JSON contents
-  WP_URL?: string;
-  WP_USERNAME?: string;
-  WP_APP_PASSWORD?: string; // secret
-  WP_CPT_SLUG?: string;
-  WP_PODCAST_SHOW_TAXONOMY?: string;
-  WP_PODCAST_SHOW_TERM?: string;
-  WP_PARENT_PODCAST_ID?: string;
 
   VOICE_STABILITY?: string;
   VOICE_SIMILARITY_BOOST?: string;
@@ -142,6 +126,7 @@ export interface Manifest {
   episode_date: string;
   source_date: string;
   title: string;
+  episode_title?: string;
   show_name: string;
   publisher: string;
   copyright: string;
@@ -188,6 +173,7 @@ export interface RunRecord {
   txt_key?: string;
   html_key?: string;
   json_key?: string;
+  metadata_key?: string;
 }
 
 export interface SourceDigest {

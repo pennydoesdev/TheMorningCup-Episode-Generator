@@ -97,6 +97,13 @@ export function spokenDate(yyyymmdd: string): string {
   return `${MONTH_NAMES[m - 1]} ${ordinal(d)}, ${y}`;
 }
 
+export function dayOfYear(yyyymmdd: string): number {
+  const [y, m, d] = yyyymmdd.split("-").map(Number);
+  const jan1 = Date.UTC(y, 0, 1);
+  const day = Date.UTC(y, m - 1, d);
+  return Math.round((day - jan1) / 86_400_000) + 1;
+}
+
 export function isValidIsoDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const [y, m, d] = value.split("-").map(Number);
