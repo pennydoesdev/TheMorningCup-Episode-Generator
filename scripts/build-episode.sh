@@ -107,6 +107,25 @@ RUNTIME=$(read_manifest estimated_runtime_minutes "?")
 GEN_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 COMMENT="Generated $GEN_AT — ~$RUNTIME min / $WORD_COUNT words"
 
+# --- detect section boundaries from manifest (smart sting placement) ---------
+#
+# Chunks with starts_section_indices = [] are continuations of a split section.
+# The sting should only play before chunks that begin a new section, not before
+# continuations. Falls back to always inserting the sting if manifest is absent.
+
+CHUNK_STARTS_SECTION=()
+if [ -f "$MANIFEST" ]; then
+  while IFS= read -r line; do
+    CHUNK_STARTS_SECTION+=("$line")
+  done < <(python3 -c "
+import json, sys
+manifest = json.load(open(sys.argv[1]))
+chunks = sorted(manifest.get('chunks', []), key=lambda c: c['order'])
+for chunk in chunks:
+    print('1' if chunk.get('starts_section_indices') else '0')
+" "$MANIFEST")
+fi
+
 # --- build ordered input list ------------------------------------------------
 
 INPUTS=("$INTRO_SONG" "$COFFEE_POUR")
@@ -114,7 +133,12 @@ INPUTS=("$INTRO_SONG" "$COFFEE_POUR")
 for i in "${!CHUNKS_LIST[@]}"; do
   INPUTS+=("${CHUNKS_LIST[$i]}")
   if [ $i -lt $((CHUNK_COUNT - 1)) ]; then
-    INPUTS+=("$SECTION_STING")
+    NEXT_IDX=$((i + 1))
+    # Insert sting only when the next chunk starts a new section.
+    # If manifest data is unavailable (fallback 1), always insert.
+    if [ "${CHUNK_STARTS_SECTION[$NEXT_IDX]:-1}" = "1" ]; then
+      INPUTS+=("$SECTION_STING")
+    fi
   fi
 done
 INPUTS+=("$OUTRO")

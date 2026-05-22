@@ -437,9 +437,30 @@ ELEVENLABS-READY SPOKEN SCRIPT OUTPUT RULES:
 - Insert [TEN-SECOND SECTION SPACER] between each major section.
 
 TRANSITIONAL PHRASES (vary across the episode):
-- After every [TEN-SECOND SECTION SPACER], the host introduces the next
-  section by name with a brief transitional phrase. This signals to the
-  listener what's coming next and pairs with the audio sting.
+- After every [TEN-SECOND SECTION SPACER], the host MUST introduce the
+  next section by name with a brief transitional phrase.
+- The transition phrase MUST appear AFTER the spacer marker, never before it.
+  The spacer is a silent gap in audio — a sting sound plays over it.
+  The first words the listener hears after the sting are the transition.
+- Required format for every section transition:
+
+    [end of previous section content]
+
+    [TEN-SECOND SECTION SPACER]
+
+    [Transition phrase], [Section Name].
+
+    [Section content begins here...]
+
+- Example:
+    ...that is the situation on the ground in Gaza.
+
+    [TEN-SECOND SECTION SPACER]
+
+    Up next, the Riddle.
+
+    Here is this morning's riddle...
+
 - VARY the transitional phrases across the episode — do NOT use the same
   phrase twice in a single show. Pick from this list at random for each
   section transition (or invent close variants in the same register):
@@ -463,15 +484,14 @@ TRANSITIONAL PHRASES (vary across the episode):
   18. "Up first today,..."
   19. "Let's spend a few minutes on..."
   20. "Heading into..."
-- Each section transition should feel like one sentence: phrase + section
-  name + period. For example:
+- Each transition is exactly one sentence: phrase + section name + period.
     "Up next, the Power Map."
     "Let's turn to our Cost of Living Check."
-    "Time for what comes next."
+    "Time for What Comes Next."
     "Now we go to today's riddle."
-- Do not stack two transitional phrases together. Pick one per section.
-- The very first section after the opening doesn't need a phrase from the
-  list — the opening line already sets up the show.
+- Do not stack two transitional phrases together. One per section.
+- Do not put any transitional phrase BEFORE the spacer marker.
+- The very first section after the opening does not need a transition phrase.
 
 SECTION LABELS — when to speak, when to silence:
 - DO speak each section's name as the host introduces it. Saying the
