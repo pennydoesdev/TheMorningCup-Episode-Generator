@@ -63,7 +63,7 @@ export function loadConfig(env: Env): Config {
     maxScriptWords: num(env.MAX_SCRIPT_WORDS, 2465),
     wordsPerMinute: num(env.WORDS_PER_MINUTE, 145),
 
-    maxTtsCharsPerChunk: num(env.MAX_TTS_CHARS_PER_CHUNK, 2500),
+    maxTtsCharsPerChunk: num(env.MAX_TTS_CHARS_PER_CHUNK, 5000),
 
     enableSourceDigest: bool(env.ENABLE_SOURCE_DIGEST, true),
     enableRepairPass: bool(env.ENABLE_REPAIR_PASS, true),
