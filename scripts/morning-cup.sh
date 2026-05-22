@@ -220,7 +220,7 @@ preflight() {
       fails=$((fails+1))
     fi
   done
-  for s in write-chapters.py transcribe-episode.py; do
+  for s in write-chapters.py transcribe-episode.py generate-cover-art.py; do
     if [ -f "$SCRIPT_DIR/$s" ]; then
       ok "script: $s"
     else
@@ -342,6 +342,26 @@ cmd_make() {
 
   step "step 4/4: building final MP3..."
   "$SCRIPT_DIR/build-episode.sh" "$DATE"
+
+  # Auto cover art: runs if Pillow is installed (no API key needed).
+  echo ""
+  if python3 -c "import PIL" 2>/dev/null; then
+    step "step 5 (bonus): generating episode cover art..."
+    python3 "$SCRIPT_DIR/generate-cover-art.py" "$DATE" || \
+      warn "cover art failed — run 'python3 scripts/generate-cover-art.py $DATE' to retry"
+  else
+    log "  cover art: skipped (pip install --user Pillow to enable)"
+  fi
+
+  # Auto-transcription: runs only if OPENAI_API_KEY is available.
+  echo ""
+  if [ -n "${OPENAI_API_KEY:-}" ]; then
+    step "step 6 (bonus): generating Whisper transcript..."
+    python3 "$SCRIPT_DIR/transcribe-episode.py" "$DATE" || \
+      warn "transcription failed — run 'morning-cup.sh transcribe $DATE' to retry"
+  else
+    log "  transcript: skipped (add OPENAI_API_KEY to $ENV_FILE to enable auto-transcription)"
+  fi
 
   echo ""
   step "make: done."

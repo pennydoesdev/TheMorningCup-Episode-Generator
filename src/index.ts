@@ -37,6 +37,7 @@ import {
 import { buildEpisodeHtml } from "./html";
 import { generateEpisodeCopy, buildMetadataTxt } from "./description";
 import { buildFilesTxt, buildManifest } from "./manifest";
+import { fetchRecentTopics, saveEpisodeTopics } from "./topics";
 import {
   isCompleted,
   readRunRecord,
@@ -175,13 +176,15 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
     const digest = await buildSourceDigest(env, sourceIso, config.enableSourceDigest);
     const digestText = renderDigestForPrompt(digest);
 
-    // 2. Build prompt + call OpenAI
+    // 2. Build prompt + call OpenAI (inject recent topics for dedup)
+    const recentTopics = await fetchRecentTopics(env, episodeIso);
     const userPrompt = buildUserPrompt({
       episodeDateSpoken: spokenDate(episodeIso),
       sourceDateSpoken: spokenDate(sourceIso),
       sourceDigestText: digestText,
       sourceLimited: !digest.available,
       hostName: config.hostName,
+      recentTopics,
     });
 
     const generated = await generateEpisode(env, config, userPrompt);
@@ -251,12 +254,13 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
 
     await putJson(env, jsonKey, episode);
 
-    // Generate episode title + description, then write the metadata file.
+    // Generate episode titles (3 options) + description, write the metadata file.
     const copy = await generateEpisodeCopy(env, config, episode);
+    const primaryTitle = copy.titles[0] || "";
     const metadataTxt = buildMetadataTxt({
       episodeIso,
       spokenDate: spokenDate(episodeIso),
-      episodeTitle: copy.title,
+      episodeTitles: copy.titles,
       episodeNumber: dayOfYear(episodeIso),
       season: Number(episodeIso.slice(0, 4)),
       hostName: config.hostName,
@@ -351,7 +355,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       episodeIso,
       sourceIso,
       baseTitle,
-      episodeTitle: copy.title || undefined,
+      episodeTitle: primaryTitle || undefined,
       publisher: config.publisher,
       copyrightHolder: config.copyrightHolder,
       genre: config.podcastGenre,
@@ -368,7 +372,9 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       contentType: "text/plain; charset=utf-8",
     });
 
-    // 7. Mark complete
+    // 7. Save topics to KV for dedup on future episodes, then mark complete.
+    await saveEpisodeTopics(env, episodeIso, episode.chapters ?? [], episode.source_notes ?? []);
+
     await updateRunStage(env, episodeIso, {
       status: "completed",
       completed_at: new Date().toISOString(),

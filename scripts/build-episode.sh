@@ -203,6 +203,21 @@ ffmpeg -y -loglevel error -f concat -safe 0 -i "$LIST" \
   -metadata disc="$YEAR" \
   "$OUTPUT"
 
+# --- loudness normalization to -16 LUFS (EBU R128 podcast standard) ----------
+#
+# Re-encodes the assembled episode to correct loudness. Most podcast distributors
+# (Apple Podcasts, Spotify) normalize on their end, but this ensures the file
+# sounds correct everywhere — especially on direct downloads and smart speakers.
+
+echo "Normalizing loudness to -16 LUFS..."
+LOUDNORM_TMP="$TMPDIR/loudnorm.mp3"
+ffmpeg -y -loglevel error \
+  -i "$OUTPUT" \
+  -filter:a "loudnorm=I=-16:TP=-1.5:LRA=11:print_format=none" \
+  -ar 44100 -ac 2 -b:a 192k -codec:a libmp3lame \
+  -map_metadata 0 -id3v2_version 3 \
+  "$LOUDNORM_TMP" && mv "$LOUDNORM_TMP" "$OUTPUT"
+
 # --- copy metadata file to Episodes ------------------------------------------
 
 METADATA_SRC="$CHUNKS/The Morning Cup - $DATE - Metadata.txt"

@@ -560,6 +560,7 @@ export interface PromptInputs {
   sourceDigestText: string;
   sourceLimited: boolean;
   hostName: string; // e.g. "Penelope Rose"
+  recentTopics?: { chapters: string[]; stories: string[] };
 }
 
 export function buildUserPrompt(inputs: PromptInputs): string {
@@ -568,12 +569,17 @@ export function buildUserPrompt(inputs: PromptInputs): string {
       ? `\nSUPPLEMENTAL CONTEXT (starting hints only — verify and expand with web_search before relying on any item):\n${inputs.sourceDigestText}\n`
       : "";
 
+  const recentTopicsBlock =
+    inputs.recentTopics && inputs.recentTopics.stories.length > 0
+      ? `\nRECENT STORIES (past 7 days — do NOT re-cover these same stories; choose fresh angles or entirely different news):\n${inputs.recentTopics.stories.map((s) => `- ${s}`).join("\n")}\n`
+      : "";
+
   return `${MASTER_PROMPT}
 
 HOST: ${inputs.hostName}
 CURRENT DATE (episode_date): ${inputs.episodeDateSpoken}
 SOURCE DATE (previous day to summarize): ${inputs.sourceDateSpoken}
-
+${recentTopicsBlock}
 RESEARCH INSTRUCTIONS:
 You have a web_search tool available. You MUST use it to research the actual news from ${inputs.sourceDateSpoken}. Run multiple targeted searches across the topic flow:
 - A genuine positive opening story (rescue, mutual aid, labor wins, conservation, ordinary people doing something kind)
