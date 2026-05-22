@@ -187,9 +187,8 @@ preflight() {
   # Sound assets (build-episode.sh requires these)
   local missing_sounds=0
   local required_sounds=(
-    "The Morning Cup - Song.wav"
+    "Spark.mp3"
     "Coffee Pour.wav"
-    "Cream or sugar, hon?.mp3"
     "Topic Transition.mp3"
     "The Morning Cup - Thank You.wav"
   )
