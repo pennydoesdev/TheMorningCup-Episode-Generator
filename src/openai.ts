@@ -10,6 +10,7 @@
 import type { Env, EpisodeJson } from "./types";
 import type { Config } from "./config";
 import { EPISODE_JSON_SCHEMA } from "./schema";
+import { MASTER_PROMPT } from "./prompt";
 import { logger } from "./logger";
 
 interface ResponsesContentPart {
@@ -38,6 +39,8 @@ interface CallOptions {
   userInput: string;
   temperature?: number;
   maxOutputTokens?: number;
+  // Override model for this specific call (e.g. cheaper model for repair passes)
+  modelOverride?: string;
 }
 
 // Per-attempt hard timeout. Generations should never legitimately take this
@@ -63,8 +66,9 @@ async function callResponses(
 ): Promise<{ raw: string }> {
   const url = "https://api.openai.com/v1/responses";
 
+  const model = opts.modelOverride ?? config.openaiModel;
   const body: Record<string, unknown> = {
-    model: config.openaiModel,
+    model,
     input: [
       ...(opts.systemInstruction
         ? [
@@ -95,7 +99,7 @@ async function callResponses(
     stream: true,
   };
 
-  if (!isReasoningModel(config.openaiModel)) {
+  if (!isReasoningModel(model)) {
     body.temperature = opts.temperature ?? 0.4;
   }
 
@@ -282,9 +286,13 @@ export async function generateEpisode(
   config: Config,
   userPrompt: string,
 ): Promise<OpenAiResult> {
+  // MASTER_PROMPT goes in the system instruction so OpenAI's automatic prompt
+  // caching kicks in after the first daily run — cached tokens cost 75% less.
+  // The userPrompt is only the dynamic context (date, host, source digest).
   const { raw } = await callResponses(env, config, {
     systemInstruction:
-      "You are a senior morning news producer. Return strict JSON matching the provided schema. No markdown. No commentary outside JSON.",
+      MASTER_PROMPT +
+      "\n\nReturn strict JSON matching the provided schema. No markdown. No commentary outside JSON.",
     userInput: userPrompt,
     temperature: 0.4,
     maxOutputTokens: 16000,
@@ -319,6 +327,9 @@ ${JSON.stringify(prior)}`;
     userInput: repairInput,
     temperature: 0.3,
     maxOutputTokens: 16000,
+    // Repair passes use the mini model — cheaper, still more than capable
+    // for fixing validation errors in an existing draft.
+    modelOverride: "gpt-4.1-mini",
   });
   const json = safeParseEpisodeJson(raw);
   if (!json) {
@@ -371,6 +382,8 @@ ${JSON.stringify(prior)}`;
     userInput: extendInput,
     temperature: 0.4,
     maxOutputTokens: 16000,
+    // Extend passes use the mini model — cheaper for additive editing work.
+    modelOverride: "gpt-4.1-mini",
   });
   const json = safeParseEpisodeJson(raw);
   if (!json) {

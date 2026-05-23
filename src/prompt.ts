@@ -574,9 +574,7 @@ export function buildUserPrompt(inputs: PromptInputs): string {
       ? `\nRECENT STORIES (past 7 days — do NOT re-cover these same stories; choose fresh angles or entirely different news):\n${inputs.recentTopics.stories.map((s) => `- ${s}`).join("\n")}\n`
       : "";
 
-  return `${MASTER_PROMPT}
-
-HOST: ${inputs.hostName}
+  return `HOST: ${inputs.hostName}
 CURRENT DATE (episode_date): ${inputs.episodeDateSpoken}
 SOURCE DATE (previous day to summarize): ${inputs.sourceDateSpoken}
 ${recentTopicsBlock}
