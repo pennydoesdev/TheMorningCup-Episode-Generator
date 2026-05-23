@@ -278,11 +278,16 @@ print(record.get('status', 'unknown'))
 
 worker_run() {
   local DATE="$1"
-  # Worker returns 202 immediately and runs the episode in the background.
-  # 30s is more than enough for the ack; the actual work is tracked via /status.
-  curl -sS --max-time 30 -X POST \
+  # The Worker runs the full pipeline inline (5-10 min). We fire the curl in
+  # the background so it doesn't block the polling loop in cmd_make.
+  # --max-time 900 = 15-minute hard cap; the pipeline should always finish
+  # well within that. Output is discarded — progress is tracked via /status.
+  curl -sS --max-time 900 -X POST \
     -H "Authorization: Bearer $RUN_SECRET" \
-    "$WORKER_URL/run?date=$DATE&force=true"
+    "$WORKER_URL/run?date=$DATE&force=true" \
+    --output /dev/null &
+  # Give the Worker 5s to start and write the initial pending record to KV.
+  sleep 5
 }
 
 # --- subcommands -------------------------------------------------------------
@@ -317,9 +322,8 @@ cmd_make() {
   log "current status: $STATUS"
 
   if [ "$STATUS" = "absent" ] || [ "$STATUS" = "unknown" ] || [ "$STATUS" = "failed" ] || [ "$FORCE" = "1" ]; then
-    step "step 1b: triggering /run (force=true)..."
-    worker_run "$DATE" >/dev/null || die "/run failed (network or auth error)"
-    sleep 3
+    step "step 1b: triggering /run (force=true) — pipeline runs in Worker, polling for progress..."
+    worker_run "$DATE"   # fires curl in background, waits 5s for KV to update
     STATUS=$(worker_status "$DATE" | parse_status)
     log "post-trigger status: $STATUS"
   fi
