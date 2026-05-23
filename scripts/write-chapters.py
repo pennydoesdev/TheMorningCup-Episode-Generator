@@ -69,7 +69,7 @@ def main(mp3_path: str, manifest_path: str, sounds_dir: str, chunks_dir: str):
         return
 
     # Sound clip filenames must match build-episode.sh exactly.
-    intro_song  = os.path.join(sounds_dir, "Spark.mp3")
+    intro_song  = os.path.join(sounds_dir, "Hello.mp3")
     coffee_pour = os.path.join(sounds_dir, "Coffee Pour.wav")
     intro_sting = os.path.join(sounds_dir, "intro-sting.wav")
     section_st  = os.path.join(sounds_dir, "Topic Transition.mp3")

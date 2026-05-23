@@ -95,8 +95,8 @@ export function validateEpisode(
 
   if (!script.includes("[TEN-SECOND SECTION SPACER]")) {
     errors.push("Script is missing [TEN-SECOND SECTION SPACER] markers");
-  } else if (spacerCount < 16) {
-    errors.push(`Found only ${spacerCount} spacer markers; need at least 16 (one between each major section, including Supreme Court Watch)`);
+  } else if (spacerCount < 22) {
+    errors.push(`Found only ${spacerCount} spacer markers; need at least 22 (one between each major section)`);
   }
 
   // Riddle section before outro, riddle answer at end.

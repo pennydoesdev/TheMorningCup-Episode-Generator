@@ -364,9 +364,15 @@ SWEET SPOT TARGET: ${config.targetScriptWordsMin}–${config.targetScriptWordsMa
 
 DO NOT delete or shorten anything already in the script. ADD content to these underweight sections:
 - U.S. politics + political trends: add 100–200 words (expand with specific policy stakes)
-- Business/economy + trade: add 75–150 words (worker impact, prices, supply chain)
-- Healthcare + environment/climate: add 75–150 words (patient/community impact)
-- International + Iran + Gaza: add 100–200 words (civilian impact, policy stakes)
+- Supreme Court Watch: add 50–100 words (pending cases, oral arguments, recusal news)
+- Voting Rights / Election Integrity: add 50–100 words (voter suppression, DOJ actions, gerrymandering)
+- Business/economy + trade: add 75–150 words (worker impact, prices, supply chain, tariff effects)
+- Housing: add 50–100 words (rent trends, mortgage rates, corporate landlordism, federal housing policy)
+- Labor / Union Watch: add 50–100 words (NLRB decisions, strikes, organizing drives)
+- Healthcare + reproductive rights combined: add 75–150 words (patient impact, access gaps, Dobbs fallout)
+- Education: add 50–100 words (DOE actions, funding, student debt, book bans, DEI rollbacks)
+- Environment + climate: add 50–100 words (active disasters, policy, equity impacts)
+- International + Iran + Gaza: add 100–200 words (civilian impact, policy stakes; always use "genocide" for Gaza)
 - Closing summary: add 50–100 words (revisit the day's through-lines)
 
 Note: these are ADD targets per section, not total section sizes. Stop adding once the script reaches ${config.targetScriptWordsMax} words.

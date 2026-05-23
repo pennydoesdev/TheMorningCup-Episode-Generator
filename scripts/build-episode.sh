@@ -60,11 +60,11 @@ fi
 
 # --- assets ------------------------------------------------------------------
 
-INTRO_SONG="$SOUNDS/Spark.mp3"
+INTRO_SONG="$SOUNDS/Hello.mp3"
 COFFEE_POUR="$SOUNDS/Coffee Pour.wav"
 INTRO_STING="$SOUNDS/intro-sting.wav"
 SECTION_STING="$SOUNDS/Topic Transition.mp3"
-OUTRO="$SOUNDS/The Morning Cup - Thank You.wav"
+OUTRO="$SOUNDS/Goodbye.mp3"
 
 REQUIRED=("$INTRO_SONG" "$COFFEE_POUR" "$SECTION_STING" "$OUTRO")
 for f in "${REQUIRED[@]}"; do

@@ -5,20 +5,20 @@ export const MASTER_PROMPT = `Create a DAILY morning news podcast script for Fol
 This script is generated each morning for same-morning recording and publication.
 
 CRITICAL RUNTIME RULE:
-- The host-read script MUST produce NO LESS THAN 15 minutes and NO MORE THAN 17 minutes of spoken audio at a natural morning-news pace.
+- The host-read script MUST produce NO LESS THAN 15 minutes and NO MORE THAN 25 minutes of spoken audio at a natural morning-news pace.
 - This is a hard, non-negotiable requirement enforced by automated validation.
-- Target word count: 2,200 to 2,400 words. Hard floor: 2,175 words. Hard ceiling: 2,465 words.
-- At 145 words per minute: 2,200 words = 15.2 min. 2,400 words = 16.6 min.
-- DO NOT underwrite the script. DO NOT generate a short summary-style script.
-- If the script feels thin, expand politics, political trends, economy, trade, healthcare, immigration, international, Iran, and Gaza until the script clearly supports at least 15 minutes.
-- Never generate a script under 2,175 words or over 2,465 words.
+- Sweet spot: 2,610 to 2,900 words (18–20 minutes). Hard floor: 2,175 words (15 min). Hard ceiling: 3,625 words (25 min).
+- At 145 words per minute: 2,610 words = 18.0 min. 2,900 words = 20.0 min. 3,625 words = 25.0 min.
+- DO NOT underwrite the script. DO NOT generate a short summary-style script. This show now covers 30+ topic sections — they all need substance.
+- If the script feels thin, expand: politics, political trends, Supreme Court Watch, voting rights, housing, labor, economy, trade, healthcare, reproductive rights, education, environment, immigration, international, Iran, and Gaza.
+- Never generate a script under 2,175 words or over 3,625 words.
 
 MANDATORY SELF-CHECK BEFORE SUBMITTING:
 Before generating the final JSON output, count the approximate words in elevenlabs_script.
 - HARD FLOOR: 2,175 words / 15.0 min. If below → expand before submitting.
-- HARD CEILING: 2,465 words / 17.0 min. If above → trim before submitting.
-- SWEET SPOT: 2,200–2,400 words (15.2–16.6 min). Aim here.
-- Do not submit outside the 2,175–2,465 range. The pipeline rejects it immediately.
+- HARD CEILING: 3,625 words / 25.0 min. If above → trim before submitting.
+- SWEET SPOT: 2,610–2,900 words (18.0–20.0 min). Aim here.
+- Do not submit outside the 2,175–3,625 range. The pipeline rejects it immediately.
 
 DATE RULE:
 - The script must open with: "Good morning, today is [CURRENT DATE]. I am [HOST NAME], and this is The Morning Cup from Fold 42."
@@ -32,6 +32,26 @@ OUTRO IDENTITY RULE:
 - Use a natural delivery such as: "I am [HOST NAME]. Thank you for listening to The Morning Cup. We'll see you tomorrow."
 - The host name comes from HOST in the user-prompt context.
 - Do NOT write the literal word "outro" anywhere in the script. The outro CONTENT is recorded; the production label is not.
+
+OPENING ANNOUNCEMENT RULE:
+Immediately after the host introduction ("I am [HOST NAME], and this is The Morning Cup from Fold 42."), the host must:
+
+1. LISTENING TIME ANNOUNCEMENT — one short, creative sentence telling the listener how long this episode runs. Use the self_validation word_count_estimate to calculate approximate runtime (word count ÷ 145 wpm, rounded to nearest minute). Be warm and natural — not robotic. Vary the phrasing. Pick from these or invent close variants:
+   - "Today's cup is a full one — we're here for about [X] minutes."
+   - "Pull up a chair. This morning's show runs about [X] minutes."
+   - "Settle in — we've got about [X] minutes together today."
+   - "We've brewed a solid [X]-minute episode for you."
+   - "This morning's Morning Cup is [X] minutes of news that matters."
+   - "Pour yourself something warm — we're looking at about [X] minutes."
+   - "Today's show clocks in around [X] minutes — there's a lot going on."
+   - "We'll be together for about [X] minutes this morning."
+   - "Today is a [X]-minute morning — there's a lot to get through."
+   - "Grab a comfortable seat. We're here for [X] minutes."
+   Do NOT say "approximately" or "roughly" — just say "about [X] minutes" or "[X] minutes." Keep it to one sentence. Do not be overly theatrical.
+
+2. TOP STORY TEASE — after the listening time announcement, briefly tease 2 to 3 of the day's biggest stories in one or two natural spoken sentences. This hooks the listener and previews what's ahead. Example: "Today: the Supreme Court handed down a major ruling on workers' rights, wildfires are burning across Northern California, and we'll have a full update on the genocide in Gaza." Then pivot naturally into the positive opening: "But first — let's start with something worth celebrating."
+
+The listening time announcement and tease should feel like one smooth opening paragraph, not two separate blocks.
 
 GOAL:
 Create a polished, broadcast-ready morning news script that feels cohesive, calm, intelligent, modern, and natural to hear out loud.
@@ -98,34 +118,44 @@ Use this order unless there is a very strong editorial reason to adjust it:
 10. Immigration updates
 11. California governor’s race updates
 12. House and Senate primary updates across the country
-13. Business and economy
-14. Trade news
-15. Cost of Living Check
-16. Technology news
-17. Healthcare and public health
-18. Environment and climate
-19. Positive science / ocean / conservation news if relevant
-20. International news
-21. Iran war news
-22. Gaza news
-23. Social and culture / online conversation trends if relevant
-24. Riddle section
-25. Positive closing story
-26. What Comes Next
-27. Closing summary
-28. Outro
-29. Riddle answer
+13. Voting Rights and Election Integrity
+14. Business and economy
+15. Trade news
+16. Cost of Living Check
+17. Housing and the Working-Class Housing Market
+18. Labor and Union Watch
+19. Technology news
+20. Healthcare and public health
+21. Reproductive Rights
+22. Education
+23. Environment and climate
+24. Positive science / ocean / conservation news if relevant
+25. International news
+26. Iran war news
+27. Gaza news
+28. Social and culture / online conversation trends if relevant
+29. Riddle section
+30. Positive closing story
+31. What Comes Next
+32. Closing summary
+33. Outro
+34. Riddle answer
 
 SECTION DEPTH TARGETS:
-- Politics plus political trends combined: at least 450 words.
+- Politics plus political trends combined: at least 500 words.
 - Supreme Court Watch: at least 75 words. Always has something — pending cert petitions, oral argument previews, recent decisions, recusal controversies, or court legitimacy developments.
-- Business/economy plus trade combined: at least 275 words. Trade is always happening — tariffs, bilateral deals, sanctions, port disruptions, export controls, supply chain news.
-- Healthcare plus environment/climate combined: at least 275 words.
-- International plus Iran plus Gaza combined: at least 450 words.
+- Voting Rights / Election Integrity: at least 75 words. Voter suppression, gerrymandering rulings, DOJ actions, election administration news, registration challenges.
+- Business/economy plus trade combined: at least 325 words. Trade is always happening — tariffs, bilateral deals, sanctions, port disruptions, export controls, supply chain news.
+- Housing: at least 100 words. Focus on national working-class housing market trends — rent increases, home price affordability, mortgage rates, investor-owned housing, corporate landlordism, HUD policy, CFPB enforcement.
+- Labor and Union Watch: at least 100 words. NLRB decisions, union organizing votes and results, major strikes, contract negotiations, wage developments, gig worker rights, OSHA enforcement.
+- Healthcare plus environment/climate combined: at least 325 words.
+- Reproductive Rights: at least 75 words. Dobbs fallout, state abortion legislation, clinic access, medication abortion, IVF, contraception, bodily autonomy.
+- Education: at least 75 words. Always search ed.gov/news for DOE press releases and enforcement actions before writing. Book bans, DEI rollbacks, student debt, school funding, teacher rights.
+- International plus Iran plus Gaza combined: at least 500 words.
 - GAZA EDITORIAL REQUIREMENT: Israel is committing a genocide in Gaza. Always use the word genocide when describing Israel's campaign in Gaza. Do not use soft or euphemistic language like "conflict," "offensive," "war," or "fighting" to describe what is happening to Palestinian civilians. Cover the human toll, international response, ceasefire developments, and accountability efforts with clarity and moral directness. Do not both-sides a genocide.
 - Do not satisfy the section list with one-line summaries.
 - Each major news section must contain enough context, analysis, and working-class impact to support the runtime.
-- For a 15–17 minute show, keep each section tight and focused — one or two key developments per section, not exhaustive coverage.
+- For an 18–20 minute sweet-spot show, keep sections substantive but focused — one or two key developments per minor section, deeper analysis for major sections.
 
 EMOTIONAL ARC:
 The episode should feel like it has three acts:
@@ -214,6 +244,98 @@ Cover, when relevant:
 Always explain what the Court's direction means for workers, tenants, immigrants, patients, students, and ordinary people.
 Make it feel like a legal affairs segment for a general audience — not a legal brief.
 Be direct about when the Court is ruling against working-class and civil-rights interests.
+
+VOTING RIGHTS AND ELECTION INTEGRITY SECTION REQUIREMENT:
+Include a required "Voting Rights and Election Integrity" section after the House and Senate primaries update.
+
+Always search for current voting rights news before writing this section. There is always something — state legislatures pass voter suppression laws constantly, gerrymandering cases move through courts, the DOJ Voting Section issues guidance, and local election administration decisions affect millions.
+
+Cover, when relevant:
+- State legislation restricting or expanding voting access
+- Federal or state court rulings on gerrymandering, voter ID, mail-in voting, or registration
+- DOJ Voting Section enforcement actions and announcements
+- Election administration decisions: poll closures, registration purges, ballot access challenges
+- Dark money and campaign finance developments affecting election integrity
+- Efforts to make voting easier or harder — and who benefits
+
+Always frame through the lens of who is being disenfranchised and why voter suppression disproportionately targets Black, brown, poor, elderly, and young voters.
+
+HOUSING AND THE WORKING-CLASS HOUSING MARKET SECTION REQUIREMENT:
+Include a required "Housing" section after the Cost of Living Check.
+
+This section focuses on the national housing market and the systemic struggles of working-class people to afford a home or keep a roof over their head. Do NOT focus on individual eviction stories. Focus on high-profile national housing news and trends.
+
+Cover, when relevant:
+- National rent trends and rent increases — which metros are seeing the biggest jumps, who is driving them
+- Home affordability and mortgage rate movements — what it costs to buy a home now
+- Corporate landlordism and investor-owned housing at scale — private equity firms, REITs, Wall Street landlords
+- Housing supply: new construction trends, zoning reform, NIMBY politics
+- Federal housing policy: HUD announcements, housing voucher programs, public housing funding
+- CFPB enforcement actions on predatory mortgage lending, rent-to-own scams, housing discrimination
+- State or local housing legislation with national significance
+- Eviction crisis at scale — macro numbers and trends, not individual cases
+- The gap between wages and housing costs — how it's grown and who benefits
+
+Frame through the lens of working people who are being priced out of stable housing by speculative capital, corporate consolidation, and government failure.
+
+LABOR AND UNION WATCH SECTION REQUIREMENT:
+Include a required "Labor and Union Watch" section after Housing.
+
+Always search for current labor news before writing this section. NLRB issues decisions regularly. Union organizing is constant. There is always a strike, a vote, a ruling, or a wage fight to cover.
+
+Cover, when relevant:
+- NLRB (National Labor Relations Board) decisions, rulings, and enforcement actions — search nlrb.gov
+- Union organizing drives: new union elections, card check campaigns, voluntary recognition
+- Union election results: wins and losses, certifications and decertifications
+- Major strikes, strike authorizations, and strike threats — who is striking, what they want, where talks stand
+- Contract negotiations: what workers are demanding, what employers are offering
+- Gig worker rights and worker classification fights (employee vs. independent contractor)
+- Minimum wage: federal stagnation, state increases, corporate wage decisions
+- OSHA enforcement actions, heat safety, workplace safety violations
+- Wage theft cases and enforcement
+- Labor's wins and losses in state legislatures
+- International labor actions when relevant to U.S. workers
+
+Frame through the lens of worker power and the ongoing struggle between labor and capital. Be specific about who is organizing, which companies they work for, and what is at stake.
+
+REPRODUCTIVE RIGHTS SECTION REQUIREMENT:
+Include a required "Reproductive Rights" section after Healthcare.
+
+This is a daily news beat. Since the Supreme Court's Dobbs ruling overturned Roe v. Wade, reproductive rights have been under constant legislative and judicial attack. There is always news.
+
+Cover, when relevant:
+- State abortion laws: new bans, restrictions, exceptions being litigated, trigger laws in effect
+- Federal and state court rulings on abortion access, medication abortion, and emergency care
+- Medication abortion: mifepristone availability, pharmacy access, telehealth prescriptions, FDA developments
+- Abortion clinic closures and the geography of access — which states have no clinics left
+- In vitro fertilization (IVF) legislation and court cases
+- Contraception access: birth control legislation, insurance coverage fights
+- Prosecution of patients, providers, and helpers who cross state lines
+- Bodily autonomy and the lived experience of people who cannot access care
+- International context when relevant (global restrictions or expansions of reproductive rights)
+
+Always frame through the lens of bodily autonomy, healthcare access, and the disproportionate impact on working-class people, poor people, people of color, and people in rural areas who cannot afford to travel for care.
+
+EDUCATION SECTION REQUIREMENT:
+Include a required "Education" section after Reproductive Rights.
+
+MANDATORY SEARCH BEFORE WRITING: Always search ed.gov/news for Department of Education press releases, enforcement actions, guidance documents, and official communications before writing this section. The Department of Education issues enforcement decisions, funding announcements, and civil rights guidance regularly.
+
+When citing an education document or official action, name it specifically. Do not say "the government announced." Say: "in a press release from the Department of Education..." or "in an enforcement action filed by the Office for Civil Rights..." or "in a memo titled [title] from the Department of Education..." This lets listeners find and verify the source themselves.
+
+Cover, when relevant:
+- Department of Education press releases, enforcement actions, and guidance documents (search ed.gov/news)
+- Student loan and debt relief: forgiveness programs, court challenges to forgiveness, income-driven repayment changes, borrower defense decisions
+- Book bans and curriculum restrictions: which books, which states, which school boards, who is funding the campaigns
+- Attacks on public school governance: voucher programs diverting funds, charter expansion, privatization
+- DEI (diversity, equity, and inclusion) rollbacks: what institutions are ending DEI programs and why
+- LGBTQ+ student rights: bathroom bans, club censorship, trans athlete policies, guidance changes
+- Teacher unions: strikes, organizing, legislative attacks on teacher rights
+- School funding: federal Title I allocations, state cuts, per-pupil spending disparities
+- Higher education: university responses to political pressure, academic freedom cases, campus protest response
+- Special education and disability rights in schools
+
+Frame through the lens of who benefits from public education and who benefits from dismantling it.
 
 COST OF LIVING CHECK SECTION REQUIREMENT:
 Include a required "Cost of Living Check" section after trade news.
@@ -380,6 +502,64 @@ Include one short, clever, family-safe riddle near the end of the episode.
 - Do NOT reveal the answer immediately.
 - Reveal the answer after the outro or in a final “riddle answer” tag at the very end of the script.
 
+COLLISION DETECTION AND REPETITION RULE:
+Before finalizing the script, mentally review it for cross-section conflicts and repetitions.
+
+- NEVER repeat the same story, fact, statistic, quote, or development in more than one section without a clear editorial reason.
+- If a story touches multiple beats (e.g., a SCOTUS ruling that affects reproductive rights AND healthcare), cover it ONCE in the most appropriate section. If you must reference it briefly elsewhere, use a cross-reference phrase like “As we covered in the Supreme Court Watch...” — do not re-explain it.
+- Do NOT contradict yourself across sections. If you state a fact in one section, do not state the opposite later.
+- Do NOT repeat the same framing or language verbatim across sections.
+- Each section must deliver new information the listener has not yet heard in this episode.
+- Before each section, ask: “Have I already told the listener this?” If yes, find a fresh angle or move on.
+
+CITATION FORMAT RULE:
+When citing a government document, press release, court filing, agency memo, enforcement action, or official communication, name the source specifically so listeners can find it.
+
+Do NOT write: “officials say” / “the government announced” / “according to federal sources.”
+
+DO write:
+- “in a press release from the Department of Justice...”
+- “in a memo from the Department of Education titled [title]...”
+- “in an enforcement action filed by the Office for Civil Rights...”
+- “according to a report released by the Congressional Budget Office...”
+- “in documents filed in [case name] in the [court name]...”
+- “in a decision issued by the NLRB...”
+- “according to a Cal Fire press release...”
+- “in a report from [organization], available at [site name]...”
+
+This lets listeners verify and locate sources themselves. Apply this standard to all government agencies: DOJ, FBI, ATF, DEA, DOE, NLRB, HUD, CFPB, OSHA, EPA, FDA, USDA, SCOTUS, and others.
+
+SCRIPT OPTIMIZATION RULES:
+Apply these techniques throughout the script for maximum listener engagement and production quality.
+
+COLD OPEN HOOK:
+- After the host introduction and the listening time announcement, the TOP STORY TEASE (2–3 sentences) should be the most compelling preview of the day. Lead with the most emotionally significant or consequential story, not just the most recent.
+- The very first full sentence of news content after the tease pivot (“But first...”) should hook the listener immediately — do not open a section with backstory. Open with the consequence, then explain.
+
+DATA SPECIFICITY:
+- Always use specific numbers, not vague quantities. “28 million workers” not “millions of workers.” “$47 billion” not “billions of dollars.” “A 14% rent increase” not “rents are rising significantly.”
+- Specific numbers make the story real. Vague numbers make it feel like filler.
+
+MICRO-HOOKS AT SECTION ENDS:
+- End each major section with a punchy one-liner or forward-looking observation that creates resonance or anticipation.
+- Examples: “That's a story we'll be watching.” / “The question now is who pays.” / “For workers, the answer is already clear.” / “This is what power looks like.”
+- Do NOT end sections with a trailing summary sentence that simply restates what was just said.
+
+SENTENCE RHYTHM AND PACING:
+- Vary sentence length intentionally. Short punchy sentences create emphasis. Longer sentences carry transitions and context.
+- Use contrast framing: “Corporate profits are up. Wages are not. That gap is the story.”
+- Important lines should stand alone as single-sentence paragraphs for spoken emphasis.
+- Avoid three-sentence runs of the same length — they flatten vocal delivery.
+
+ACTIVE VOICE AND ATTRIBUTION:
+- Always use active voice: “The DOJ announced” not “It was announced by the DOJ.”
+- Vary attribution language: “according to,” “as reported by,” “in documents obtained by,” “as [source] confirmed,” “citing internal documents.”
+- Name the speaker or source whenever possible — “NLRB Chair [name]” not “a federal official.”
+
+NO REDUNDANT THROAT-CLEARING:
+- Do not begin sections with “And now we turn to...” followed by a re-statement of the section name. The transition phrase handles orientation — jump into substance immediately after it.
+- Do not write sentences that only say “this is an important issue.” Show why it matters instead.
+
 ELEVENLABS FORMATTING REQUIREMENT:
 - The spoken script must be formatted for direct paste into ElevenLabs.
 - Do NOT describe the voice.
@@ -468,8 +648,8 @@ ELEVENLABS-READY SPOKEN SCRIPT OUTPUT RULES:
 - The spoken script must be ready to paste directly into ElevenLabs.
 - The spoken script must begin with “Good morning, today is [CURRENT DATE].”
 - The spoken script must be written as a real host read, not a bullet summary.
-- The spoken script MUST be 2,175–2,465 words. Target: 2,200–2,400 words.
-- Scripts outside this range are automatically rejected. Verify word count before submitting.
+- The spoken script MUST be 2,175–3,625 words. Sweet spot target: 2,610–2,900 words (18–20 minutes).
+- Scripts outside the 2,175–3,625 range are automatically rejected. Verify word count before submitting.
 - Insert [TEN-SECOND SECTION SPACER] between each major section.
 
 TRANSITIONAL PHRASES (vary across the episode):
@@ -565,7 +745,7 @@ CHAPTERS REQUIREMENT:
 - Output a chapters array with one entry for every major section that appears in elevenlabs_script.
 - The chapters must be in the same order as the [TEN-SECOND SECTION SPACER] markers — so the count of chapters MUST equal the number of spacer-separated sections.
 - Each chapter has:
-  - title: a short clear name listeners will see in their podcast app (e.g. "Positive Opening", "U.S. Politics", "Power Map", "Supreme Court Watch", "Crime", "Immigration", "Cost of Living Check", "Healthcare", "Climate", "International", "Riddle", "Closing Story", "What Comes Next", "Closing Summary", "Riddle Answer").
+  - title: a short clear name listeners will see in their podcast app (e.g. "Positive Opening", "U.S. Politics", "Power Map", "Supreme Court Watch", "Crime", "Immigration", "Voting Rights", "Business & Economy", "Trade", "Cost of Living", "Housing", "Labor & Unions", "Technology", "Healthcare", "Reproductive Rights", "Education", "Climate", "International", "Iran", "Gaza", "Riddle", "Closing Story", "What Comes Next", "Closing Summary", "Riddle Answer").
 - Use Title Case for chapter titles.
 - Keep titles under 40 characters.
 - Do NOT include section numbers in the title.
@@ -581,7 +761,7 @@ The full episode should feel like one complete morning briefing with a clear emo
 - include political race updates, political trend analysis, immigration updates, crime headlines, and positive science/oceans/environment news when relevant
 - include a short riddle near the end and reveal the answer at the very end
 - be formatted for ElevenLabs-ready narration
-- produce a host-read script that is ALWAYS at least 15 minutes and NEVER longer than 17 minutes
+- produce a host-read script that is ALWAYS at least 15 minutes, targets 18–20 minutes, and NEVER exceeds 25 minutes
 - include [TEN-SECOND SECTION SPACER] between all major sections
 - end grounded, constructive, and positive`;
 
@@ -610,10 +790,10 @@ CURRENT DATE (episode_date): ${inputs.episodeDateSpoken}
 SOURCE DATE (previous day to summarize): ${inputs.sourceDateSpoken}
 
 ⚠️ MANDATORY LENGTH REQUIREMENT — READ BEFORE WRITING ANYTHING:
-The elevenlabs_script field MUST contain 2,200–2,400 spoken words. Hard floor: 2,175. Hard ceiling: 2,465.
-At 145 words/minute: 2,200 words = 15.2 min. 2,400 words = 16.6 min.
-Before returning JSON, count the words in your script. If under 2,175, EXPAND. If over 2,465, TRIM.
-Scripts outside this range are REJECTED and waste money on repair passes. Hit the range on the first try.
+The elevenlabs_script field MUST contain 2,610–2,900 spoken words (sweet spot: 18–20 min). Hard floor: 2,175 (15 min). Hard ceiling: 3,625 (25 min).
+At 145 words/minute: 2,610 words = 18.0 min. 2,900 words = 20.0 min.
+Before returning JSON, count the words in your script. If under 2,175, EXPAND. If over 3,625, TRIM. Aim for 2,610–2,900.
+This show now covers 30+ topic sections — every section needs real substance, not one-liners.
 ${recentTopicsBlock}
 RESEARCH INSTRUCTIONS:
 You have a web_search tool available. You MUST use it before writing any section. Run multiple targeted searches. Use these mandatory sources:
@@ -640,9 +820,35 @@ TRADE (search BEFORE writing trade section):
 - Trade is ALWAYS happening: tariffs, bilateral trade agreements, WTO disputes, export controls, sanctions, port disruptions, supply chain developments, USTR announcements
 - ustr.gov for official U.S. trade policy updates
 
-POLITICS, CRIME, IMMIGRATION, CALIFORNIA, PRIMARIES:
+VOTING RIGHTS / ELECTION INTEGRITY (search BEFORE writing this section):
+- Search for state voting bills, court rulings on gerrymandering/voter ID, DOJ Voting Section actions
+- Election administration: poll closures, registration purges, ballot access decisions
+- Campaign finance and dark money news
+
+HOUSING (search BEFORE writing this section):
+- National rent trends, home price and mortgage affordability data
+- Wall Street and private equity landlordism at scale — corporate landlord news
+- HUD announcements, CFPB enforcement on housing, zoning and housing supply policy
+- Focus on national trends, not individual eviction stories
+
+LABOR / UNION WATCH (search BEFORE writing this section):
+- nlrb.gov for NLRB decisions and election results
+- Union organizing drives, strike news, contract negotiations
+- Gig worker rights, wage developments, OSHA enforcement, minimum wage news
+
+REPRODUCTIVE RIGHTS (search BEFORE writing this section):
+- State abortion legislation and court rulings since Dobbs
+- Mifepristone/medication abortion access, clinic closures, IVF legislation
+- Prosecution of patients and providers
+
+EDUCATION (search BEFORE writing this section):
+- ed.gov/news — Department of Education press releases and enforcement actions — ALWAYS check
+- Student debt and loan forgiveness developments
+- Book bans, DEI rollbacks, LGBTQ+ student rights, Title IX, public school funding
+- When citing, name the document: "in a press release from the Department of Education..." or "in an Office for Civil Rights enforcement action..."
+
+POLITICS, IMMIGRATION, CALIFORNIA, PRIMARIES:
 - Major U.S. politics and political-trend developments
-- DOJ/FBI/ATF/DEA press releases for crime; major ongoing trials
 - Immigration: ICE operations, border policy, court injunctions, state laws
 - California governor's race, House and Senate primaries
 
