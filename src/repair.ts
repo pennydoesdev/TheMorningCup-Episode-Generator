@@ -30,13 +30,14 @@ export async function maybeRepair(
   episode: EpisodeJson,
   validation: ValidationResult,
   userPrompt: string,
+  episodeDate: string,
 ): Promise<RepairOutcome> {
   if (validation.ok || !config.enableRepairPass) {
     return { episode, raw: "", validation, attempted: false };
   }
 
   // Pass 1: standard "fix the listed errors" repair.
-  const first = await repairEpisode(env, config, episode, validation.errors, userPrompt);
+  const first = await repairEpisode(env, config, episode, validation.errors, userPrompt, episodeDate);
   let currentEpisode = first.json;
   let currentRaw = first.raw;
   let currentValidation = validateEpisode(currentEpisode, config);
