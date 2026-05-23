@@ -10,7 +10,7 @@
 import type { Env, EpisodeJson } from "./types";
 import type { Config } from "./config";
 import { EPISODE_JSON_SCHEMA } from "./schema";
-import { MASTER_PROMPT } from "./prompt";
+import { buildSystemPrompt } from "./prompt";
 import { logger } from "./logger";
 
 interface ResponsesContentPart {
@@ -304,13 +304,15 @@ export async function generateEpisode(
   env: Env,
   config: Config,
   userPrompt: string,
+  episodeDate: string,
 ): Promise<OpenAiResult> {
-  // MASTER_PROMPT goes in the system instruction so OpenAI's automatic prompt
-  // caching kicks in after the first daily run — cached tokens cost 75% less.
-  // The userPrompt is only the dynamic context (date, host, source digest).
+  // buildSystemPrompt pre-selects the opening variation and AI disclaimer for
+  // the given date, so only ONE of each is sent to OpenAI instead of all 225.
+  // The system instruction still benefits from OpenAI's automatic prompt
+  // caching — cached tokens cost 75% less after the first daily call.
   const { raw } = await callResponses(env, config, {
     systemInstruction:
-      MASTER_PROMPT +
+      buildSystemPrompt(episodeDate) +
       "\n\nReturn strict JSON matching the provided schema. No markdown. No commentary outside JSON.",
     userInput: userPrompt,
     temperature: 0.4,
@@ -329,6 +331,7 @@ export async function repairEpisode(
   prior: EpisodeJson,
   errors: string[],
   userPrompt: string,
+  episodeDate: string,
 ): Promise<OpenAiResult> {
   const repairInput = `${userPrompt}
 

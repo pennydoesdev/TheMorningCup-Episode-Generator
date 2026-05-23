@@ -194,7 +194,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       corrections,
     });
 
-    const generated = await generateEpisode(env, config, userPrompt);
+    const generated = await generateEpisode(env, config, userPrompt, episodeIso);
     let episode: EpisodeJson = generated.json;
     let raw: string = generated.raw;
 
@@ -209,7 +209,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
         errors: validation.errors,
       });
       try {
-        const repaired = await maybeRepair(env, config, episode, validation, userPrompt);
+        const repaired = await maybeRepair(env, config, episode, validation, userPrompt, episodeIso);
         if (repaired.attempted) {
           episode = repaired.episode;
           raw = repaired.raw || raw;
