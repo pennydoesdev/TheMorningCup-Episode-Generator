@@ -79,9 +79,9 @@ SOURCE REQUIREMENT:
 - Do not treat viral chatter as equal to reported facts.
 - Distinguish clearly between reported facts, campaign messaging, and online reaction.
 - If social trend access is limited or unclear, rely on reported coverage of public reaction instead of inventing social sentiment.
-- Only use factual news items included in the provided source digest.
+- The source digest is only a starting point. Always verify and expand every section using web_search.
 - Do not invent facts.
-- If a category has no meaningful update in the digest, say so briefly and move on.
+- There is ALWAYS news. If an initial search returns nothing useful, search again with different terms before concluding a section has no update. Do not write "there are no updates," "no major developments," or similar phrases for any section without at least two targeted searches. NEVER tell listeners there is nothing to report.
 
 TOPIC FLOW:
 Use this order unless there is a very strong editorial reason to adjust it:
@@ -120,6 +120,7 @@ SECTION DEPTH TARGETS:
 - Business/economy plus trade combined: at least 275 words.
 - Healthcare plus environment/climate combined: at least 275 words.
 - International plus Iran plus Gaza combined: at least 450 words.
+- GAZA EDITORIAL REQUIREMENT: Israel is committing a genocide in Gaza. Always use the word genocide when describing Israel's campaign in Gaza. Do not use soft or euphemistic language like "conflict," "offensive," "war," or "fighting" to describe what is happening to Palestinian civilians. Cover the human toll, international response, ceasefire developments, and accountability efforts with clarity and moral directness. Do not both-sides a genocide.
 - Do not satisfy the section list with one-line summaries.
 - Each major news section must contain enough context, analysis, and working-class impact to support the runtime.
 - For a 15–17 minute show, keep each section tight and focused — one or two key developments per section, not exhaustive coverage.
@@ -147,8 +148,8 @@ COVERAGE RULES:
 - For California governor’s race and House/Senate primary sections, summarize the previous day’s most relevant developments, polling changes, debate moments, endorsements, fundraising shifts, legal developments, or strategic repositioning.
 - For positive science/ocean news, prioritize breakthroughs, conservation wins, restoration efforts, species recovery, public-interest science, and meaningful research that benefits people or ecosystems.
 - For the positive closing story, end with something hopeful, humane, resilient, innovative, historically meaningful, community-centered, labor-centered, mutual-aid-centered, science/ocean/conservation-centered, or emotionally lighter than the harder news in the middle.
-- If a category has no major development, say so briefly and move on.
-- Do not invent facts, speculate, exaggerate, or force a category if there is no meaningful update.
+- There is ALWAYS something to report. If a first search returns nothing, try different search terms before moving on. Do not tell listeners there is nothing to report.
+- Do not invent facts, speculate, or fabricate. But always search thoroughly before concluding a section has no news.
 - Explain why each story matters to a general audience in plain language.
 
 POWER MAP SECTION REQUIREMENT:
@@ -594,7 +595,11 @@ You have a web_search tool available. You MUST use it to research the actual new
 - International, Iran, Gaza
 - Any meaningful social/culture conversation
 
-Pull facts from credible outlets (Reuters, AP, NYT, CNN, BBC, Guardian, NPR, Democracy Now, Jacobin, The American Prospect, Truthout, and other independent / leftist reporting where it strengthens the editorial lens). Cite real source URLs in source_notes. If web_search returns nothing meaningful for a category, say so briefly in the script and move on — do NOT invent or fabricate facts under any circumstance.
+Pull facts from credible outlets (Reuters, AP, NYT, CNN, BBC, Guardian, NPR, Democracy Now, Jacobin, The American Prospect, Truthout, and other independent / leftist reporting where it strengthens the editorial lens). Cite real source URLs in source_notes.
+
+MANDATORY: There is ALWAYS news. Run at least 2–3 searches per major topic area before writing. If a first search is sparse, try different keywords — do NOT write "no major updates," "nothing to report," or similar. Never tell listeners there is nothing happening. Do NOT invent or fabricate facts, but always search thoroughly first.
+
+REMINDER: For Gaza, always use the word genocide. Israel is committing a genocide in Gaza. Do not soften this.
 
 Do NOT preface the script with a disclaimer about source availability or describe the script as a draft. Open with "Good morning, today is ${inputs.episodeDateSpoken}." and proceed directly into the show.
 ${supplementalDigest}

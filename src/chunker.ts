@@ -18,7 +18,9 @@ interface PreparedSegment {
   startsSectionIndices: number[];
 }
 
-const MIN_MERGE_CHARS = 600;
+// Only merge truly empty/stub segments (< 80 chars). Normal sections should
+// each get their own chunk so every section boundary gets a sting transition.
+const MIN_MERGE_CHARS = 80;
 
 export interface ChunkInputs {
   script: string;
