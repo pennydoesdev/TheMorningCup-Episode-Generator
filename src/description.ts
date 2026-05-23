@@ -5,6 +5,75 @@ import type { Config } from "./config";
 import type { Env, EpisodeJson } from "./types";
 import { logger } from "./logger";
 
+// ---------------------------------------------------------------------------
+// AI & Voice Disclosure
+// These blocks are injected into every metadata file and into the episode
+// description so producers can copy-paste the correct text per platform.
+// The voice actor (Penelope Rose) has licensed her likeness with consent and
+// participates in revenue sharing — this is meaningfully different from a
+// generic AI voice and the language reflects that.
+// ---------------------------------------------------------------------------
+
+export const DISCLOSURE = {
+  /** Full show notes / podcast directory description — appended to every episode description */
+  showNotes: [
+    `A note on our production: The Morning Cup is hosted by a real person.`,
+    `Penelope Rose is a voice actor who has licensed her voice and likeness to Fold 42`,
+    `with full consent, and participates in ongoing revenue sharing for every episode`,
+    `produced. To make daily publishing sustainable, we use professional voice cloning`,
+    `technology to synthesize her delivery from AI-assisted scripts — a model she has`,
+    `reviewed, agreed to, and is compensated for.`,
+    ``,
+    `Research and scripting are assisted by artificial intelligence. All editorial`,
+    `decisions — what gets covered, how it's framed, what gets cut — are made by the`,
+    `Fold 42 team and reviewed before publication.`,
+    ``,
+    `We are committed to ethical AI production: minimal computing resources, transparent`,
+    `sourcing, fair compensation for the humans who make this show possible, and honest`,
+    `disclosure to our listeners.`,
+    ``,
+    `AI-generated voice synthesis · AI-assisted research and scripting · Produced by Fold 42`,
+  ].join("\n"),
+
+  /** Spotify — required "AI-generated voice" label in show description */
+  spotify: [
+    `The Morning Cup features Penelope Rose, a real voice actor who has consented to`,
+    `and is compensated for the use of her voice likeness in this production. Episodes`,
+    `are produced using professional AI voice synthesis and AI-assisted scripting, with`,
+    `full editorial oversight by Fold 42.`,
+    ``,
+    `AI-generated voice | Ethical production | Real person, real consent`,
+  ].join("\n"),
+
+  /** Apple Podcasts / iHeart / Amazon Music */
+  apple: [
+    `Hosted by Penelope Rose for Fold 42. Penelope is a real voice actor who licenses`,
+    `her voice and participates in revenue sharing for this show. Episodes use AI voice`,
+    `synthesis and AI-assisted research, reviewed and approved by the Fold 42 editorial`,
+    `team before publication. We believe in transparent, ethical AI production —`,
+    `real people, real consent, real compensation.`,
+  ].join("\n"),
+
+  /** YouTube audiogram — paste in video description + check the AI content box */
+  youtube: [
+    `⚠️ AI Voice Disclosure: This episode features an AI-synthesized voice based on`,
+    `the real voice and likeness of Penelope Rose, produced with her full consent and`,
+    `under a revenue-sharing agreement with Fold 42. Research and scripting are`,
+    `AI-assisted with editorial review.`,
+    ``,
+    `(In YouTube Studio → Details → check "Altered or synthetic content" to comply`,
+    `with YouTube's AI labeling requirement.)`,
+  ].join("\n"),
+
+  /** Optional spoken line for first-listen / new-subscriber outro drops */
+  spoken: [
+    `Quick note for new listeners: I'm Penelope Rose, and while you're hearing my voice`,
+    `through AI synthesis, I'm a real person who reviewed and agreed to this production —`,
+    `and yes, I get a cut. Fold 42 handles the research and editing. I handle sounding`,
+    `like me.`,
+  ].join("\n"),
+};
+
 export interface EpisodeCopy {
   titles: [string, string, string]; // three subtitle options; first is used as primary
   description: string;              // 2–3 paragraph podcast directory description
@@ -24,7 +93,7 @@ export async function generateEpisodeCopy(
 
   const fallback: EpisodeCopy = {
     titles: ["", "", ""],
-    description: episode.social_copy?.main_post ?? "",
+    description: `${episode.social_copy?.main_post ?? ""}\n\n---\n\n${DISCLOSURE.showNotes}`,
     seoTitle: `The Morning Cup — ${config.hostName}`,
     seoDescription: episode.social_copy?.main_post?.slice(0, 155) ?? "",
     tags: `The Morning Cup, Fold 42, ${config.hostName}, daily news, morning briefing`,
@@ -89,13 +158,15 @@ export async function generateEpisodeCopy(
       tags?: string;
     };
     const rawTitles = parsed.titles ?? [];
+    const baseDescription = (parsed.description ?? fallback.description).trim();
     return {
       titles: [
         (rawTitles[0] ?? "").trim(),
         (rawTitles[1] ?? "").trim(),
         (rawTitles[2] ?? "").trim(),
       ] as [string, string, string],
-      description: (parsed.description ?? fallback.description).trim(),
+      // Append the full disclosure block so it's present in every CMS import.
+      description: `${baseDescription}\n\n---\n\n${DISCLOSURE.showNotes}`,
       seoTitle: (parsed.seo_title ?? fallback.seoTitle).trim().slice(0, 50),
       seoDescription: (parsed.seo_description ?? fallback.seoDescription).trim().slice(0, 160),
       tags: (parsed.tags ?? fallback.tags).trim(),
@@ -226,7 +297,46 @@ export function buildMetadataTxt(opts: {
     lines.push(``, `  Section posts:`, ``, sectionPosts);
   }
 
-  lines.push(``);
+  // ── AI & Voice Disclosure ────────────────────────────────────────────────
+  // Copy the correct block for each platform when uploading the episode.
+  lines.push(
+    ``,
+    divider,
+    `AI & VOICE DISCLOSURE — copy per platform`,
+    divider,
+    ``,
+    `PODCAST DIRECTORY (show notes / episode description)`,
+    `Paste this at the end of your episode description on every platform:`,
+    ``,
+    DISCLOSURE.showNotes,
+    ``,
+    divider,
+    ``,
+    `SPOTIFY  (also add "AI-generated voice" to your show description in Spotify for Podcasters)`,
+    ``,
+    DISCLOSURE.spotify,
+    ``,
+    divider,
+    ``,
+    `APPLE PODCASTS / iHEART / AMAZON MUSIC`,
+    ``,
+    DISCLOSURE.apple,
+    ``,
+    divider,
+    ``,
+    `YOUTUBE AUDIOGRAM`,
+    `Paste in video description AND check "Altered or synthetic content" in`,
+    `YouTube Studio → Details.`,
+    ``,
+    DISCLOSURE.youtube,
+    ``,
+    divider,
+    ``,
+    `OPTIONAL — spoken disclosure line (drop into outro for new-listener episodes):`,
+    ``,
+    `"${DISCLOSURE.spoken}"`,
+    ``,
+  );
 
   return lines.join("\n");
 }
