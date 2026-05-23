@@ -10,6 +10,7 @@ in Cloudflare R2, and emails you the script, metadata, and chunk links.
 
 | Doc | What's in it |
 |-----|--------------|
+| [docs/NEW-SHOW.md](./docs/NEW-SHOW.md) | **Launch a new Fold 42 podcast** — white-label setup guide, API keys, voice cloning, prompt writing, step-by-step from concept to first episode |
 | [docs/QUICKSTART.md](./docs/QUICKSTART.md) | **First-time setup** — every command in a copy-paste block, zero to first episode |
 | [docs/PRODUCTION-WORKFLOW.md](./docs/PRODUCTION-WORKFLOW.md) | **Daily morning routine** — pull, build, upload, review, publish |
 | [docs/PIPELINE.md](./docs/PIPELINE.md) | Full pipeline diagram + every component, end-to-end |
