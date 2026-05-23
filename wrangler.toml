@@ -46,7 +46,7 @@ R2_KEY_PREFIX = "Generators/Podcasts/TheMorningCup"
 # WORDPRESS_PODCAST_ID — the WP post ID of the parent vicinity_podcast post.
 #   Find it in WP Admin → Podcasts → your show → ID in the URL bar.
 #   Leave "0" until the show post is created; the import block will show a placeholder.
-WORDPRESS_PODCAST_ID = "0"
+WORDPRESS_PODCAST_ID = "2616"
 
 # CDN URLs for the final stitched MP3.
 # Both fields are written into Metadata.txt so the Auto-Episode import block
