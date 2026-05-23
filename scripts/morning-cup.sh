@@ -278,7 +278,9 @@ print(record.get('status', 'unknown'))
 
 worker_run() {
   local DATE="$1"
-  curl -sS --max-time 60 -X POST \
+  # Worker returns 202 immediately and runs the episode in the background.
+  # 30s is more than enough for the ack; the actual work is tracked via /status.
+  curl -sS --max-time 30 -X POST \
     -H "Authorization: Bearer $RUN_SECRET" \
     "$WORKER_URL/run?date=$DATE&force=true"
 }

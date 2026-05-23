@@ -79,25 +79,22 @@ export default {
       if (!isValidIsoDate(date)) return json({ error: "invalid date" }, 400);
       const force = url.searchParams.get("force") === "true";
 
-      // Await inline. ctx.waitUntil() is killed shortly after the response is
-      // sent, which is far less than the 60-120s OpenAI generation needs.
-      // Wall time on a fetch handler isn't capped while we're awaiting a
-      // network call, so blocking the response is the reliable path.
-      try {
-        await runEpisode(env, config, {
+      // Return 202 immediately and run the episode in the background.
+      // The full pipeline (OpenAI + ElevenLabs) takes 5-10 minutes — far
+      // beyond any HTTP client timeout. ctx.waitUntil keeps the Worker alive
+      // after the response is sent; since nearly all of that time is spent
+      // waiting on external I/O (not CPU), the 30s CPU budget is not a
+      // concern. Monitor progress via GET /status.
+      ctx.waitUntil(
+        runEpisode(env, config, {
           episodeIso: date,
           force,
           trigger: "manual",
-        });
-        const record = await readRunRecord(env, date);
-        return json({ accepted: true, date, force, record });
-      } catch (err) {
-        logger.error("manual run failed", { err: String(err), date });
-        return json(
-          { accepted: true, date, force, error: String(err) },
-          500,
-        );
-      }
+        }).catch((err) => {
+          logger.error("manual run failed", { err: String(err), date });
+        }),
+      );
+      return json({ accepted: true, date, force, status: "started" }, 202);
     }
 
     return new Response("Not found", { status: 404 });
