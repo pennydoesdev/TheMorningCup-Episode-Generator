@@ -124,16 +124,16 @@ cd "$HOME/Documents/The Morning Cup/Generator"
 # Service account JSON — when prompted, paste the FULL contents of the
 # JSON file you downloaded (open it in TextEdit, ⌘A, ⌘C, then ⌘V into
 # the wrangler prompt and hit Enter).
-wrangler versions secret put GOOGLE_SERVICE_ACCOUNT_KEY
+wrangler secret put GOOGLE_SERVICE_ACCOUNT_KEY
 
 # WordPress Application Password — paste the value when prompted.
-wrangler versions secret put WP_APP_PASSWORD
+wrangler secret put WP_APP_PASSWORD
 ```
 
 Verify both are set:
 
 ```bash
-wrangler versions secret list
+wrangler secret list
 ```
 
 You should see both `GOOGLE_SERVICE_ACCOUNT_KEY` and `WP_APP_PASSWORD`
@@ -239,7 +239,7 @@ If you want to add one, ping me — it'd be a 30-min change.
 |---|---|
 | `wrangler tail` shows `publish: drive upload failed` with `403` | Service account not added as Editor to the destination Drive folder |
 | `publish: drive upload failed` with `404` | `GOOGLE_DRIVE_FOLDER_ID` wrong or folder is in a Shared Drive without permission propagation |
-| `publish: wp draft failed` with `401` | `WP_APP_PASSWORD` wrong or revoked. Regenerate from WP profile + `wrangler versions secret put WP_APP_PASSWORD` again |
+| `publish: wp draft failed` with `401` | `WP_APP_PASSWORD` wrong or revoked. Regenerate from WP profile + `wrangler secret put WP_APP_PASSWORD` again |
 | `publish: wp draft failed` with `404 rest_no_route` | `WP_CPT_SLUG` doesn't match — verify with `curl https://thefold42.com/wp-json/wp/v2/types` |
 | `publish: wp draft failed` with `403 rest_cannot_create` | The `systems` user doesn't have `edit_posts` on the CPT. Bump role to Editor or grant the capability via the SSP plugin's settings |
 | Drafts created but the Podcast Show dropdown is empty | The taxonomy slug is different. Check `curl https://thefold42.com/wp-json/wp/v2/taxonomies` and update `WP_PODCAST_SHOW_TAXONOMY` |

@@ -369,11 +369,11 @@ npm install
 wrangler login
 
 # Set secrets — paste value at each prompt
-wrangler versions secret put OPENAI_API_KEY
-wrangler versions secret put ELEVENLABS_API_KEY
-wrangler versions secret put ELEVENLABS_VOICE_ID     # paste the Voice ID from Step 2
-wrangler versions secret put RESEND_API_KEY
-wrangler versions secret put RUN_SECRET              # make up a long random password
+wrangler secret put OPENAI_API_KEY
+wrangler secret put ELEVENLABS_API_KEY
+wrangler secret put ELEVENLABS_VOICE_ID     # paste the Voice ID from Step 2
+wrangler secret put RESEND_API_KEY
+wrangler secret put RUN_SECRET              # make up a long random password
 
 # Create the R2 bucket (if using a dedicated bucket for your show)
 wrangler r2 bucket create your-show-bucket-name

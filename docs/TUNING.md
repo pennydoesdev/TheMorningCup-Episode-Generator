@@ -2,7 +2,7 @@
 
 All the knobs you can turn, what they do, and what's safe to change.
 
-Most config lives in `wrangler.toml` under `[vars]` and is read in `src/config.ts`. Secrets (API keys) are set with `wrangler versions secret put NAME`.
+Most config lives in `wrangler.toml` under `[vars]` and is read in `src/config.ts`. Secrets (API keys) are set with `wrangler secret put NAME`.
 
 ## OpenAI model
 
@@ -86,7 +86,7 @@ NEWS_RSS_FEEDS = "https://feeds.reuters.com/reuters/topNews,https://feeds.npr.or
 
 Or use NewsAPI:
 ```bash
-wrangler versions secret put NEWSAPI_KEY
+wrangler secret put NEWSAPI_KEY
 ```
 
 To **disable web search entirely** (rely on RSS/NewsAPI only) you'd need to modify `src/openai.ts` and remove the `tools: [{ type: "web_search" }]` line. Not recommended — leaves the model without grounding when feeds are stale.
@@ -135,7 +135,7 @@ EMAIL_TO = "your-email@example.com"
 
 Currently disabled. To enable:
 1. Set up Resend, get an API key.
-2. `wrangler versions secret put RESEND_API_KEY`
+2. `wrangler secret put RESEND_API_KEY`
 3. Set `ENABLE_EMAIL = "true"` and update `EMAIL_FROM`/`EMAIL_TO`.
 4. `wrangler deploy`.
 

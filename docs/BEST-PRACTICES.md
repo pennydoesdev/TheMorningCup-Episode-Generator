@@ -210,7 +210,7 @@ required — do not change it to a non-streaming call.
 ### What to avoid
 
 **Do not put secrets in wrangler.toml.**
-API keys, voice IDs, and run secrets go into `wrangler versions secret put`.
+API keys, voice IDs, and run secrets go into `wrangler secret put`.
 Never committed, never in version control.
 
 **Do not change the R2 bucket.**

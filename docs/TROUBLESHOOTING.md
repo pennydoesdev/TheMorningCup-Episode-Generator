@@ -6,6 +6,35 @@ Real issues that came up while building this pipeline, and what fixed each one. 
 
 ## Worker side (Cloudflare)
 
+### Secrets disappear after every `wrangler deploy`
+
+**Symptom:** `POST /run` returns 401 after a fresh deploy. Secrets you set previously are gone. The worker can't reach OpenAI or ElevenLabs either.
+
+**Root cause:** Using `wrangler versions secret put` ties a secret to a specific deployed version. Each `wrangler deploy` creates a new version that doesn't inherit those secrets.
+
+**Fix:** Always use `wrangler secret put` (no `versions`). These secrets are stored at the worker level and survive all future deploys:
+
+```bash
+wrangler secret put OPENAI_API_KEY
+wrangler secret put ELEVENLABS_API_KEY
+wrangler secret put ELEVENLABS_VOICE_ID
+wrangler secret put RUN_SECRET
+```
+
+If you need to reset your `RUN_SECRET`, generate a new one and update both the worker and your local `.env`:
+
+```bash
+openssl rand -hex 32
+wrangler secret put RUN_SECRET
+```
+
+Then update `~/Documents/The Morning Cup/.env`:
+```
+RUN_SECRET="<new value>"
+```
+
+---
+
 ### Run record stuck at `status: "generating"` and never advances
 
 **Symptom:** The status endpoint keeps showing `generating`, `updated_at` doesn't move, no logs after `run start` in `wrangler tail`. After a while you see:
