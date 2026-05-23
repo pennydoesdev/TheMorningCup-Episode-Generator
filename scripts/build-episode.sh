@@ -218,13 +218,22 @@ ffmpeg -y -loglevel error \
   -map_metadata 0 -id3v2_version 3 \
   "$LOUDNORM_TMP" && mv "$LOUDNORM_TMP" "$OUTPUT"
 
-# --- copy metadata file to Episodes ------------------------------------------
+# --- copy metadata file to Episodes + patch File Size -----------------------
 
 METADATA_SRC="$CHUNKS/The Morning Cup - $DATE - Metadata.txt"
 METADATA_OUT="$EPISODES/The Morning Cup - $DATE - Metadata.txt"
 if [ -f "$METADATA_SRC" ]; then
   cp "$METADATA_SRC" "$METADATA_OUT"
-  echo "Metadata: $METADATA_OUT"
+  # Patch the File Size placeholder with the real byte count of the assembled MP3.
+  # The VNewsOS Auto-Episode import block reads this field for the RSS enclosure.
+  if [ -f "$OUTPUT" ]; then
+    FILE_SIZE_BYTES=$(wc -c < "$OUTPUT" | tr -d ' ')
+    sed -i.bak "s|^File Size: .*|File Size: $FILE_SIZE_BYTES|" "$METADATA_OUT" \
+      && rm -f "$METADATA_OUT.bak"
+    echo "Metadata: $METADATA_OUT  (File Size: ${FILE_SIZE_BYTES} bytes)"
+  else
+    echo "Metadata: $METADATA_OUT"
+  fi
 else
   echo "Warning: metadata file not found in chunks folder; run fetch-chunks.sh first." >&2
 fi

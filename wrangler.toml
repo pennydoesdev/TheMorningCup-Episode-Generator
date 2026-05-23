@@ -41,6 +41,16 @@ PODCAST_GENRE = "News"
 HOST_NAME = "Penelope Rose"
 SHOW_TITLE = "The Morning Cup"
 R2_KEY_PREFIX = "Generators/Podcasts/TheMorningCup"
+
+# WordPress / VNewsOS Auto-Episode integration
+# WORDPRESS_PODCAST_ID — the WP post ID of the parent vicinity_podcast post.
+#   Find it in WP Admin → Podcasts → your show → ID in the URL bar.
+#   Leave "0" until the show post is created; the import block will show a placeholder.
+WORDPRESS_PODCAST_ID = "0"
+# AUDIO_CDN_BASE_URL — base URL where your stitched MP3 will live after upload.
+#   Example: "https://cdn.vicinitynews.com/podcasts/morning-cup"
+#   Leave blank to get a fill-in placeholder in Metadata.txt.
+AUDIO_CDN_BASE_URL = ""
 VOICE_STABILITY = "0.35"
 VOICE_SIMILARITY_BOOST = "0.85"
 VOICE_STYLE = "0.7"

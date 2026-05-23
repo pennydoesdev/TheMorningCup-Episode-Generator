@@ -185,6 +185,34 @@ export async function generateEpisodeCopy(
   }
 }
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Convert fractional minutes to HH:MM:SS string (zero-padded). */
+function minutesToHHMMSS(minutes: number): string {
+  const totalSec = Math.round(minutes * 60);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+/** Generate a URL-safe slug from an episode subtitle + ISO date. */
+function makeEpisodeSlug(subtitle: string, isoDate: string): string {
+  const s = subtitle
+    .toLowerCase()
+    .replace(/[''""]/g, "")
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 60)
+    .replace(/-$/, "");
+  return s ? `${s}-${isoDate}` : isoDate;
+}
+
 export function buildMetadataTxt(opts: {
   episodeIso: string;
   spokenDate: string;
@@ -203,13 +231,36 @@ export function buildMetadataTxt(opts: {
   seoDescription?: string;
   tags?: string;
   episode: EpisodeJson;
+  wpPodcastId?: number;
+  audioCdnBaseUrl?: string;
 }): string {
   const year = opts.episodeIso.slice(0, 4);
-  const divider = "-".repeat(60);
+  const divider = "=".repeat(60);
+  const dash = "-".repeat(60);
   const [t1, t2, t3] = opts.episodeTitles;
   const primaryTitle = t1
     ? `${opts.showTitle}: ${t1}`
     : `${opts.showTitle} — ${opts.spokenDate}`;
+
+  // ── VNewsOS Auto-Episode import fields ────────────────────────────────────
+  const durationStr = minutesToHHMMSS(opts.estimatedRuntimeMinutes);
+  const slug = makeEpisodeSlug(t1 ?? "", opts.episodeIso);
+  const podcastId =
+    opts.wpPodcastId && opts.wpPodcastId > 0
+      ? String(opts.wpPodcastId)
+      : "[fill in — WP vicinity_podcast post ID; set WORDPRESS_PODCAST_ID in wrangler.toml]";
+  const audioUrl =
+    opts.audioCdnBaseUrl
+      ? `${opts.audioCdnBaseUrl.replace(/\/$/, "")}/${opts.showTitle} - ${opts.episodeIso}.mp3`
+      : "[fill in after CDN upload — set AUDIO_CDN_BASE_URL in wrangler.toml to auto-generate]";
+  const seoDesc = (opts.seoDescription ?? "").trim();
+
+  // ── Supplementary producer fields ─────────────────────────────────────────
+  const seoTitleFull = (() => {
+    const base = opts.seoTitle?.trim() ?? t1 ?? "";
+    const full = `Ep. ${opts.episodeNumber}: ${base} | ${opts.showTitle}`;
+    return full.length <= 60 ? full : full.slice(0, 57) + "...";
+  })();
 
   const chapters =
     (opts.episode.chapters ?? [])
@@ -229,22 +280,49 @@ export function buildMetadataTxt(opts: {
     .join("\n\n");
 
   const titleOptions = [
-    t1 ? `  1. ${opts.showTitle}: ${t1}  ← primary (used in MP3 + feeds)` : "",
+    t1 ? `  1. ${opts.showTitle}: ${t1}  <- primary (used in MP3 + feeds)` : "",
     t2 ? `  2. ${opts.showTitle}: ${t2}` : "",
     t3 ? `  3. ${opts.showTitle}: ${t3}` : "",
   ]
     .filter(Boolean)
     .join("\n");
 
-  // Build full SEO title: "Ep. 142: Subtitle | Show Title" (≤60 chars)
-  const seoTitleFull = (() => {
-    const base = opts.seoTitle?.trim() ?? t1 ?? "";
-    const full = `Ep. ${opts.episodeNumber}: ${base} | ${opts.showTitle}`;
-    return full.length <= 60 ? full : full.slice(0, 57) + "...";
-  })();
+  // ── Assemble the file ─────────────────────────────────────────────────────
+  //
+  // STRUCTURE:
+  //   Part 1 — VNewsOS Auto-Episode import header (Label: Value lines)
+  //   [blank line] — ends the header block; body begins here
+  //   Part 2 — Episode description (becomes post_content in WordPress)
+  //   Part 3 — Producer notes (chapters, sources, social, disclosure)
+  //
+  // The Auto-Episode sidebar block reads Label: Value pairs above the first
+  // blank line and maps them to WordPress meta keys automatically.
+  // Everything below the first blank line becomes the post_content draft.
+  // Review and trim the producer notes section before publishing.
+  // ─────────────────────────────────────────────────────────────────────────
 
-  const lines = [
-    `${opts.showTitle.toUpperCase()} — EPISODE METADATA`,
+  const importHeader = [
+    `Title: ${primaryTitle}`,
+    `Date: ${opts.episodeIso} 05:00:00`,
+    `Status: draft`,
+    `Podcast ID: ${podcastId}`,
+    `Season: ${opts.season}`,
+    `Episode: ${opts.episodeNumber}`,
+    `Type: full`,
+    `Explicit: no`,
+    `Duration: ${durationStr}`,
+    `File Size: [updated by build-episode.sh after local assembly]`,
+    `Audio URL: ${audioUrl}`,
+    `Slug: ${slug}`,
+    `Summary: ${seoDesc}`,
+  ].join("\n");
+
+  const disclosure = buildDisclosure(opts.showTitle, opts.hostName);
+
+  const producerNotes = [
+    divider,
+    `PRODUCER NOTES — review and trim before publishing to WordPress`,
+    divider,
     ``,
     `Post Title:      ${t1 || primaryTitle}`,
     `Feed Title:      ${primaryTitle}  (used in MP3 tags + RSS)`,
@@ -256,97 +334,91 @@ export function buildMetadataTxt(opts: {
     `Copyright:       Copyright ${year} — ${opts.copyrightHolder}`,
     `Genre:           ${opts.genre}`,
     ``,
-    `-- WordPress / OpenPodcast (Yoast or RankMath) --`,
     `SEO Title:       ${seoTitleFull}`,
-    `SEO Description: ${opts.seoDescription ?? ""}`,
+    `SEO Description: ${seoDesc}`,
     `Tags:            ${opts.tags ?? ""}`,
     ``,
-    divider,
+    dash,
     `TITLE OPTIONS`,
-    divider,
-    ``,
-    `  (Primary = Post Title + podcast host title. Pick any for MP3 feed title.)`,
+    dash,
     ``,
     titleOptions || `  (no titles generated)`,
     ``,
-    divider,
-    `EPISODE DESCRIPTION`,
-    divider,
-    ``,
-    opts.description,
-    ``,
-    divider,
+    dash,
     `CHAPTERS`,
-    divider,
+    dash,
     ``,
     chapters,
     ``,
-    divider,
-    `SHOW NOTES / SOURCES`,
-    divider,
+    dash,
+    `SOURCES`,
+    dash,
     ``,
     sourceLines,
     ``,
-    divider,
+    dash,
     `TODAY'S RIDDLE`,
-    divider,
+    dash,
     ``,
     `  Q: ${opts.episode.riddle_question ?? ""}`,
     `  A: ${opts.episode.riddle_answer ?? ""}`,
     ``,
-    divider,
+    dash,
     `SOCIAL MEDIA`,
-    divider,
+    dash,
     ``,
     `  Main post:`,
     `  ${opts.episode.social_copy?.main_post ?? ""}`,
   ];
 
   if (sectionPosts) {
-    lines.push(``, `  Section posts:`, ``, sectionPosts);
+    producerNotes.push(``, `  Section posts:`, ``, sectionPosts);
   }
 
-  // ── AI & Voice Disclosure ────────────────────────────────────────────────
-  // Copy the correct block for each platform when uploading the episode.
-  const disclosure = buildDisclosure(opts.showTitle, opts.hostName);
-  lines.push(
+  producerNotes.push(
     ``,
-    divider,
+    dash,
     `AI & VOICE DISCLOSURE — copy per platform`,
-    divider,
+    dash,
     ``,
-    `PODCAST DIRECTORY (show notes / episode description)`,
+    `PODCAST DIRECTORY / SHOW NOTES`,
     `Paste this at the end of your episode description on every platform:`,
     ``,
     disclosure.showNotes,
     ``,
-    divider,
+    dash,
     ``,
     `SPOTIFY  (also add "AI-generated voice" to your show description in Spotify for Podcasters)`,
     ``,
     disclosure.spotify,
     ``,
-    divider,
+    dash,
     ``,
     `APPLE PODCASTS / iHEART / AMAZON MUSIC`,
     ``,
     disclosure.apple,
     ``,
-    divider,
+    dash,
     ``,
     `YOUTUBE AUDIOGRAM`,
     `Paste in video description AND check "Altered or synthetic content" in`,
-    `YouTube Studio → Details.`,
+    `YouTube Studio -> Details.`,
     ``,
     disclosure.youtube,
     ``,
-    divider,
+    dash,
     ``,
-    `OPTIONAL — spoken disclosure line (drop into outro for new-listener episodes):`,
+    `OPTIONAL — spoken disclosure (drop into outro for new-listener episodes):`,
     ``,
     `"${disclosure.spoken}"`,
     ``,
   );
 
-  return lines.join("\n");
+  return [
+    importHeader,
+    ``,                                // blank line = end of VNewsOS header block
+    opts.description,                  // post_content: description + disclosure.showNotes
+    ``,
+    producerNotes.join("\n"),
+  ].join("\n");
 }

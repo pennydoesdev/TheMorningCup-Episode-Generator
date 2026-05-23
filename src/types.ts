@@ -41,6 +41,10 @@ export interface Env {
   VOICE_STYLE?: string;
   VOICE_USE_SPEAKER_BOOST?: string;
 
+  // WordPress / VNewsOS integration
+  WORDPRESS_PODCAST_ID?: string;   // vicinity_podcast post ID for Auto-Episode import
+  AUDIO_CDN_BASE_URL?: string;     // CDN prefix for final stitched MP3 (e.g. https://cdn.example.com)
+
   // Optional source providers
   NEWS_RSS_FEEDS?: string;
   NEWSAPI_KEY?: string;

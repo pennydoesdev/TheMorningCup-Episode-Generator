@@ -41,8 +41,11 @@ export interface Config {
   copyrightHolder: string;
   podcastGenre: string;
   hostName: string;
-  showTitle: string;     // "The Morning Cup" — used in file names, titles, validator
-  r2KeyPrefix: string;   // "Generators/Podcasts/TheMorningCup" — R2 storage path prefix
+  showTitle: string;       // "The Morning Cup" — used in file names, titles, validator
+  r2KeyPrefix: string;     // "Generators/Podcasts/TheMorningCup" — R2 storage path prefix
+
+  wpPodcastId: number;     // vicinity_podcast WP post ID (0 = not configured)
+  audioCdnBaseUrl: string; // CDN base URL for final stitched MP3 (empty = placeholder)
 
   voice: {
     stability: number;
@@ -80,6 +83,9 @@ export function loadConfig(env: Env): Config {
     hostName: str(env.HOST_NAME, "Penelope Rose"),
     showTitle: str(env.SHOW_TITLE, "The Morning Cup"),
     r2KeyPrefix: str(env.R2_KEY_PREFIX, "Generators/Podcasts/TheMorningCup"),
+
+    wpPodcastId: num(env.WORDPRESS_PODCAST_ID, 0),
+    audioCdnBaseUrl: str(env.AUDIO_CDN_BASE_URL, ""),
 
     voice: {
       stability: num(env.VOICE_STABILITY, 0.35),
