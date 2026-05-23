@@ -2,8 +2,8 @@
 #
 # build-episode.sh - Assemble a Morning Cup episode with ffmpeg.
 #
-# Concatenates Spark.mp3 -> Coffee Pour -> intro-sting ->
-# 001.mp3 -> Topic Transition -> 002.mp3 -> ... -> Thank You.wav
+# Concatenates Hello.mp3 -> Coffee Pour -> intro-sting ->
+# 001.mp3 -> Topic Transition -> 002.mp3 -> ... -> Goodbye.mp3
 # into one MP3, writes ID3 tags from the manifest, saves to:
 #     ~/Documents/The Morning Cup/Episodes/The Morning Cup - <DATE>.mp3
 #

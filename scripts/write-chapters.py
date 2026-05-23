@@ -84,7 +84,7 @@ def main(mp3_path: str, manifest_path: str, sounds_dir: str, chunks_dir: str):
     sorted_chunks = sorted(chunks, key=lambda c: c["order"])
 
     # Walk the assembled timeline to find each chunk's start offset (ms).
-    # Mirrors build-episode.sh: Spark.mp3 → Coffee Pour → [intro-sting] →
+    # Mirrors build-episode.sh: Hello.mp3 → Coffee Pour → [intro-sting] →
     # chunk[0] → [sting if chunk[1] starts a section] → chunk[1] → ...
     cursor_ms = intro_song_ms + coffee_pour_ms + intro_sting_ms
     chunk_starts_ms = []
