@@ -68,8 +68,8 @@ cd ~/Documents/”The Morning Cup”/Generator
 # 1. Deploy latest code
 npx wrangler deploy
 
-# 2. Clear today’s KV run record
-npx wrangler kv key delete \
+# 2. Clear today’s KV run record (--remote is required)
+npx wrangler kv key delete --remote \
   --binding MORNING_CUP_KV \
   “morning-cup/$(date +%Y-%m-%d)/run.json”
 
