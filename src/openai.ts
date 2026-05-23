@@ -321,14 +321,14 @@ ${errors.map((e) => `- ${e}`).join("\n")}
 PREVIOUS JSON OUTPUT:
 ${JSON.stringify(prior)}`;
 
+  const repairRuntimeFloor = (config.minScriptWords / config.wordsPerMinute).toFixed(1);
+  const repairRuntimeCeil  = (config.maxScriptWords / config.wordsPerMinute).toFixed(1);
   const { raw } = await callResponses(env, config, {
     systemInstruction:
-      "You are repairing a structured JSON podcast script. Fix only the listed errors. Preserve unchanged content verbatim. Return strict JSON only.",
+      `You are repairing a structured JSON podcast script. Fix ONLY the listed validation errors. Preserve all unchanged content verbatim. Return strict JSON only.\n\nLENGTH CONSTRAINTS (do not violate):\n- elevenlabs_script must be ${config.minScriptWords}–${config.maxScriptWords} spoken words.\n- At ${config.wordsPerMinute} wpm that is ${repairRuntimeFloor}–${repairRuntimeCeil} minutes.\n- Sweet spot: ${config.targetScriptWordsMin}–${config.targetScriptWordsMax} words.\n- If fixing a "too short" error, ADD content to underweight sections. Do not delete anything.\n- If fixing a "too long" error, TRIM carefully. Do not add anything.`,
     userInput: repairInput,
     temperature: 0.3,
     maxOutputTokens: 16000,
-    // Repair passes use the mini model — cheaper, still more than capable
-    // for fixing validation errors in an existing draft.
     modelOverride: "gpt-4.1-mini",
   });
   const json = safeParseEpisodeJson(raw);
@@ -349,26 +349,31 @@ export async function extendEpisode(
   minWords: number,
   userPrompt: string,
 ): Promise<OpenAiResult> {
-  const wordsNeeded = Math.max(minWords - validation.word_count, 400);
+  const wordsNeeded = Math.max(minWords - validation.word_count, 300);
+  const runtimeFloor = (minWords / config.wordsPerMinute).toFixed(1);
+  const runtimeCeil  = (config.maxScriptWords / config.wordsPerMinute).toFixed(1);
 
   const extendInput = `${userPrompt}
 
 LENGTH-EXTEND PASS (mandatory).
 
-Your previous draft is too short. It is ${validation.word_count} spoken words and ~${validation.estimated_runtime_minutes} minutes of speech. The hard floor is ${minWords} words and 20 minutes. You MUST add at least ${wordsNeeded} more spoken words to the elevenlabs_script.
+Your previous draft is too short: ${validation.word_count} spoken words (~${validation.estimated_runtime_minutes} min). You MUST add at least ${wordsNeeded} words to reach the floor of ${minWords} words (${runtimeFloor} min at ${config.wordsPerMinute} wpm).
 
-DO NOT shorten or remove anything that is already in the script. ADD substantial new content to the underweight sections. Preserve the existing structure (positive opening, weather, politics, political trends, crime, immigration, California governor's race, House/Senate primaries, business/economy, trade, technology, healthcare, environment/climate, positive science, international, Iran, Gaza, social/culture, riddle, positive closing, closing summary, outro, riddle answer) and the [TEN-SECOND SECTION SPACER] markers between every major section.
+HARD CEILING: ${config.maxScriptWords} words / ${runtimeCeil} min. Do NOT exceed it.
+SWEET SPOT TARGET: ${config.targetScriptWordsMin}–${config.targetScriptWordsMax} words.
 
-Use the web_search tool to find more substantive yesterday's-news material to deepen these sections specifically:
-- U.S. politics + political trends (target combined ≥ 800 words; expand on power, who pays, policy effect)
-- Business/economy + trade (target combined ≥ 500 words; expand on labor impact, who benefits)
-- Healthcare + environment/climate (target combined ≥ 500 words; expand on patient/community impact)
-- International + Iran + Gaza (target combined ≥ 800 words; expand on civilian impact and policy stakes)
-- Closing summary (extend to a fuller wrap-up that revisits the day's through-lines)
+DO NOT delete or shorten anything already in the script. ADD content to these underweight sections:
+- U.S. politics + political trends: add 100–200 words (expand with specific policy stakes)
+- Business/economy + trade: add 75–150 words (worker impact, prices, supply chain)
+- Healthcare + environment/climate: add 75–150 words (patient/community impact)
+- International + Iran + Gaza: add 100–200 words (civilian impact, policy stakes)
+- Closing summary: add 50–100 words (revisit the day's through-lines)
 
-Stay strictly factual — verify any new claims with web_search. Do not invent. Apply the same leftist, working-class-centered editorial lens.
+Note: these are ADD targets per section, not total section sizes. Stop adding once the script reaches ${config.targetScriptWordsMax} words.
 
-Return strict JSON only — same schema. The elevenlabs_script must be at least ${minWords} spoken words and 20 minutes of speech. Update self_validation accordingly.
+Use web_search to verify any new facts. Stay factual, leftist, working-class-centered. No invention.
+
+Return strict JSON only — same schema. Update self_validation word count and runtime.
 
 PREVIOUS VALIDATION ERRORS:
 ${validation.errors.map((e) => `- ${e}`).join("\n")}
@@ -378,11 +383,10 @@ ${JSON.stringify(prior)}`;
 
   const { raw } = await callResponses(env, config, {
     systemInstruction:
-      "You are extending a structured JSON podcast script that is too short. Preserve every line of existing content. ADD new substantive material to the listed sections until the script clears the word-count floor. Use web_search to ground new content in real reporting. Return strict JSON only.",
+      `You are extending a structured JSON podcast script that is too short. Preserve every existing line verbatim — only ADD to underweight sections. Use web_search to verify any new facts. Return strict JSON only.\n\nLENGTH CONSTRAINTS: ${minWords}–${config.maxScriptWords} words (${runtimeFloor}–${runtimeCeil} min at ${config.wordsPerMinute} wpm). Do not exceed the ceiling.`,
     userInput: extendInput,
     temperature: 0.4,
     maxOutputTokens: 16000,
-    // Extend passes use the mini model — cheaper for additive editing work.
     modelOverride: "gpt-4.1-mini",
   });
   const json = safeParseEpisodeJson(raw);

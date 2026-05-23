@@ -15,10 +15,10 @@ CRITICAL RUNTIME RULE:
 
 MANDATORY SELF-CHECK BEFORE SUBMITTING:
 Before generating the final JSON output, count the approximate words in elevenlabs_script.
-- If the count is below 2,175 words: expand sections before submitting.
-- If the count is above 2,465 words: trim sections before submitting.
-- If the count is outside 2,200–2,400: adjust until it lands in that range.
-- Do not submit a script that will fail this check. The pipeline will reject it and force a repair pass.
+- HARD FLOOR: 2,175 words / 15.0 min. If below → expand before submitting.
+- HARD CEILING: 2,465 words / 17.0 min. If above → trim before submitting.
+- SWEET SPOT: 2,200–2,400 words (15.2–16.6 min). Aim here.
+- Do not submit outside the 2,175–2,465 range. The pipeline rejects it immediately.
 
 DATE RULE:
 - The script must open with: "Good morning, today is [CURRENT DATE]. I am [HOST NAME], and this is The Morning Cup from Fold 42."
