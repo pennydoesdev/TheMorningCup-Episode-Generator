@@ -3,8 +3,9 @@
 Automated daily podcast generator for *The Morning Cup* by Fold 42.
 Cloudflare Worker (TypeScript) + local assembly scripts (bash + Python).
 
-> **Your local project directory:** `~/Documents/The Morning Cup/`
-> This is both the git repo AND where your sounds, chunks, and episodes live.
+> **Your local project (git repo):** `~/Documents/The Morning Cup/Generator/`
+> **Your local data folder (sounds, chunks, episodes, .env):** `~/Documents/The Morning Cup/`
+> These are two separate folders. Scripts always run from `Generator/`.
 
 ---
 
@@ -23,7 +24,7 @@ pip3 install --user numpy   # for build-audacity.py
 ## Pull latest changes
 
 ```bash
-cd ~/Documents/”The Morning Cup”
+cd ~/Documents/”The Morning Cup”/Generator
 git fetch origin claude/brave-gates-wbCkD
 git checkout claude/brave-gates-wbCkD
 git pull origin claude/brave-gates-wbCkD
@@ -35,7 +36,7 @@ npm install
 ## Deploy the worker
 
 ```bash
-cd ~/Documents/”The Morning Cup”
+cd ~/Documents/”The Morning Cup”/Generator
 npx wrangler deploy
 ```
 
@@ -44,7 +45,7 @@ npx wrangler deploy
 ## Daily use — generate an episode
 
 ```bash
-cd ~/Documents/”The Morning Cup”
+cd ~/Documents/”The Morning Cup”/Generator
 ./scripts/morning-cup.sh make
 ```
 
@@ -62,7 +63,7 @@ That one command does everything:
 ## Re-run from scratch (clear and regenerate)
 
 ```bash
-cd ~/Documents/”The Morning Cup”
+cd ~/Documents/”The Morning Cup”/Generator
 
 # 1. Deploy latest code
 npx wrangler deploy
@@ -79,6 +80,8 @@ npx wrangler kv key delete \
 ---
 
 ## Subcommands
+
+All run from `~/Documents/"The Morning Cup"/Generator`:
 
 ```bash
 ./scripts/morning-cup.sh preflight            # check all deps + assets
@@ -99,6 +102,7 @@ npx wrangler kv key delete \
 ## Test a TTS chunk
 
 ```bash
+cd ~/Documents/”The Morning Cup”/Generator
 python3 scripts/test-chunk.py “Your script text here.”
 python3 scripts/test-chunk.py --file /path/to/excerpt.txt
 ```
@@ -110,6 +114,7 @@ Saves to `~/Documents/The Morning Cup/Chunks/test/` and auto-opens on Mac.
 ## Audacity multi-track editing
 
 ```bash
+cd ~/Documents/"The Morning Cup"/Generator
 ./scripts/morning-cup.sh audacity
 ```
 
