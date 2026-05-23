@@ -113,11 +113,37 @@ chunks/The Morning Cup - YYYY-MM-DD - 003.mp3
 
 ## 5. Deploy
 
+**First-time deploy:**
+
 ```bash
 npm install
 npm run typecheck
 wrangler login        # one time
 wrangler deploy
+```
+
+**Updating an existing deployment** (do this every time you pull new code):
+
+```bash
+cd /path/to/your/Generator/clone
+git fetch origin
+git pull origin claude/brave-gates-wbCkD
+
+# Regenerate the lock file — REQUIRED before pushing or the
+# Cloudflare dashboard CI will fail with npm ci mismatch errors.
+npm install
+
+wrangler deploy
+```
+
+**Then copy updated scripts to your local Scripts/ folder:**
+
+```bash
+cp scripts/build-episode.sh \
+   scripts/write-chapters.py \
+   scripts/fetch-chunks.sh \
+   scripts/generate-transcript.py \
+   "$HOME/Documents/The Morning Cup/Scripts/"
 ```
 
 ## 6. Create the R2 bucket

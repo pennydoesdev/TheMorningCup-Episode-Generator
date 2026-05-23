@@ -8,12 +8,11 @@ episode. `team-setup.sh` automatically copies these into a teammate's
 
 | File | Role | Approx duration |
 |------|------|-----------------|
-| `The Morning Cup - Song.wav` | Intro music bed | 30s – 5 min |
+| `Hello.mp3` | Intro music bed (plays first) | 30s – 5 min |
 | `Coffee Pour.wav` | Signature pour ambience | ~2 sec |
-| `Cream or sugar, hon?.mp3` | Cloned-voice greeting line | ~2 sec |
-| `intro-sting.wav` | "Now the news begins" sting | ~2 sec |
-| `morning-cup-sting.wav` | Section transition sting | ~2 sec |
-| `The Morning Cup - Thank You.wav` | Outro thank-you bed | 30s – 90s |
+| `Topic Transition.mp3` | Section transition sting | ~2 sec |
+| `intro-sting.wav` | "Now the news begins" sting | optional, ~2 sec |
+| `Goodbye.mp3` | Outro music bed (plays last) | 30s – 90s |
 
 ## Adding / replacing assets
 

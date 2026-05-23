@@ -75,6 +75,30 @@ Cost: web_search adds ~$0.03/call × 8-15 calls per episode = ~$0.30-0.50/run.
 
 ## Local pipeline (your Mac)
 
+### Cloudflare dashboard build fails: `npm ci` lock file mismatch
+
+**Symptom:** The Cloudflare Pages/Workers dashboard build log shows:
+```
+npm error Invalid: lock file's wrangler@X does not satisfy wrangler@Y
+npm error Missing: some-package@X.Y.Z from lock file
+Failed: error occurred while installing tools or dependencies
+```
+
+**Root cause:** `package.json` was updated (Wrangler version bump, new dependency, etc.) but `package-lock.json` wasn't regenerated before pushing. The CI uses `npm ci`, which requires the two files to be in perfect sync and fails hard when they're not.
+
+**Fix:** Regenerate the lock file locally and push it:
+```bash
+cd "$HOME/Documents/The Morning Cup/Generator"
+git pull origin claude/brave-gates-wbCkD
+npm install           # regenerates package-lock.json
+git add package-lock.json
+git commit -m "Regenerate package-lock.json"
+git push origin claude/brave-gates-wbCkD
+```
+Then retry the deployment in the Cloudflare dashboard. The build will pull the new commit and `npm ci` will pass.
+
+**Prevention:** Any time you `git pull` and then run `wrangler deploy` locally, run `npm install` first. The local deploy doesn't need a matching lock file — the dashboard build does.
+
 ### `wrangler r2 object get` fails with "Unknown argument"
 
 **Symptom:**

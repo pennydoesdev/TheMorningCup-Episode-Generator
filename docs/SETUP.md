@@ -93,10 +93,44 @@ cp scripts/fetch-chunks.sh         "$HOME/Documents/The Morning Cup/Scripts/"
 cp scripts/morning-cup.sh          "$HOME/Documents/The Morning Cup/Scripts/"
 cp scripts/write-chapters.py       "$HOME/Documents/The Morning Cup/Scripts/"
 cp scripts/transcribe-episode.py   "$HOME/Documents/The Morning Cup/Scripts/"
+cp scripts/generate-transcript.py  "$HOME/Documents/The Morning Cup/Scripts/"
 chmod +x "$HOME/Documents/The Morning Cup/Scripts/"*.sh
 ```
 
 Re-run this block any time you `git pull` updates.
+
+## Updating the code
+
+**Run this every time you pull new changes from GitHub.** Skipping any step can result in a stale Worker, a broken Cloudflare dashboard build, or scripts that don't match.
+
+```bash
+# 1. Pull latest from the branch
+cd "$HOME/Documents/The Morning Cup/Generator"
+git fetch origin
+git pull origin claude/brave-gates-wbCkD
+
+# 2. Regenerate the lock file (REQUIRED after any dependency change)
+#    Skipping this causes the Cloudflare dashboard build to fail with
+#    "npm ci" lock file mismatch errors.
+npm install
+
+# 3. Copy updated scripts to your working Scripts/ folder
+cp scripts/build-episode.sh \
+   scripts/write-chapters.py \
+   scripts/fetch-chunks.sh \
+   scripts/generate-transcript.py \
+   "$HOME/Documents/The Morning Cup/Scripts/"
+
+# 4. Deploy the updated Worker to Cloudflare
+wrangler deploy
+```
+
+> **Why `npm install` every time?**  
+> The Cloudflare dashboard CI uses `npm ci`, which requires `package.json`
+> and `package-lock.json` to be in perfect sync. When Wrangler or any
+> dependency bumps a version, the lock file goes stale. Running `npm install`
+> regenerates it. If you skip this step and push, the dashboard build will
+> fail with a wall of "lock file's X does not satisfy Y" errors.
 
 ## 3. Create the five sound assets
 
@@ -104,10 +138,10 @@ All five live in `~/Documents/The Morning Cup/Sounds/` with these exact filename
 
 | File | What | Required |
 |------|------|---------|
-| `Spark.mp3` | Intro theme | ✓ required |
+| `Hello.mp3` | Intro theme (plays first) | ✓ required |
 | `Coffee Pour.wav` | 2-second pour ambience | ✓ required |
 | `Topic Transition.mp3` | Section transition sting | ✓ required |
-| `The Morning Cup - Thank You.wav` | Outro thank-you bed | ✓ required |
+| `Goodbye.mp3` | Outro music bed (plays last) | ✓ required |
 | `intro-sting.wav` | Sting that says "now the news begins" | optional |
 
 ElevenLabs prompt copy-paste templates are in [PROMPTS.md](./PROMPTS.md).
@@ -186,10 +220,10 @@ Total wall time: ~5-8 minutes. You should hear: intro song → coffee pour → i
 │   ├── write-chapters.py
 │   └── transcribe-episode.py
 ├── Sounds/
-│   ├── Spark.mp3
+│   ├── Hello.mp3
 │   ├── Coffee Pour.wav
 │   ├── Topic Transition.mp3
-│   ├── The Morning Cup - Thank You.wav
+│   ├── Goodbye.mp3
 │   └── intro-sting.wav  (optional)
 ├── Chunks/<YYYY-MM-DD>/                       ← per-day raw chunks (created by fetch)
 └── Episodes/                                  ← final tagged MP3s

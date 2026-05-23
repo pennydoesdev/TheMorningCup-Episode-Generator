@@ -4,6 +4,83 @@ Reverse-chronological summary of significant changes to the pipeline. For
 the full git log: `git log --oneline main`. Use this page for "what's new
 since the last time I looked at the repo."
 
+## 2026-05-23 — New sections, voice presets, transcript generator, corrections system, AI disclosure, script optimization
+
+A large batch of editorial, production, and transparency improvements:
+
+**New editorial sections** (`src/prompt.ts`, `src/openai.ts`):
+- Supreme Court Watch (scotusblog.com + supremecourt.gov mandatory)
+- Voting Rights / Election Integrity
+- Housing (national market trends only — no individual evictions; working-class focus)
+- Labor / Union Watch (nlrb.gov mandatory)
+- Reproductive Rights (Dobbs fallout, mifepristone, clinic access)
+- Education (ed.gov/news mandatory)
+- On This Day in Labor & Civil Rights History (30–60 words; verified against Wikipedia, Smithsonian, LOC, Archives.gov, family foundations)
+- Total section count: 35 items with dedicated depth targets per section
+
+**Runtime targets updated**:
+- Floor: 15 min / 2,175 words
+- Sweet spot: 18–20 min / 2,610–2,900 words
+- Hard ceiling: 25 min / 3,625 words
+- Spacer floor: 23 (one per section)
+
+**Opening announcement rule**: after host intro, state listening time + 2–3 story tease + "But first…"
+
+**Outro CTA**: before sign-off — "If today's show was worth your time, consider sharing it… exclusive access to cutting-edge journalism… consider becoming a paid member at Fold 42."
+
+**Script optimization rules** (`src/prompt.ts`):
+- TTS speech formatting: numbers written as spoken (2026 → "twenty twenty-six"), acronyms expanded on first mention, phonetic scaffolding for difficult names
+- Citation format rule: name the document/agency, not "officials say"
+- Collision detection: no story repeated across sections
+- Coverage rules: immigration is NOT a crime; required terminology ("undocumented immigrant", "asylum seeker", "migrant"); never "illegal alien"
+
+**Per-section voice presets** (`src/elevenlabs.ts`, `src/index.ts`):
+- `getVoicePreset()` applies different ElevenLabs stability/style settings per section type
+- Warm/narrative sections (opening, riddle, On This Day): lower stability, higher style
+- Hard news (politics, crime, international, Gaza): higher stability, lower style
+- Data sections (weather, housing, trade): mid stability/style
+
+**Corrections bridge** (`src/index.ts`, `src/prompt.ts`):
+- Worker reads `pending_corrections` key from KV at run start
+- Corrections are read on-air before the story tease ("Before we begin, a correction from yesterday…")
+- KV key auto-deleted after successful use
+- Set via: `wrangler kv key put --binding MORNING_CUP_KV pending_corrections "your text"`
+
+**Mandatory research sources** (`src/prompt.ts`):
+- Weather: weather.gov, Cal Fire (calfire.ca.gov), InciWeb, NHC (nhc.noaa.gov), AirNow.gov
+- Crime/justice: doj.gov, fbi.gov, atf.gov, dea.gov
+- Intelligence: cia.gov, nsa.gov (with civil liberties lens)
+- Supreme Court: scotusblog.com, supremecourt.gov
+- Labor: nlrb.gov
+- Education: ed.gov/news
+
+**AI & voice disclosure** (`src/description.ts`):
+- `DISCLOSURE` constant with four platform-specific variants: showNotes (full), spotify (required AI label), apple/iHeart/Amazon, youtube (audiogram + Studio checkbox note)
+- Full showNotes disclosure appended to every generated episode description (present in every CMS import)
+- Dedicated "AI & VOICE DISCLOSURE" section in every Metadata.txt — copy-paste ready for each platform
+- Optional spoken disclosure line for first-listen/new-subscriber episodes
+- Positions Penelope Rose as real person with consent and revenue sharing
+
+**Transcript generator** (`scripts/generate-transcript.py` — new):
+- Outputs `The Morning Cup - YYYY-MM-DD.txt` (clean plain-text with section headers) and `.srt` (section-timed subtitles)
+- Section timestamps calculated via ffprobe — matches actual chapter marker timing
+- Requires episode JSON (downloaded automatically by updated `fetch-chunks.sh`)
+
+**fetch-chunks.sh updated**:
+- Now also downloads `The Morning Cup - YYYY-MM-DD.json` (episode JSON) alongside chunks, required by `generate-transcript.py`
+
+**Song names updated** (was done in prior session, comments now also fixed):
+- Intro: `Spark.mp3` → `Hello.mp3`
+- Outro: `The Morning Cup - Thank You.wav` → `Goodbye.mp3`
+
+**Chunker** (`src/chunker.ts`):
+- `MIN_MERGE_CHARS` reduced from 600 → 80; prevents sections from merging into the same chunk, ensuring every section boundary triggers its own transition sting
+
+**Dependency maintenance**:
+- `package-lock.json` regenerated to match wrangler 4.x and current deps; fixes Cloudflare dashboard `npm ci` failures
+
+---
+
 ## 2026-05-22 — Transcription, metadata file, episode titles, SEO, tags, loudness normalization, topic memory
 
 A large batch of post-production and publishing improvements:
