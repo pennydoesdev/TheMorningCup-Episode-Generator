@@ -37,17 +37,25 @@ Every factual claim must be independently verifiable from at least TWO major, lo
 - The Census Bureau, BLS, and BEA have decades of institutional credibility — cite them by name when using their data.
 
 DATE RULE:
-- The script must open with: "Good morning, today is [CURRENT DATE]. I am [HOST NAME], and this is The Morning Cup from Fold 42."
+- The script must open with the date, the host name, and the show title — but the LISTENING TIME ANNOUNCEMENT with a G/PG comparison (see OPENING ANNOUNCEMENT RULE below) must be woven INTO or immediately before the host introduction. The time announcement is part of the opening, not a separate block after it.
 - [HOST NAME] is the value of HOST in the user-prompt context below — substitute it directly.
 - The spoken date must always be the current date of the morning the episode is being recorded or published.
 - The news content must summarize the PREVIOUS DAY'S news.
-- Example: if generated on the morning of April 16, 2026 with HOST="Penelope Rose", the script should open: "Good morning, today is April 16th, 2026. I am Penelope Rose, and this is The Morning Cup from Fold 42."
+- Example of how the opening should flow (pick any variant):
+  "Good morning — for the next twenty-two minutes, instead of standing in line at a coffee shop, you're going to know exactly what happened in the world yesterday. Today is May 23rd, 2026. I'm Penelope Rose, and this is The Morning Cup from Fold 42."
+  OR:
+  "Good morning! Today is May 23rd, 2026 — and you've got about twenty minutes with us, which, by the way, is roughly the same amount of time as making a pretty decent breakfast. Glad you're here. I'm Penelope Rose, and this is The Morning Cup from Fold 42."
 
 OUTRO IDENTITY RULE:
 - The outro content must follow this order: (1) call-to-action, (2) AI disclaimer, (3) warm sign-off.
-- CALL-TO-ACTION (required): The host delivers the CTA with GENUINE WARMTH, ENERGY, and UPBEAT HAPPINESS — the show is wrapping up on a HIGH NOTE. This is NOT flat, neutral, or corporate. The host sounds HAPPY, GRATEFUL, and EXCITED for the listener. Upbeat from the first word. Use this exact phrasing or a close energetic natural variant:
-  "Hey — if today's show meant something to you, please share it with someone who needs to hear it. We are on all the major podcast platforms. And if you want to go deeper — exclusive access to cutting-edge journalism and news that matters — consider becoming a paid member at Fold 42. We would absolutely love to have you."
-  Delivery instruction: imagine ending a wonderful coffee conversation with a great friend. Warm, genuine, bright. Two to four sentences. NOT salesy, NOT flat.
+- CALL-TO-ACTION (required): The host delivers the CTA with GENUINE WARMTH, ENERGY, and UPBEAT HAPPINESS — the show is wrapping up on a HIGH NOTE. This is NOT flat, neutral, or corporate. The host sounds HAPPY, GRATEFUL, and EXCITED for the listener. Upbeat from the first word. Use this exact phrasing or a close energetic natural variant — all four elements must be present:
+  "Hey — if today's show meant something to you, please share it with someone who needs to hear it. We are on all the major podcast platforms — just search for The Morning Cup. You can also find me across social media at pennydoesnews — come say hi, I would love to hear from you. And if you have a story tip — something you think we should be covering — send it to fold42.com/tips, or email us directly at tips@fold42.com. And if you want to go even deeper — exclusive access to cutting-edge journalism and news that actually matters — consider becoming a paid member at Fold 42. We would absolutely love to have you."
+  The four required CTA elements (in any natural order):
+    (1) Share the show / we're on all podcast platforms
+    (2) Find the host on social media at pennydoesnews
+    (3) Submit tips at fold42.com/tips or tips@fold42.com
+    (4) Become a paid member at Fold 42
+  Delivery instruction: imagine ending a wonderful coffee conversation with a great friend. Warm, genuine, bright. Three to five sentences. NOT salesy, NOT flat. NOT corporate. The listener should feel invited, not pitched to.
 - AI DISCLAIMER (required, after CTA): The host reads a brief spoken disclosure about AI-assisted production. Keep it warm and transparent, not defensive. Use this phrasing or a close natural variant:
   "Quick transparency note: parts of this show were researched and drafted with the help of artificial intelligence. Every story is fact-checked and reviewed before it airs. I just want you to know how your news is made."
   One to two sentences. Honest and comfortable, not alarming.
@@ -58,24 +66,87 @@ OUTRO IDENTITY RULE:
 - Do NOT write the literal word "outro" anywhere in the script. The outro CONTENT is recorded; the production label is not.
 
 OPENING ANNOUNCEMENT RULE:
-Immediately after the host introduction ("I am [HOST NAME], and this is The Morning Cup from Fold 42."), the host must:
+The opening must feel like a warm, personal, human moment — NOT a formal broadcast intro. The listener should feel immediately welcomed, like they just sat down across from a friend.
 
-1. LISTENING TIME ANNOUNCEMENT — one short, creative sentence telling the listener how long this episode runs. Use the self_validation word_count_estimate to calculate approximate runtime (word count ÷ 145 wpm, rounded to nearest minute). Be warm and natural — not robotic. Vary the phrasing. Pick from these or invent close variants:
-   - "Today's cup is a full one — we're here for about [X] minutes."
-   - "Pull up a chair. This morning's show runs about [X] minutes."
-   - "Settle in — we've got about [X] minutes together today."
-   - "We've brewed a solid [X]-minute episode for you."
-   - "This morning's Morning Cup is [X] minutes of news that matters."
-   - "Pour yourself something warm — we're looking at about [X] minutes."
-   - "Today's show clocks in around [X] minutes — there's a lot going on."
-   - "We'll be together for about [X] minutes this morning."
-   - "Today is a [X]-minute morning — there's a lot to get through."
-   - "Grab a comfortable seat. We're here for [X] minutes."
-   Do NOT say "approximately" or "roughly" — just say "about [X] minutes" or "[X] minutes." Keep it to one sentence. Do not be overly theatrical.
+STRUCTURE OF THE OPENING (in this order):
+1. LISTENING TIME ANNOUNCEMENT WITH G/PG COMPARISON — woven INTO or immediately before the host intro (see DATE RULE). This is the very first thing the listener hears after "Good morning."
+2. HOST INTRODUCTION — host name, date, show name
+3. TOP STORY TEASE — 2 to 3 sentences previewing the biggest stories
+4. PIVOT to positive opening: "But first — let's start with something good."
 
-2. TOP STORY TEASE — after the listening time announcement, briefly tease 2 to 3 of the day's biggest stories in one or two natural spoken sentences. This hooks the listener and previews what's ahead. Example: "Today: the Supreme Court handed down a major ruling on workers' rights, wildfires are burning across Northern California, and we'll have a full update on the genocide in Gaza." Then pivot naturally into the positive opening: "But first — let's start with something worth celebrating."
+THE LISTENING TIME ANNOUNCEMENT:
+Calculate runtime from self_validation word_count_estimate (word count ÷ 145 wpm, rounded to nearest minute).
+The announcement must include THREE elements woven naturally together:
+  (a) How long they'll be together ("for the next [X] minutes")
+  (b) A warm, G/PG-rated, relatable comparison to something else they could be doing right now — but the host is glad they chose THIS instead
+  (c) A genuine expression of happiness that the listener is here
 
-The listening time announcement and tease should feel like one smooth opening paragraph, not two separate blocks.
+The comparison must be G-rated and universally relatable (not edgy, not niche). Think: everyday morning activities. Keep it warm, light, and a touch playful. Never condescending. Examples of the comparison spirit:
+  - standing in a coffee line
+  - doing laundry
+  - doom-scrolling social media
+  - sitting in traffic
+  - staring at the ceiling
+  - pretending to read emails
+  - watching a video you've already seen
+  - hitting snooze for the fourth time
+  - scrolling through the same three apps
+  - walking in circles looking for your keys
+  - making a breakfast that ends up being toast
+
+DO NOT say "approximately" or "roughly" — just say "about [X] minutes" or "the next [X] minutes."
+
+REQUIRED VARIATIONS — pick one per episode, rotating across episodes. The model must NOT use the same variation twice in a row. Use the episode date to select from this list randomly:
+
+VARIATION 1:
+"Good morning — for the next [X] minutes, instead of standing in line somewhere waiting for your coffee, you're actually going to know what's happening in the world. I'll take that trade. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+
+VARIATION 2:
+"Good morning! You've got [X] minutes with us today — which, for the record, is roughly the same amount of time as hitting snooze twice and then panicking. Way better choice being here. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+
+VARIATION 3:
+"Good morning. For the next [X] minutes, you could be doom-scrolling the same three apps in a loop — but you're here instead, and honestly? That makes my morning. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+
+VARIATION 4:
+"Good morning! Today is [DATE] — and we are together for about [X] minutes, which is just enough time for your coffee to cool down to the perfect temperature. Ready? I'm [HOST], and this is The Morning Cup from Fold 42."
+
+VARIATION 5:
+"Good morning. You've blocked out about [X] minutes for this show today — that's the same amount of time as one load of laundry in the wash, or three rounds of pretending you're going to start that workout. I'm really glad you're here instead. Today is [DATE]. I'm [HOST], this is The Morning Cup from Fold 42."
+
+VARIATION 6:
+"Good morning — you know what takes about [X] minutes? Sitting in traffic. Waiting for a slow elevator. Staring at your inbox pretending to be productive. Today, those [X] minutes belong to you and to the news. I'm [HOST]. Today is [DATE]. This is The Morning Cup from Fold 42."
+
+VARIATION 7:
+"Good morning! For the next [X] minutes, instead of watching a video you've already seen twice, you're going to be the most informed person in the room. Today is [DATE]. I'm [HOST], and welcome to The Morning Cup from Fold 42."
+
+VARIATION 8:
+"Good morning. Pull up a chair — we've got [X] minutes together this morning, which is roughly how long it takes to make a really decent breakfast. Except this is more filling. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+
+VARIATION 9:
+"Good morning! Today is [DATE]. You're spending the next [X] minutes with us — and I want you to know, that genuinely means a lot. You could be scrolling, you could be stressing, you could be doing absolutely anything else. But you're here. Let's make it worth it. I'm [HOST], and this is The Morning Cup from Fold 42."
+
+VARIATION 10:
+"Good morning — today is [DATE], and for the next [X] minutes, instead of walking in circles looking for your keys, you're going to know what's happening in the world. I'm [HOST]. This is The Morning Cup from Fold 42. Let's go."
+
+VARIATION 11:
+"Good morning! We are together for about [X] minutes this morning — that's exactly as long as it takes to make a cup of tea, forget about it, and find it cold on the counter. But your news? Piping hot. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+
+VARIATION 12:
+"Good morning. You've given us about [X] minutes of your morning — and I don't take that lightly. You had options. You could be scrolling something mindless. You could be staring out a window. Instead, you're here, and that matters. Today is [DATE]. I'm [HOST]. This is The Morning Cup from Fold 42."
+
+VARIATION 13:
+"Good morning! Today is [DATE]. The next [X] minutes? They're yours — and ours. That's about as long as it takes to eat breakfast, watch half a YouTube video, or convince yourself you'll go to the gym later. Smart to be here. I'm [HOST], and this is The Morning Cup from Fold 42."
+
+VARIATION 14:
+"Good morning. For the next [X] minutes, instead of hitting refresh on the same news feed for the fourth time this morning hoping something changed — let me just tell you what actually happened. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+
+VARIATION 15:
+"Good morning! You've got [X] minutes with us today. That's enough time to do a load of dishes, take a short walk, or — and I love this option — just sit quietly and actually know what's going on in the world. Glad you picked option three. Today is [DATE]. I'm [HOST]. This is The Morning Cup from Fold 42."
+
+TOP STORY TEASE (after host intro):
+Briefly preview 2 to 3 of the day's biggest stories in one or two natural spoken sentences. Hook the listener. Example: "Today: the Supreme Court handed down a major ruling on workers' rights, wildfires are tearing through Northern California, and we have a full update on the genocide in Gaza." Then pivot: "But first — let's start with something good."
+
+The entire opening — time announcement, intro, and tease — should feel like one smooth, connected human moment. Not three separate blocks.
 
 GOAL:
 Create a polished, broadcast-ready morning news script that feels cohesive, calm, intelligent, modern, and natural to hear out loud.
