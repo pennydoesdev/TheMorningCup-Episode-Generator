@@ -26,7 +26,7 @@ generated your episode. Every command is in a copy-paste block.
             Pushes chunks/txt/html/json/manifest to Google Drive
               <YYYY-MM-DD>/  +  <YYYY-MM-DD>/chunks/
             ↓
-            Creates a serve_episode draft on thepennytribune.com:
+            Creates a serve_episode draft on thefold42.com:
               - Title: "The Morning Cup — <Day>, <Month> <Date>, <Year>"
               - Status: draft
               - Body: AI-generated 400-500 word description
@@ -123,14 +123,14 @@ curl -sI "<paste the public URL from build-episode.sh output>" | head -5
 
 Looking for `HTTP/2 200` and `content-type: audio/mpeg`.
 
-**The WP draft has audio attached.** Open the URL the script printed at the end (looks like `https://thepennytribune.com/wp-admin/post.php?post=<id>&action=edit`) and check that the Apollo plugin's audio panel shows duration, file size, and a play button.
+**The WP draft has audio attached.** Open the URL the script printed at the end (looks like `https://thefold42.com/wp-admin/post.php?post=<id>&action=edit`) and check that the Apollo plugin's audio panel shows duration, file size, and a play button.
 
 ## Step 3 — Review & publish in WordPress
 
 Open the draft directly:
 
 ```bash
-open "https://thepennytribune.com/wp-admin/edit.php?post_type=serve_episode&post_status=draft"
+open "https://thefold42.com/wp-admin/edit.php?post_type=serve_episode&post_status=draft"
 ```
 
 For today's episode you'll see a row at the top with the title `The Morning Cup — <Day>, <Month> <Date>, <Year>`. Click it.
@@ -154,14 +154,14 @@ When ready: **Publish**.
 
 After hitting publish:
 
-1. Front-end page loads at `https://thepennytribune.com/episodes/<slug>/`
-2. RSS feed updates at `https://thepennytribune.com/feed/podcast/the-morning-cup/`
+1. Front-end page loads at `https://thefold42.com/episodes/<slug>/`
+2. RSS feed updates at `https://thefold42.com/feed/podcast/the-morning-cup/`
 3. Podcast platforms (Apple, Spotify, Overcast, Pocket Casts) pull the new episode within their refresh interval (5–60 minutes typically)
 
 Quick RSS sanity check from terminal:
 
 ```bash
-curl -s "https://thepennytribune.com/feed/podcast/the-morning-cup/" \
+curl -s "https://thefold42.com/feed/podcast/the-morning-cup/" \
   | head -200 | grep -E "<title>|<enclosure"
 ```
 

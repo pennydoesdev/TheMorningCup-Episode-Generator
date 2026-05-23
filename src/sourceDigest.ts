@@ -171,7 +171,7 @@ function inferSource(feedUrl: string): string {
 
 async function fetchRss(feedUrl: string, signal: AbortSignal): Promise<FetchedItem[]> {
   const res = await fetch(feedUrl, {
-    headers: { "User-Agent": "MorningCupBot/1.0 (+Vicinity News)" },
+    headers: { "User-Agent": "MorningCupBot/1.0 (+Fold 42)" },
     signal,
   });
   if (!res.ok) {

@@ -27,7 +27,7 @@ export async function generateEpisodeCopy(
     description: episode.social_copy?.main_post ?? "",
     seoTitle: `The Morning Cup — ${config.hostName}`,
     seoDescription: episode.social_copy?.main_post?.slice(0, 155) ?? "",
-    tags: `The Morning Cup, Vicinity News, ${config.hostName}, daily news, morning briefing`,
+    tags: `The Morning Cup, Fold 42, ${config.hostName}, daily news, morning briefing`,
   };
 
   const prompt =
@@ -50,7 +50,7 @@ export async function generateEpisodeCopy(
     `4. SEO_DESCRIPTION: A meta description for the WordPress post, 150–160 characters. ` +
     `Hook the reader; include the show name and 1–2 key topics.\n\n` +
     `5. TAGS: 10–14 comma-separated tags for the WordPress post. ` +
-    `Mix show constants (The Morning Cup, Vicinity News, daily news, morning briefing) ` +
+    `Mix show constants (The Morning Cup, Fold 42, daily news, morning briefing) ` +
     `with episode-specific tags drawn from the chapter topics (people, places, issues).\n\n` +
     `Return a JSON object with exactly five keys: "titles" (array of 3 strings), "description" (string), ` +
     `"seo_title" (string), "seo_description" (string), "tags" (string). ` +

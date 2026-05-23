@@ -228,7 +228,7 @@ schedules a WP-Cron job that:
 4. Saves Publer job IDs back to post meta for de-duplication.
 
 Status: **specced, not built.** When ready, will live as its own GitHub
-repo + WP plugin so other Penny Tribune post types (articles, videos,
+repo + WP plugin so other Fold 42 post types (articles, videos,
 elections) get the same treatment.
 
 ---
@@ -291,7 +291,7 @@ flowchart TB
 | `S3_REGION` | e.g. `us-east-1` |
 | `S3_BUCKET` | Audio bucket name (same as `APOLLO_S3_BUCKET` in wp-config) |
 | `S3_CF_URL` | CloudFront URL (e.g. `https://d1abc.cloudfront.net`) — falls back to direct S3 URL if empty |
-| `WP_URL` | `https://thepennytribune.com` |
+| `WP_URL` | `https://thefold42.com` |
 | `WP_USERNAME` | `systems` |
 | `WP_APP_PASSWORD` | Application Password (same value as the worker secret) |
 

@@ -7,7 +7,7 @@ Once a worker run completes, the publishing pipeline:
 2. Uploads **chunks, transcripts, and metadata** to Google Drive in
    `<root>/<YYYY-MM-DD>/` and `<root>/<YYYY-MM-DD>/chunks/`.
 3. Creates a **draft WordPress post** (Seriously Simple Podcasting custom
-   post type `serve_episode`) on `thepennytribune.com`, tagged to the
+   post type `serve_episode`) on `thefold42.com`, tagged to the
    "Podcast Show" taxonomy with term *The Morning Cup*.
 
 The final stitched MP3 is rendered locally by `build-episode.sh` and
@@ -94,7 +94,7 @@ S3_SECRET_KEY="<matching AWS secret>"
 S3_REGION="us-east-1"
 S3_BUCKET="<bucket name, same as APOLLO_S3_BUCKET in wp-config>"
 S3_CF_URL="<CloudFront URL, e.g. https://d1abc.cloudfront.net>"
-WP_URL="https://thepennytribune.com"
+WP_URL="https://thefold42.com"
 WP_USERNAME="systems"
 WP_APP_PASSWORD="<same value as the Cloudflare WP_APP_PASSWORD secret>"
 ENVEOF
@@ -146,7 +146,7 @@ These are already set with sensible defaults:
 ```toml
 ENABLE_PUBLISHING        = "true"
 GOOGLE_DRIVE_FOLDER_ID   = "1FNlBn7-pYJLnd3ORFCDeli5f7Z9C8yoM"
-WP_URL                   = "https://thepennytribune.com"
+WP_URL                   = "https://thefold42.com"
 WP_USERNAME              = "systems"
 WP_CPT_SLUG              = "serve_episode"
 WP_PODCAST_SHOW_TAXONOMY = "serve_podcast_category"
@@ -185,7 +185,7 @@ Per successful worker run:
       The Morning Cup - 2026-05-01 - NNN.mp3
 ```
 
-**WordPress** (`https://thepennytribune.com/wp-admin/edit.php?post_type=serve_episode`)
+**WordPress** (`https://thefold42.com/wp-admin/edit.php?post_type=serve_episode`)
 - Status: **Draft**
 - Title: e.g. *"The Morning Cup — Friday, May 1st, 2026"*
 - Content: AI-generated 400–500 word episode description
@@ -240,9 +240,9 @@ If you want to add one, ping me — it'd be a 30-min change.
 | `wrangler tail` shows `publish: drive upload failed` with `403` | Service account not added as Editor to the destination Drive folder |
 | `publish: drive upload failed` with `404` | `GOOGLE_DRIVE_FOLDER_ID` wrong or folder is in a Shared Drive without permission propagation |
 | `publish: wp draft failed` with `401` | `WP_APP_PASSWORD` wrong or revoked. Regenerate from WP profile + `wrangler versions secret put WP_APP_PASSWORD` again |
-| `publish: wp draft failed` with `404 rest_no_route` | `WP_CPT_SLUG` doesn't match — verify with `curl https://thepennytribune.com/wp-json/wp/v2/types` |
+| `publish: wp draft failed` with `404 rest_no_route` | `WP_CPT_SLUG` doesn't match — verify with `curl https://thefold42.com/wp-json/wp/v2/types` |
 | `publish: wp draft failed` with `403 rest_cannot_create` | The `systems` user doesn't have `edit_posts` on the CPT. Bump role to Editor or grant the capability via the SSP plugin's settings |
-| Drafts created but the Podcast Show dropdown is empty | The taxonomy slug is different. Check `curl https://thepennytribune.com/wp-json/wp/v2/taxonomies` and update `WP_PODCAST_SHOW_TAXONOMY` |
+| Drafts created but the Podcast Show dropdown is empty | The taxonomy slug is different. Check `curl https://thefold42.com/wp-json/wp/v2/taxonomies` and update `WP_PODCAST_SHOW_TAXONOMY` |
 | `publish: body generation failed` | OpenAI rate-limit or transient. Falls back to social-copy concatenation; the WP draft still gets created |
 
 ## Costs added by publishing

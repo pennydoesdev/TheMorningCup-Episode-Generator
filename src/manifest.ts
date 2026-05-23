@@ -13,8 +13,8 @@ export interface ManifestInputs {
   sourceIso: string; // YYYY-MM-DD
   baseTitle: string; // "The Morning Cup"
   episodeTitle?: string; // short subtitle, e.g. "Housing Costs & AI Regulation"
-  publisher: string; // "Vicinity News"
-  copyrightHolder: string; // "Vicinity News"
+  publisher: string; // "Fold 42"
+  copyrightHolder: string; // "Fold 42"
   genre: string; // "Podcast" / "News"
   wordCount: number;
   estimatedRuntimeMinutes: number;

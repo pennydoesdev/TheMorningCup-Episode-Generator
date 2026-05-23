@@ -129,7 +129,7 @@ If you change the daily hour, also widen the cron's UTC range to cover that hour
 
 ```toml
 ENABLE_EMAIL = "false"
-EMAIL_FROM = "The Penny Tribune <morningcup@yourdomain.com>"
+EMAIL_FROM = "Fold 42 <morningcup@yourdomain.com>"
 EMAIL_TO = "your-email@example.com"
 ```
 
@@ -146,8 +146,8 @@ Sent emails:
 ## Metadata defaults
 
 ```toml
-PUBLISHER = "The Penny Tribune"
-COPYRIGHT_HOLDER = "The Penny Tribune"
+PUBLISHER = "Fold 42"
+COPYRIGHT_HOLDER = "Fold 42"
 PODCAST_GENRE = "News"
 ```
 

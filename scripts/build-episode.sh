@@ -103,8 +103,8 @@ if [ -n "$EPISODE_SUBTITLE" ]; then
 else
   TITLE=$(read_manifest title "The Morning Cup - $DATE")
 fi
-PUBLISHER=$(read_manifest publisher "Vicinity News")
-COPYRIGHT=$(read_manifest copyright "Copyright $YEAR - Vicinity News")
+PUBLISHER=$(read_manifest publisher "Fold 42")
+COPYRIGHT=$(read_manifest copyright "Copyright $YEAR - Fold 42")
 GENRE=$(read_manifest genre "News")
 WORD_COUNT=$(read_manifest word_count "?")
 RUNTIME=$(read_manifest estimated_runtime_minutes "?")

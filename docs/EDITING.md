@@ -53,12 +53,12 @@ All from the manifest, falling back to defaults if a field is missing.
 | ID3 frame | Source | Example |
 |-----------|--------|---------|
 | `TIT2` (title) | `manifest.title` | `The Morning Cup: Housing Costs & AI Bills` |
-| `TPE1` (artist) | `manifest.publisher` | `Vicinity News` |
+| `TPE1` (artist) | `manifest.publisher` | `Fold 42` |
 | `TALB` (album) | `manifest.show_name` | `The Morning Cup` |
 | `TYER` (year) / `TDRC` (date) | episode year / date | `2026` / `2026-05-22` |
-| `TCOP` (copyright) | `manifest.copyright` | `Copyright 2026 — Vicinity News` |
+| `TCOP` (copyright) | `manifest.copyright` | `Copyright 2026 — Fold 42` |
 | `TCON` (genre) | `manifest.genre` | `News` |
-| `TPUB` (publisher) | `manifest.publisher` | `Vicinity News` |
+| `TPUB` (publisher) | `manifest.publisher` | `Fold 42` |
 | `COMM` (comment) | runtime + word count + timestamp | `Generated 2026-05-22T08:14:00Z — ~8.5 min / 1420 words` |
 | `TRCK` (track) | day of year | `142` (episode number) |
 | `TPOS` (disc) | year | `2026` (season) |

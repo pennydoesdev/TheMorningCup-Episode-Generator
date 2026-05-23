@@ -176,7 +176,7 @@ string.
 ## 9. Configure email
 
 - **EMAIL_FROM** must be a verified Resend sender (e.g.
-  `The Penny Tribune <morningcup@yourdomain.com>`).
+  `Fold 42 <morningcup@yourdomain.com>`).
 - **EMAIL_TO** is your inbox.
 - Disable email entirely with `ENABLE_EMAIL=false` (the Worker will still run
   and write everything to R2).

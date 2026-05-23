@@ -1,6 +1,6 @@
 // Master prompt for The Morning Cup. Do not modify the prompt body.
 
-export const MASTER_PROMPT = `Create a DAILY morning news podcast script for Vicinity News called “The Morning Cup.”
+export const MASTER_PROMPT = `Create a DAILY morning news podcast script for Fold 42 called “The Morning Cup.”
 
 This script is generated each morning for same-morning recording and publication.
 
@@ -21,11 +21,11 @@ Before generating the final JSON output, count the approximate words in elevenla
 - Do not submit a script that will fail this check. The pipeline will reject it and force a repair pass.
 
 DATE RULE:
-- The script must open with: "Good morning, today is [CURRENT DATE]. I am [HOST NAME], and this is The Morning Cup from Vicinity News."
+- The script must open with: "Good morning, today is [CURRENT DATE]. I am [HOST NAME], and this is The Morning Cup from Fold 42."
 - [HOST NAME] is the value of HOST in the user-prompt context below — substitute it directly.
 - The spoken date must always be the current date of the morning the episode is being recorded or published.
 - The news content must summarize the PREVIOUS DAY'S news.
-- Example: if generated on the morning of April 16, 2026 with HOST="Penelope Rose", the script should open: "Good morning, today is April 16th, 2026. I am Penelope Rose, and this is The Morning Cup from Vicinity News."
+- Example: if generated on the morning of April 16, 2026 with HOST="Penelope Rose", the script should open: "Good morning, today is April 16th, 2026. I am Penelope Rose, and this is The Morning Cup from Fold 42."
 
 OUTRO IDENTITY RULE:
 - The script must end with a sign-off that includes the host's name and thanks the listener.

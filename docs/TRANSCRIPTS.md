@@ -25,15 +25,15 @@ Feed Title:      The Morning Cup: Housing Costs & AI Bills  (used in MP3 tags + 
 Episode:         142  (Season 2026)
 Date:            2026-05-22  —  May 22nd, 2026
 Host:            Penelope Rose
-Publisher:       Vicinity News
+Publisher:       Fold 42
 Runtime:         ~8.5 min  (1420 words)
-Copyright:       Copyright 2026 — Vicinity News
+Copyright:       Copyright 2026 — Fold 42
 Genre:           News
 
 -- WordPress / OpenPodcast (Yoast or RankMath) --
 SEO Title:       Ep. 142: Housing Costs & AI Bills | The Morning Cup
 SEO Description: Start your morning with The Morning Cup — today we cover...
-Tags:            The Morning Cup, Vicinity News, daily news, morning briefing, housing costs, ...
+Tags:            The Morning Cup, Fold 42, daily news, morning briefing, housing costs, ...
 ```
 
 Further down it contains:

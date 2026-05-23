@@ -2,7 +2,7 @@
   "name": "morning-cup-generator",
   "version": "1.0.0",
   "private": true,
-  "description": "Cloudflare Worker that generates The Morning Cup daily podcast for The Penny Tribune.",
+  "description": "Cloudflare Worker that generates The Morning Cup daily podcast for Fold 42.",
   "main": "src/index.ts",
   "scripts": {
     "dev": "wrangler dev",
