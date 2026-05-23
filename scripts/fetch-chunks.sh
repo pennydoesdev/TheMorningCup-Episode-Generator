@@ -121,6 +121,21 @@ if [ ! -f "$METADATA_LOCAL" ]; then
   fi
 fi
 
+# --- pull episode JSON (for transcript generation) ---------------------------
+
+EPISODE_JSON_LOCAL="$DEST/The Morning Cup - $DATE.json"
+EPISODE_JSON_KEY="$R2_PREFIX/$DATE/The Morning Cup - $DATE.json"
+
+if [ ! -f "$EPISODE_JSON_LOCAL" ]; then
+  echo ""
+  echo "Fetching episode JSON (for transcript generation)..."
+  if wrangler r2 object get "$BUCKET/$EPISODE_JSON_KEY" --file "$EPISODE_JSON_LOCAL" --remote 2>/dev/null; then
+    echo "  Saved: $EPISODE_JSON_LOCAL"
+  else
+    echo "  (episode JSON not found in R2 — skipping)"
+  fi
+fi
+
 echo ""
 ls -la "$DEST"
 echo ""

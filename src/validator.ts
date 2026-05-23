@@ -95,8 +95,8 @@ export function validateEpisode(
 
   if (!script.includes("[TEN-SECOND SECTION SPACER]")) {
     errors.push("Script is missing [TEN-SECOND SECTION SPACER] markers");
-  } else if (spacerCount < 22) {
-    errors.push(`Found only ${spacerCount} spacer markers; need at least 22 (one between each major section)`);
+  } else if (spacerCount < 23) {
+    errors.push(`Found only ${spacerCount} spacer markers; need at least 23 (one between each major section, including On This Day)`);
   }
 
   // Riddle section before outro, riddle answer at end.

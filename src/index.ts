@@ -175,6 +175,14 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
 
     // 2. Build prompt + call OpenAI (inject recent topics for dedup)
     const recentTopics = await fetchRecentTopics(env, episodeIso);
+
+    // Load any pending correction from KV ("pending_corrections" key).
+    // Set via: wrangler kv key put --binding MORNING_CUP_KV pending_corrections "text"
+    // Cleared automatically after one use.
+    const corrections = env.MORNING_CUP_KV
+      ? (await env.MORNING_CUP_KV.get("pending_corrections")) ?? undefined
+      : undefined;
+
     const userPrompt = buildUserPrompt({
       episodeDateSpoken: spokenDate(episodeIso),
       sourceDateSpoken: spokenDate(sourceIso),
@@ -182,6 +190,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       sourceLimited: !digest.available,
       hostName: config.hostName,
       recentTopics,
+      corrections,
     });
 
     const generated = await generateEpisode(env, config, userPrompt);
@@ -313,7 +322,13 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
           if (failureState.value) return;
           const chunk = chunks[i];
           try {
-            const tts = await synthesizeChunk(env, config, { text: chunk.text });
+            // Resolve voice preset from the first chapter this chunk starts.
+            const chapterIdx = chunk.starts_section_indices[0];
+            const chapterTitle = chapterIdx !== undefined
+              ? (episode.chapters[chapterIdx]?.title)
+              : undefined;
+            const voiceOverride = getVoicePreset(chapterTitle);
+            const tts = await synthesizeChunk(env, config, { text: chunk.text, voiceOverride });
             await putArrayBuffer(env, chunk.r2_key, tts.audio, {
               contentType: tts.contentType || "audio/mpeg",
               metadata: {
@@ -387,6 +402,11 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       metadata_key: metadataKey,
     });
 
+    // Clear any pending correction from KV now that it has been used.
+    if (corrections && env.MORNING_CUP_KV) {
+      await env.MORNING_CUP_KV.delete("pending_corrections").catch(() => {});
+    }
+
     logger.info("run complete", {
       episodeIso,
       chunkCount: completedChunks.length,
@@ -399,6 +419,29 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       error: String(err),
     });
   }
+}
+
+// Returns per-section voice tuning based on chapter title. Similarity boost
+// and speaker boost stay at config values — they define voice identity.
+// Stability: higher = more monotone/authoritative. Lower = more natural/warm.
+// Style: higher = more expressive. Lower = more controlled.
+function getVoicePreset(chapterTitle: string | undefined): { stability: number; style: number } | undefined {
+  if (!chapterTitle) return undefined;
+  const t = chapterTitle.toLowerCase();
+  // Warm and expressive: show opening, closing story, riddle, historical moment, sign-off
+  if (/opening|closing story|closing summary|riddle|on this day|what comes next/.test(t)) {
+    return { stability: 0.28, style: 0.80 };
+  }
+  // Authoritative and steady: hard news and serious analysis
+  if (/crime|international|iran|gaza|politics|power map|supreme court|voting rights|immigration/.test(t)) {
+    return { stability: 0.45, style: 0.60 };
+  }
+  // Practical and calm: weather and cost-of-living service segments
+  if (/weather|cost of living|housing|trade/.test(t)) {
+    return { stability: 0.38, style: 0.65 };
+  }
+  // Default: use config values (undefined = no override)
+  return undefined;
 }
 
 function checkAuth(req: Request, env: Env): { ok: true } | { ok: false; response: Response } {

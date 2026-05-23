@@ -4,8 +4,16 @@ import type { Env } from "./types";
 import type { Config } from "./config";
 import { logger } from "./logger";
 
+export interface VoiceOverride {
+  // Override stability and style per section type. Similarity boost and
+  // speaker boost are always pulled from config — they define voice identity.
+  stability?: number;
+  style?: number;
+}
+
 export interface TtsRequest {
   text: string;
+  voiceOverride?: VoiceOverride;
 }
 
 export interface TtsResult {
@@ -27,9 +35,9 @@ export async function synthesizeChunk(
     text: req.text,
     model_id: config.elevenLabsModelId,
     voice_settings: {
-      stability: config.voice.stability,
-      similarity_boost: config.voice.similarityBoost,
-      style: config.voice.style,
+      stability:        req.voiceOverride?.stability        ?? config.voice.stability,
+      similarity_boost: config.voice.similarityBoost,  // always from config — defines voice identity
+      style:            req.voiceOverride?.style            ?? config.voice.style,
       use_speaker_boost: config.voice.useSpeakerBoost,
     },
   };
