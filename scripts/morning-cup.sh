@@ -8,7 +8,8 @@
 # Subcommands:
 #     preflight             check every dependency + asset + secret
 #     make [DATE]           full pipeline: preflight -> run -> poll -> fetch -> build
-#     status [DATE]         show the worker's current run record
+#     monitor [DATE]        live dashboard — auto-exits when completed or failed
+#     status [DATE]         one-shot JSON status snapshot
 #     fetch [DATE]          R2 chunks + manifest only
 #     build [DATE]          ffmpeg assembly only (assumes chunks are local)
 #     transcribe [DATE]     Whisper transcript -> .vtt alongside the MP3
@@ -323,14 +324,26 @@ cmd_make() {
 
   if [ "$STATUS" != "completed" ]; then
     step "step 2/4: polling /status every 20s (max 30 min)..."
+    log "  tip: open a second terminal and run 'morning-cup.sh monitor' for a live dashboard"
     local DEADLINE=$(( $(date +%s) + 1800 ))
+    local STAGE_LABELS="pending=queued  generating=writing-script  validating=checking  tts=rendering-audio  completed=done"
     while [ "$STATUS" != "completed" ] && [ "$STATUS" != "failed" ]; do
       if [ "$(date +%s)" -ge "$DEADLINE" ]; then
         die "timed out after 30 minutes. Last status: $STATUS"
       fi
       sleep 20
       STATUS=$(worker_status "$DATE" | parse_status)
-      printf "[mc]   %s status=%s\n" "$(date +%H:%M:%S)" "$STATUS"
+      local LABEL
+      case "$STATUS" in
+        pending)    LABEL="queued, waiting to start" ;;
+        generating) LABEL="OpenAI writing script..." ;;
+        validating) LABEL="checking word count + structure..." ;;
+        tts)        LABEL="ElevenLabs rendering chunks..." ;;
+        completed)  LABEL="done!" ;;
+        failed)     LABEL="FAILED" ;;
+        *)          LABEL="$STATUS" ;;
+      esac
+      printf "[mc]   %s  %-12s  %s\n" "$(date +%H:%M:%S)" "$STATUS" "$LABEL"
     done
   fi
 
@@ -367,6 +380,127 @@ cmd_status() {
   local DATE
   DATE="$(resolve_date "${1:-}")"
   worker_status "$DATE" | python3 -m json.tool
+}
+
+cmd_monitor() {
+  load_env
+  [ -n "${RUN_SECRET:-}" ] || die "RUN_SECRET not set."
+  local DATE
+  DATE="$(resolve_date "${1:-}")"
+
+  local TMPFILE
+  TMPFILE=$(mktemp /tmp/mc-status.XXXX)
+  trap "rm -f '$TMPFILE'" EXIT INT TERM
+
+  local START_WALL
+  START_WALL=$(date +%s)
+
+  while true; do
+    # Fetch status into temp file
+    curl -sS --max-time 30 \
+      -H "Authorization: Bearer $RUN_SECRET" \
+      "$WORKER_URL/status?date=$DATE" > "$TMPFILE" 2>/dev/null \
+      || printf '{}' > "$TMPFILE"
+
+    local NOW ELAPSED MINS SECS
+    NOW=$(date +%s)
+    ELAPSED=$(( NOW - START_WALL ))
+    MINS=$(( ELAPSED / 60 ))
+    SECS=$(( ELAPSED % 60 ))
+
+    clear
+    printf "${C_BOLD}  The Morning Cup — Episode Monitor${C_RESET}\n"
+    printf "  %-10s %s\n" "date:"    "$DATE"
+    printf "  %-10s %02d:%02d\n\n"  "watching:" "$MINS" "$SECS"
+
+    python3 - "$TMPFILE" "$C_OK" "$C_ERR" "$C_DIM" "$C_RESET" <<'PYEOF'
+import json, sys
+tmpfile, C_OK, C_ERR, C_DIM, C_RESET = sys.argv[1:]
+
+STAGE_ORDER = ['pending','generating','validating','tts','completed']
+STAGE_LABEL = {
+  'pending':    'Pending      — queued, about to start',
+  'generating': 'Generating   — OpenAI writing the script...',
+  'validating': 'Validating   — checking word count + structure...',
+  'tts':        'TTS          — ElevenLabs rendering MP3 chunks...',
+  'completed':  'Completed',
+  'failed':     'Failed',
+  'absent':     'Not started yet',
+  'unknown':    'Unknown',
+}
+
+try:
+    with open(tmpfile) as f:
+        d = json.load(f)
+except Exception:
+    print("  (waiting for worker to respond...)")
+    sys.exit(0)
+
+r = d.get('record')
+if not r:
+    print("  status:   not started yet")
+    sys.exit(0)
+
+status = r.get('status', 'unknown')
+color  = C_OK if status == 'completed' else (C_ERR if status == 'failed' else '')
+label  = STAGE_LABEL.get(status, status)
+print(f"  status:   {color}{label}{C_RESET}")
+
+# Progress bar for known stages
+if status in STAGE_ORDER:
+    idx  = STAGE_ORDER.index(status)
+    bar  = ''.join(['[+] ' if i <= idx else '[ ] ' for i in range(len(STAGE_ORDER))])
+    labs = ' '.join([s[:4].upper() for s in STAGE_ORDER])
+    print(f"\n  {C_DIM}{labs}{C_RESET}")
+    print(f"  {bar}\n")
+
+for key, label in [
+    ('started_at',                'started: '),
+    ('updated_at',                'updated: '),
+]:
+    if r.get(key):
+        print(f"  {label}{r[key]}")
+
+if r.get('word_count') and int(r.get('word_count', 0)) > 0:
+    print(f"  words:    {r['word_count']}")
+if r.get('estimated_runtime_minutes') and float(r.get('estimated_runtime_minutes', 0)) > 0:
+    rt = float(r['estimated_runtime_minutes'])
+    m, s = int(rt), int((rt % 1) * 60)
+    print(f"  runtime:  ~{m}m {s:02d}s")
+if r.get('chunk_count') and int(r.get('chunk_count', 0)) > 0:
+    print(f"  chunks:   {r['chunk_count']}")
+if r.get('error'):
+    print(f"\n  {C_ERR}error:{C_RESET}    {r['error']}")
+PYEOF
+
+    printf "\n  ${C_DIM}refreshing every 15s — Ctrl+C to stop${C_RESET}\n"
+
+    # Check terminal status
+    local STATUS
+    STATUS=$(python3 -c "
+import json, sys
+try:
+    with open('$(echo "$TMPFILE" | sed "s/'/'\\\\''/g")') as f:
+        d = json.load(f)
+    r = d.get('record')
+    print(r.get('status','unknown') if r else 'absent')
+except:
+    print('unknown')
+")
+
+    if [ "$STATUS" = "completed" ]; then
+      printf "\n  ${C_OK}Done!${C_RESET} Run this to build the MP3:\n"
+      printf "  morning-cup.sh build %s\n\n" "$DATE"
+      break
+    elif [ "$STATUS" = "failed" ]; then
+      printf "\n  ${C_ERR}Episode failed.${C_RESET} Re-run with:\n"
+      printf "  morning-cup.sh make --force %s\n\n" "$DATE"
+      break
+    fi
+
+    sleep 15
+  done
+  rm -f "$TMPFILE"
 }
 
 cmd_fetch() {
@@ -416,14 +550,15 @@ usage() {
 # --- dispatch ----------------------------------------------------------------
 
 case "${1:-}" in
-  preflight) shift; cmd_preflight ;;
-  make)      shift; cmd_make   "${1:-}" ;;
-  status)    shift; cmd_status "${1:-}" ;;
-  fetch)      shift; cmd_fetch      "${1:-}" ;;
-  build)      shift; cmd_build      "${1:-}" ;;
+  preflight)  shift; cmd_preflight ;;
+  make)       shift; cmd_make      "${1:-}" ;;
+  monitor)    shift; cmd_monitor   "${1:-}" ;;
+  status)     shift; cmd_status    "${1:-}" ;;
+  fetch)      shift; cmd_fetch     "${1:-}" ;;
+  build)      shift; cmd_build     "${1:-}" ;;
   transcribe) shift; cmd_transcribe "${1:-}" ;;
-  latest)    cmd_latest ;;
-  open)      shift; cmd_open   "${1:-}" ;;
+  latest)     cmd_latest ;;
+  open)       shift; cmd_open      "${1:-}" ;;
   -h|--help|"") usage ;;
   *) printf "[mc] unknown subcommand: %s\n\n" "$1" >&2; usage ;;
 esac
