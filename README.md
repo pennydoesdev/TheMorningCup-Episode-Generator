@@ -10,7 +10,12 @@ in Cloudflare R2, and emails you the script, metadata, and chunk links.
 
 | Doc | What's in it |
 |-----|--------------|
-| [docs/NEW-SHOW.md](./docs/NEW-SHOW.md) | **Launch a new Fold 42 podcast** — white-label setup guide, API keys, voice cloning, prompt writing, step-by-step from concept to first episode |
+| [docs/NEW-SHOW.md](./docs/NEW-SHOW.md) | **Launch a new Fold 42 podcast** — white-label setup, API keys, voice cloning, prompt writing, step-by-step from concept to first episode |
+| [docs/SHOW-PLANNER.md](./docs/SHOW-PLANNER.md) | **New show planning quiz** — answer every question before writing code; produces wrangler.toml inputs and a prompt brief |
+| [docs/BEST-PRACTICES.md](./docs/BEST-PRACTICES.md) | **What we learned** — prompt engineering, voice quality, infrastructure, editorial; what works and what to avoid |
+| [docs/AUDIT.md](./docs/AUDIT.md) | **Producer and compliance audit guide** — daily spot-checks, full episode review, quarterly compliance, incident response |
+| [docs/COMPLIANCE.md](./docs/COMPLIANCE.md) | **Legal and compliance** — voice talent agreements, platform AI disclosure requirements, copyright, data privacy |
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | **Branch protection and access control** — who can merge, what's locked, PR process, forking policy |
 | [docs/QUICKSTART.md](./docs/QUICKSTART.md) | **First-time setup** — every command in a copy-paste block, zero to first episode |
 | [docs/PRODUCTION-WORKFLOW.md](./docs/PRODUCTION-WORKFLOW.md) | **Daily morning routine** — pull, build, upload, review, publish |
 | [docs/PIPELINE.md](./docs/PIPELINE.md) | Full pipeline diagram + every component, end-to-end |

@@ -1,0 +1,24 @@
+# CODEOWNERS — Fold 42 Podcast Infrastructure
+# All PRs require infrastructure review. Prompt and validator changes
+# also require editorial (EP) sign-off. Legal docs require compliance team.
+
+# Default: all changes require infrastructure review
+*                           @pennydoesdev
+
+# Prompt and validator changes require EP sign-off too
+src/prompt.ts               @pennydoesdev
+src/validator.ts            @pennydoesdev
+
+# Core pipeline — infrastructure team only
+src/chunker.ts              @pennydoesdev
+src/elevenlabs.ts           @pennydoesdev
+src/index.ts                @pennydoesdev
+src/openai.ts               @pennydoesdev
+src/config.ts               @pennydoesdev
+src/types.ts                @pennydoesdev
+src/r2.ts                   @pennydoesdev
+src/description.ts          @pennydoesdev
+
+# Compliance and legal docs
+docs/COMPLIANCE.md          @pennydoesdev
+docs/AUDIT.md               @pennydoesdev
