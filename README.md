@@ -305,9 +305,9 @@ Common causes:
 
 ## 17. Cost notes
 
-- **OpenAI** — one `gpt-4.1` Responses call per day for ~3,500 words of
-  output, plus an optional repair pass. Roughly a few cents per episode at
-  current pricing; check Anthropic-equivalent / OpenAI rate cards.
+- **OpenAI** — one `o3` Responses call per day for the script (~3,500 words
+  output) plus one `gpt-4o-mini` call for SEO/metadata, plus an optional
+  repair pass. Roughly $0.10–0.20/episode at current pricing.
 - **ElevenLabs** — each chunk is one TTS call. A 3,500-word episode produces
   roughly 8–14 chunks; cost depends on your plan and per-character rate.
 - **Cloudflare** — Workers (cron + small fetch handler), R2 storage (an

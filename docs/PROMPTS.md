@@ -107,8 +107,8 @@ You can swap the line for variety without changing any code:
 
 Not generated — these are typically commissioned tracks or royalty-free stems you choose:
 
-- `The Morning Cup - Song.wav` — full intro theme (any length up to ~30 seconds reads well, longer if it's a proper opener)
-- `The Morning Cup - Thank You.wav` — outro thank-you bed (typically 30-90 seconds with a voice line over a bed, or just a music wind-down)
+- `Hello.mp3` — full intro theme (any length up to ~30 seconds reads well, longer if it's a proper opener)
+- `Goodbye.mp3` — outro music bed (typically 30-90 seconds with a voice line over a bed, or just a music wind-down)
 
 Sources:
 - ElevenLabs **Music** model (newer; can compose short tracks from prompts — try it for a one-off bumper).

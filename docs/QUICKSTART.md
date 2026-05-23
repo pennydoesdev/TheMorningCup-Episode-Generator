@@ -52,6 +52,7 @@ cp scripts/fetch-chunks.sh         "$HOME/Documents/The Morning Cup/Scripts/"
 cp scripts/morning-cup.sh          "$HOME/Documents/The Morning Cup/Scripts/"
 cp scripts/write-chapters.py       "$HOME/Documents/The Morning Cup/Scripts/"
 cp scripts/transcribe-episode.py   "$HOME/Documents/The Morning Cup/Scripts/"
+cp scripts/generate-transcript.py  "$HOME/Documents/The Morning Cup/Scripts/"
 chmod +x "$HOME/Documents/The Morning Cup/Scripts/"*.sh
 ```
 
@@ -62,10 +63,10 @@ Re-run this block any time you `git pull` updates.
 You need five files with these exact names:
 
 ```
-Spark.mp3                           ← intro music
+Hello.mp3                           ← intro music
 Coffee Pour.wav                     ← signature pour ambience
 Topic Transition.mp3                ← section transition sting
-The Morning Cup - Thank You.wav     ← outro
+Goodbye.mp3                         ← outro
 intro-sting.wav                     ← optional: "now the news begins" sting
 ```
 
@@ -181,12 +182,13 @@ Build the Shortcuts in [APPLE-SHORTCUTS.md](./APPLE-SHORTCUTS.md). After that:
 │   ├── fetch-chunks.sh
 │   ├── build-episode.sh
 │   ├── write-chapters.py
-│   └── transcribe-episode.py
+│   ├── transcribe-episode.py
+│   └── generate-transcript.py
 ├── Sounds/
-│   ├── Spark.mp3
+│   ├── Hello.mp3
 │   ├── Coffee Pour.wav
 │   ├── Topic Transition.mp3
-│   ├── The Morning Cup - Thank You.wav
+│   ├── Goodbye.mp3
 │   └── intro-sting.wav  (optional)
 ├── Chunks/<YYYY-MM-DD>/                       ← per-day raw chunks from R2
 └── Episodes/                                  ← final tagged MP3s + metadata

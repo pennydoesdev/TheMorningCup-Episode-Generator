@@ -119,7 +119,7 @@ curl "https://themorningcupgenerator.itsmiarosemathews.workers.dev/health"
 
 ## Timing budget
 
-Typical run on `gpt-5-mini`:
+Typical run on `o3` + `gpt-4o-mini`:
 
 | Phase | Wall time |
 |-------|-----------|

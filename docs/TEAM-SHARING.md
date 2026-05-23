@@ -41,10 +41,10 @@ storage required.
 The five required assets:
 
 ```
-Spark.mp3
+Hello.mp3
 Coffee Pour.wav
 Topic Transition.mp3
-The Morning Cup - Thank You.wav
+Goodbye.mp3
 intro-sting.wav  (optional)
 ```
 
@@ -81,9 +81,9 @@ Best if you want the codebase public but the music to stay private.
    ```
 2. Each teammate runs `wrangler login` to gain R2 read access, then downloads:
    ```bash
-   for name in "Spark.mp3" "Coffee Pour.wav" \
+   for name in "Hello.mp3" "Coffee Pour.wav" \
                "Topic Transition.mp3" "intro-sting.wav" \
-               "The Morning Cup - Thank You.wav"; do
+               "Goodbye.mp3"; do
      wrangler r2 object get "vicinity/_assets/sounds/$name" \
        --file "$ROOT/Sounds/$name" --remote 2>/dev/null || true
    done

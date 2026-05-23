@@ -192,10 +192,10 @@ preflight() {
   # Sound assets (build-episode.sh requires these)
   local missing_sounds=0
   local required_sounds=(
-    "Spark.mp3"
+    "Hello.mp3"
     "Coffee Pour.wav"
     "Topic Transition.mp3"
-    "The Morning Cup - Thank You.wav"
+    "Goodbye.mp3"
   )
   for s in "${required_sounds[@]}"; do
     if [ -f "$SOUNDS/$s" ]; then

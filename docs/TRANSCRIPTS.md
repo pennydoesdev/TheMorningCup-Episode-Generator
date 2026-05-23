@@ -162,7 +162,7 @@ jq -r '.chapters[].title' "$JSON"
 
 ## What's NOT in the script transcripts (but IS in the audio)
 
-- Intro song (`Spark.mp3`)
+- Intro song (`Hello.mp3`)
 - Coffee pour foley
 - Intro sting
 - Section transition stings between sections

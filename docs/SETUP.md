@@ -65,7 +65,7 @@ Cloudflare account with these resources (created once):
 
 - **R2 bucket** named `vicinity`
 - **KV namespace** with binding `MORNING_CUP_KV` (id is in `wrangler.toml`)
-- **OpenAI API key** with access to `gpt-5-mini`
+- **OpenAI API key** with access to `o3` and `gpt-4o-mini`
 - **ElevenLabs API key** + a cloned voice id
 
 ---
@@ -218,7 +218,8 @@ Total wall time: ~5-8 minutes. You should hear: intro song → coffee pour → i
 │   ├── fetch-chunks.sh
 │   ├── build-episode.sh
 │   ├── write-chapters.py
-│   └── transcribe-episode.py
+│   ├── transcribe-episode.py
+│   └── generate-transcript.py
 ├── Sounds/
 │   ├── Hello.mp3
 │   ├── Coffee Pour.wav

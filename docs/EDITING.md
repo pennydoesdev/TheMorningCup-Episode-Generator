@@ -7,7 +7,7 @@ How the daily MP3 actually gets stitched together. This is the "post-production"
 Every episode is assembled in this exact order:
 
 ```
-1.  Spark.mp3                             ← intro music bed
+1.  Hello.mp3                             ← intro music bed
 2.  Coffee Pour.wav                       ← signature pour ambience
 3.  intro-sting.wav                       ← "now the news begins" sting (optional)
 4.  chunk-001.mp3                         ← first news section
@@ -16,7 +16,7 @@ Every episode is assembled in this exact order:
 7.  Topic Transition.mp3
 …
 N.  chunk-NNN.mp3                         ← last news section
-N+1.The Morning Cup - Thank You.wav       ← outro thank-you bed
+N+1.Goodbye.mp3                           ← outro music bed
 ```
 
 For a typical 19-chunk episode: `1 song + 1 pour + 1 intro sting + 19 chunks + 18 section stings + 1 outro = 41 clips`.
@@ -79,11 +79,11 @@ The Morning Cup - 2026-05-22.vtt           ← timestamped transcript (WebVTT) �
 Edit the constants at the top of `scripts/build-episode.sh`:
 
 ```bash
-INTRO_SONG="$SOUNDS/Spark.mp3"
+INTRO_SONG="$SOUNDS/Hello.mp3"
 COFFEE_POUR="$SOUNDS/Coffee Pour.wav"
 INTRO_STING="$SOUNDS/intro-sting.wav"
 SECTION_STING="$SOUNDS/Topic Transition.mp3"
-OUTRO="$SOUNDS/The Morning Cup - Thank You.wav"
+OUTRO="$SOUNDS/Goodbye.mp3"
 ```
 
 Just point at different files. The order is hardcoded a few lines below.
