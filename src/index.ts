@@ -284,6 +284,8 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       episode,
       wpPodcastId: config.wpPodcastId,
       audioCdnBaseUrl: config.audioCdnBaseUrl,
+      audioCdnBaseUrlLegacy: config.audioCdnBaseUrlLegacy,
+      wpCategories: config.wpCategories,
     });
     await putText(env, metadataKey, metadataTxt);
 

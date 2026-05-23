@@ -47,10 +47,23 @@ R2_KEY_PREFIX = "Generators/Podcasts/TheMorningCup"
 #   Find it in WP Admin → Podcasts → your show → ID in the URL bar.
 #   Leave "0" until the show post is created; the import block will show a placeholder.
 WORDPRESS_PODCAST_ID = "0"
-# AUDIO_CDN_BASE_URL — base URL where your stitched MP3 will live after upload.
-#   Example: "https://cdn.vicinitynews.com/podcasts/morning-cup"
-#   Leave blank to get a fill-in placeholder in Metadata.txt.
-AUDIO_CDN_BASE_URL = ""
+
+# CDN URLs for the final stitched MP3.
+# Both fields are written into Metadata.txt so the Auto-Episode import block
+# populates both _vicinity_audio_url (new) and _vnews_ep_audio_url (legacy).
+# VNewsOS resolves audio in this order: _vicinity_audio_url → _vnews_ep_audio_url
+# so the new CDN wins once it's live, and the old one stays as a working fallback
+# during migration. Once fully migrated, clear AUDIO_CDN_BASE_URL_LEGACY.
+#
+# New CDN (not yet live — set this when cdn.fold42.com is ready):
+AUDIO_CDN_BASE_URL = "https://cdn.fold42.com/podcasts/morning-cup"
+# Legacy CDN (currently live — keep until migration is complete):
+AUDIO_CDN_BASE_URL_LEGACY = "https://cdn.vicinitynews.com/podcasts/morning-cup"
+
+# WORDPRESS_CATEGORIES — comma-separated default category names for episode posts.
+#   The Auto-Episode block looks up (or creates) each name and passes the IDs
+#   as the top-level "categories" array in the REST API call.
+WORDPRESS_CATEGORIES = "News, The Morning Cup"
 VOICE_STABILITY = "0.35"
 VOICE_SIMILARITY_BOOST = "0.85"
 VOICE_STYLE = "0.7"

@@ -42,8 +42,10 @@ export interface Env {
   VOICE_USE_SPEAKER_BOOST?: string;
 
   // WordPress / VNewsOS integration
-  WORDPRESS_PODCAST_ID?: string;   // vicinity_podcast post ID for Auto-Episode import
-  AUDIO_CDN_BASE_URL?: string;     // CDN prefix for final stitched MP3 (e.g. https://cdn.example.com)
+  WORDPRESS_PODCAST_ID?: string;     // vicinity_podcast post ID for Auto-Episode import
+  AUDIO_CDN_BASE_URL?: string;       // New CDN prefix (e.g. https://cdn.fold42.com/podcasts/morning-cup)
+  AUDIO_CDN_BASE_URL_LEGACY?: string; // Legacy CDN prefix during migration (e.g. https://cdn.vicinitynews.com/...)
+  WORDPRESS_CATEGORIES?: string;     // Comma-separated default category names for episode posts
 
   // Optional source providers
   NEWS_RSS_FEEDS?: string;

@@ -44,8 +44,10 @@ export interface Config {
   showTitle: string;       // "The Morning Cup" — used in file names, titles, validator
   r2KeyPrefix: string;     // "Generators/Podcasts/TheMorningCup" — R2 storage path prefix
 
-  wpPodcastId: number;     // vicinity_podcast WP post ID (0 = not configured)
-  audioCdnBaseUrl: string; // CDN base URL for final stitched MP3 (empty = placeholder)
+  wpPodcastId: number;          // vicinity_podcast WP post ID (0 = not configured)
+  audioCdnBaseUrl: string;      // New CDN base URL for final stitched MP3 (empty = placeholder)
+  audioCdnBaseUrlLegacy: string; // Legacy CDN base URL — written as Direct Audio: for migration fallback
+  wpCategories: string;         // Comma-separated default WP category names for episode posts
 
   voice: {
     stability: number;
@@ -86,6 +88,8 @@ export function loadConfig(env: Env): Config {
 
     wpPodcastId: num(env.WORDPRESS_PODCAST_ID, 0),
     audioCdnBaseUrl: str(env.AUDIO_CDN_BASE_URL, ""),
+    audioCdnBaseUrlLegacy: str(env.AUDIO_CDN_BASE_URL_LEGACY, ""),
+    wpCategories: str(env.WORDPRESS_CATEGORIES, ""),
 
     voice: {
       stability: num(env.VOICE_STABILITY, 0.35),

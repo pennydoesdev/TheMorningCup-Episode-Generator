@@ -233,6 +233,8 @@ export function buildMetadataTxt(opts: {
   episode: EpisodeJson;
   wpPodcastId?: number;
   audioCdnBaseUrl?: string;
+  audioCdnBaseUrlLegacy?: string;
+  wpCategories?: string;
 }): string {
   const year = opts.episodeIso.slice(0, 4);
   const divider = "=".repeat(60);
@@ -249,10 +251,15 @@ export function buildMetadataTxt(opts: {
     opts.wpPodcastId && opts.wpPodcastId > 0
       ? String(opts.wpPodcastId)
       : "[fill in — WP vicinity_podcast post ID; set WORDPRESS_PODCAST_ID in wrangler.toml]";
+  const filename = `${opts.showTitle} - ${opts.episodeIso}.mp3`;
   const audioUrl =
     opts.audioCdnBaseUrl
-      ? `${opts.audioCdnBaseUrl.replace(/\/$/, "")}/${opts.showTitle} - ${opts.episodeIso}.mp3`
+      ? `${opts.audioCdnBaseUrl.replace(/\/$/, "")}/${filename}`
       : "[fill in after CDN upload — set AUDIO_CDN_BASE_URL in wrangler.toml to auto-generate]";
+  const legacyAudioUrl =
+    opts.audioCdnBaseUrlLegacy
+      ? `${opts.audioCdnBaseUrlLegacy.replace(/\/$/, "")}/${filename}`
+      : "";
   const seoDesc = (opts.seoDescription ?? "").trim();
 
   // ── Supplementary producer fields ─────────────────────────────────────────
@@ -301,7 +308,8 @@ export function buildMetadataTxt(opts: {
   // Review and trim the producer notes section before publishing.
   // ─────────────────────────────────────────────────────────────────────────
 
-  const importHeader = [
+  // Build import header lines — only include Direct Audio if legacy URL is configured
+  const importLines = [
     `Title: ${primaryTitle}`,
     `Date: ${opts.episodeIso} 05:00:00`,
     `Status: draft`,
@@ -313,9 +321,21 @@ export function buildMetadataTxt(opts: {
     `Duration: ${durationStr}`,
     `File Size: [updated by build-episode.sh after local assembly]`,
     `Audio URL: ${audioUrl}`,
+  ];
+  // Direct Audio maps to _vnews_ep_audio_url — lower priority than Audio URL.
+  // Both are written during CDN migration so either CDN can serve the file.
+  // Remove AUDIO_CDN_BASE_URL_LEGACY from wrangler.toml once migration is complete.
+  if (legacyAudioUrl) {
+    importLines.push(`Direct Audio: ${legacyAudioUrl}`);
+  }
+  if (opts.wpCategories?.trim()) {
+    importLines.push(`Categories: ${opts.wpCategories.trim()}`);
+  }
+  importLines.push(
     `Slug: ${slug}`,
     `Summary: ${seoDesc}`,
-  ].join("\n");
+  );
+  const importHeader = importLines.join("\n");
 
   const disclosure = buildDisclosure(opts.showTitle, opts.hostName);
 
