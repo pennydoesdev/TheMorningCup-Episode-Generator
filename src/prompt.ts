@@ -577,6 +577,12 @@ export function buildUserPrompt(inputs: PromptInputs): string {
   return `HOST: ${inputs.hostName}
 CURRENT DATE (episode_date): ${inputs.episodeDateSpoken}
 SOURCE DATE (previous day to summarize): ${inputs.sourceDateSpoken}
+
+⚠️ MANDATORY LENGTH REQUIREMENT — READ BEFORE WRITING ANYTHING:
+The elevenlabs_script field MUST contain 2,200–2,400 spoken words. Hard floor: 2,175. Hard ceiling: 2,465.
+At 145 words/minute: 2,200 words = 15.2 min. 2,400 words = 16.6 min.
+Before returning JSON, count the words in your script. If under 2,175, EXPAND. If over 2,465, TRIM.
+Scripts outside this range are REJECTED and waste money on repair passes. Hit the range on the first try.
 ${recentTopicsBlock}
 RESEARCH INSTRUCTIONS:
 You have a web_search tool available. You MUST use it to research the actual news from ${inputs.sourceDateSpoken}. Run multiple targeted searches across the topic flow:

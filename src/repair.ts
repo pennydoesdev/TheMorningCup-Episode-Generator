@@ -16,7 +16,9 @@ export interface RepairOutcome {
 
 function isLengthFailure(validation: ValidationResult, config: Config): boolean {
   if (validation.word_count < config.minScriptWords) return true;
-  if (validation.estimated_runtime_minutes < 20) return true;
+  // Use the actual configured floor, not a hardcoded value.
+  const runtimeFloor = (config.minScriptWords / config.wordsPerMinute);
+  if (validation.estimated_runtime_minutes < runtimeFloor) return true;
   return validation.errors.some(
     (e) => /word count|runtime|below/i.test(e) && /min|floor/i.test(e),
   );
