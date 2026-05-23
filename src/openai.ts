@@ -103,8 +103,16 @@ async function callResponses(
     body.temperature = opts.temperature ?? 0.4;
   }
 
+  // Parse "try again in N.NNNs" from OpenAI rate limit messages.
+  const parseRateLimitWaitMs = (msg: string): number | null => {
+    const m = msg.match(/try again in (\d+(?:\.\d+)?)s/i);
+    if (m) return Math.ceil(parseFloat(m[1]) * 1000) + 3000; // +3 s buffer
+    return null;
+  };
+
+  const MAX_ATTEMPTS = 6;
   let lastErr: unknown;
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), ATTEMPT_TIMEOUT_MS);
     try {
@@ -121,10 +129,12 @@ async function callResponses(
 
       if (res.status === 429 || res.status >= 500) {
         const retryAfter = Number(res.headers.get("retry-after"));
-        const wait = Number.isFinite(retryAfter) && retryAfter > 0
-          ? retryAfter * 1000
-          : 1000 * Math.pow(2, attempt);
         const errBody = await res.text().catch(() => "");
+        const rateLimitWait = parseRateLimitWaitMs(errBody);
+        const wait = rateLimitWait ??
+          (Number.isFinite(retryAfter) && retryAfter > 0
+            ? retryAfter * 1000
+            : 5000 * Math.pow(2, attempt));
         lastErr = new Error(`OpenAI ${res.status}: ${errBody.slice(0, 500)}`);
         logger.warn("openai retry", {
           status: res.status,
@@ -150,13 +160,22 @@ async function callResponses(
       return { raw };
     } catch (err) {
       lastErr = err;
-      logger.warn("openai call failed", { attempt, err: String(err) });
-      await sleep(1000 * Math.pow(2, attempt));
+      // If the stream itself carried a rate limit message, wait the right amount.
+      const errMsg = String(err);
+      const rateLimitWait = parseRateLimitWaitMs(errMsg);
+      const isRateLimit = rateLimitWait !== null ||
+        /rate.?limit|too many requests|429/i.test(errMsg);
+      const wait = rateLimitWait ??
+        (isRateLimit
+          ? 30_000                               // safe fallback: 30 s
+          : 2000 * Math.pow(2, attempt));        // normal exponential back-off
+      logger.warn("openai call failed", { attempt, err: errMsg, wait, isRateLimit });
+      await sleep(wait);
     } finally {
       clearTimeout(timeout);
     }
   }
-  throw new Error(`OpenAI call failed after 3 attempts: ${String(lastErr)}`);
+  throw new Error(`OpenAI call failed after ${MAX_ATTEMPTS} attempts: ${String(lastErr)}`);
 }
 
 interface SseEvent {
