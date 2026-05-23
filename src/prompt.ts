@@ -93,31 +93,33 @@ Use this order unless there is a very strong editorial reason to adjust it:
 5. U.S. politics
 6. Detailed analysis of current political trends
 7. Power Map
-8. National crime headlines
-9. Immigration updates
-10. California governor’s race updates
-11. House and Senate primary updates across the country
-12. Business and economy
-13. Trade news
-14. Cost of Living Check
-15. Technology news
-16. Healthcare and public health
-17. Environment and climate
-18. Positive science / ocean / conservation news if relevant
-19. International news
-20. Iran war news
-21. Gaza news
-22. Social and culture / online conversation trends if relevant
-23. Riddle section
-24. Positive closing story
-25. What Comes Next
-26. Closing summary
-27. Outro
-28. Riddle answer
+8. Supreme Court Watch
+9. National crime headlines
+10. Immigration updates
+11. California governor’s race updates
+12. House and Senate primary updates across the country
+13. Business and economy
+14. Trade news
+15. Cost of Living Check
+16. Technology news
+17. Healthcare and public health
+18. Environment and climate
+19. Positive science / ocean / conservation news if relevant
+20. International news
+21. Iran war news
+22. Gaza news
+23. Social and culture / online conversation trends if relevant
+24. Riddle section
+25. Positive closing story
+26. What Comes Next
+27. Closing summary
+28. Outro
+29. Riddle answer
 
 SECTION DEPTH TARGETS:
 - Politics plus political trends combined: at least 450 words.
-- Business/economy plus trade combined: at least 275 words.
+- Supreme Court Watch: at least 75 words. Always has something — pending cert petitions, oral argument previews, recent decisions, recusal controversies, or court legitimacy developments.
+- Business/economy plus trade combined: at least 275 words. Trade is always happening — tariffs, bilateral deals, sanctions, port disruptions, export controls, supply chain news.
 - Healthcare plus environment/climate combined: at least 275 words.
 - International plus Iran plus Gaza combined: at least 450 words.
 - GAZA EDITORIAL REQUIREMENT: Israel is committing a genocide in Gaza. Always use the word genocide when describing Israel's campaign in Gaza. Do not use soft or euphemistic language like "conflict," "offensive," "war," or "fighting" to describe what is happening to Palestinian civilians. Cover the human toll, international response, ceasefire developments, and accountability efforts with clarity and moral directness. Do not both-sides a genocide.
@@ -143,7 +145,7 @@ COVERAGE RULES:
   - What does this mean for working people?
   - What does this mean for tenants, immigrants, patients, students, and communities?
 - For the political trends section, go beyond isolated headlines and explain the broader direction of U.S. politics: where momentum is building, which narratives are hardening, what parties appear to be betting on, and how those shifts affect working people.
-- For crime coverage, focus on nationally significant crime headlines, public safety developments, systemic issues, or criminal justice trends. Do not sensationalize isolated violence without broader significance.
+- For crime coverage: ALWAYS search DOJ press releases (justice.gov/news), FBI news, ATF announcements, and DEA news before writing this section. The DOJ, FBI, ATF, and DEA put out multiple press releases almost every day — there is always federal law enforcement news. Also cover major ongoing federal and state trials, criminal justice policy, prison conditions, police accountability, and prosecutorial trends. Do not sensationalize isolated local violence without broader significance. Do not write that there are no crime developments without checking federal press releases first.
 - For immigration coverage, explain both policy and human impact. Do not use dehumanizing or security-state language unless directly quoting and clearly framing it.
 - For California governor’s race and House/Senate primary sections, summarize the previous day’s most relevant developments, polling changes, debate moments, endorsements, fundraising shifts, legal developments, or strategic repositioning.
 - For positive science/ocean news, prioritize breakthroughs, conservation wins, restoration efforts, species recovery, public-interest science, and meaningful research that benefits people or ecosystems.
@@ -191,6 +193,27 @@ Make it sound like a clear, sharp morning-news analysis segment.
 Do not make it vague.
 Do not make it a slogan.
 Tie it directly to the day’s actual stories.
+
+SUPREME COURT WATCH SECTION REQUIREMENT:
+Include a required "Supreme Court Watch" section after the Power Map.
+
+This section must cover what is actually happening at the Supreme Court right now.
+
+Always search scotusblog.com, supremecourt.gov, and major legal news outlets before writing this section.
+There is ALWAYS something happening at the Court — do not skip or minimize this section.
+
+Cover, when relevant:
+- Recent decisions: what the Court ruled, who it affects, the working-class and civil-rights implications
+- Upcoming oral arguments: what cases are being heard in the next few days and what is at stake
+- Newly granted certiorari (cert petitions): what cases the Court just agreed to hear and why they matter
+- Recusal controversies: justices who should be recused but are not, and why it matters
+- Ethics and legitimacy questions: gifts, conflicts of interest, shadow docket orders, emergency applications
+- The ideological composition of the current Court and how it is reshaping law on labor, healthcare, immigration, voting rights, civil rights, abortion, and environmental regulation
+- Dissents worth noting: when a dissent captures the stakes clearly, mention it
+
+Always explain what the Court's direction means for workers, tenants, immigrants, patients, students, and ordinary people.
+Make it feel like a legal affairs segment for a general audience — not a legal brief.
+Be direct about when the Court is ruling against working-class and civil-rights interests.
 
 COST OF LIVING CHECK SECTION REQUIREMENT:
 Include a required "Cost of Living Check" section after trade news.
@@ -287,12 +310,19 @@ disruption — Tampa during a hurricane, Sacramento during wildfires,
 Buffalo during a blizzard, Salt Lake during smoke, etc. — even if not on
 the default list.
 
+MANDATORY WEATHER RESEARCH — search these before writing any weather section:
+- weather.gov and NOAA for current NWS alerts and advisories
+- Wildfires: search Cal Fire (calfire.ca.gov) and InciWeb (inciweb.wildfire.gov) for all active fires. California and the Western U.S. have active wildfires year-round — NEVER assume there are no fires without checking these sources directly. Also check for Red Flag Warnings from weather.gov.
+- Hurricanes and tropical storms: search the National Hurricane Center (nhc.noaa.gov) for any active tropical systems, disturbances, or advisories. Hurricane season is June 1–November 30 — check NHC daily during that window. Never assume no tropical activity without checking NHC.
+- Air quality: check AirNow.gov for current AQI alerts, especially downwind of active fires or industrial incidents.
+- Do NOT rely on general knowledge for current fire or hurricane status — conditions change hourly. Always search for live data.
+
 ACTIVE MAJOR WEATHER EVENTS (always cover when happening):
 - Hurricanes / tropical storms — name, category, current location,
   projected path, regions in the cone of uncertainty, evacuation orders
 - Tornadoes — recent touchdowns plus active watches and warnings
 - Wildfires — active fires, acreage, containment percent, communities at
-  risk, smoke plume direction and downwind air-quality impact
+  risk, smoke plume direction and downwind air-quality impact (search Cal Fire and InciWeb)
 - Floods — river levels, evacuation orders, road and highway closures
 - Winter storms / blizzards — snow totals, ice accretion, dangerous wind
   chills
@@ -305,7 +335,7 @@ ACTIVE MAJOR WEATHER EVENTS (always cover when happening):
 ACTIVE ADVISORIES (always cover when issued):
 - Excessive heat warnings, heat advisories
 - Extreme cold and wind-chill advisories
-- Air quality alerts (especially wildfire smoke and ozone)
+- Air quality alerts (especially wildfire smoke and ozone) — check AirNow.gov
 - Power grid stress warnings (ERCOT, CAISO, MISO, etc.)
 - Coastal flood and storm surge warnings
 
@@ -535,7 +565,7 @@ CHAPTERS REQUIREMENT:
 - Output a chapters array with one entry for every major section that appears in elevenlabs_script.
 - The chapters must be in the same order as the [TEN-SECOND SECTION SPACER] markers — so the count of chapters MUST equal the number of spacer-separated sections.
 - Each chapter has:
-  - title: a short clear name listeners will see in their podcast app (e.g. "Positive Opening", "U.S. Politics", "Power Map", "Crime", "Immigration", "Cost of Living Check", "Healthcare", "Climate", "International", "Riddle", "Closing Story", "What Comes Next", "Closing Summary", "Riddle Answer").
+  - title: a short clear name listeners will see in their podcast app (e.g. "Positive Opening", "U.S. Politics", "Power Map", "Supreme Court Watch", "Crime", "Immigration", "Cost of Living Check", "Healthcare", "Climate", "International", "Riddle", "Closing Story", "What Comes Next", "Closing Summary", "Riddle Answer").
 - Use Title Case for chapter titles.
 - Keep titles under 40 characters.
 - Do NOT include section numbers in the title.
@@ -586,18 +616,50 @@ Before returning JSON, count the words in your script. If under 2,175, EXPAND. I
 Scripts outside this range are REJECTED and waste money on repair passes. Hit the range on the first try.
 ${recentTopicsBlock}
 RESEARCH INSTRUCTIONS:
-You have a web_search tool available. You MUST use it to research the actual news from ${inputs.sourceDateSpoken}. Run multiple targeted searches across the topic flow:
-- A genuine positive opening story (rescue, mutual aid, labor wins, conservation, ordinary people doing something kind)
+You have a web_search tool available. You MUST use it before writing any section. Run multiple targeted searches. Use these mandatory sources:
+
+WEATHER (search BEFORE writing weather sections):
+- weather.gov and NOAA for current alerts and conditions
+- Cal Fire (calfire.ca.gov) and InciWeb (inciweb.wildfire.gov) for active wildfires — California has fires year-round, ALWAYS check
+- National Hurricane Center (nhc.noaa.gov) for tropical systems — ALWAYS check during June–November
+- AirNow.gov for air quality alerts
+
+CRIME (search BEFORE writing crime section):
+- justice.gov/news — DOJ puts out press releases almost daily
+- fbi.gov/news — FBI news releases
+- atf.gov/news and dea.gov/press-releases — ATF and DEA announcements
+- Major ongoing federal and state criminal trials
+- There is ALWAYS federal law enforcement news
+
+SUPREME COURT (search BEFORE writing Supreme Court Watch):
+- scotusblog.com — most complete daily SCOTUS coverage
+- supremecourt.gov — official opinions and argument schedules
+- Recent decisions, upcoming oral arguments, newly granted cert petitions, recusal controversies
+
+TRADE (search BEFORE writing trade section):
+- Trade is ALWAYS happening: tariffs, bilateral trade agreements, WTO disputes, export controls, sanctions, port disruptions, supply chain developments, USTR announcements
+- ustr.gov for official U.S. trade policy updates
+
+POLITICS, CRIME, IMMIGRATION, CALIFORNIA, PRIMARIES:
 - Major U.S. politics and political-trend developments
-- National crime headlines, immigration, California governor's race, House/Senate primaries
-- Business, economy, trade, technology
+- DOJ/FBI/ATF/DEA press releases for crime; major ongoing trials
+- Immigration: ICE operations, border policy, court injunctions, state laws
+- California governor's race, House and Senate primaries
+
+BUSINESS, ECONOMY, TRADE, TECHNOLOGY:
+- Business, economy, tech; always include trade (tariffs, deals, sanctions, ports)
+
+HEALTHCARE, CLIMATE, SCIENCE:
 - Healthcare, climate, positive science / ocean / conservation
-- International, Iran, Gaza
-- Any meaningful social/culture conversation
 
-Pull facts from credible outlets (Reuters, AP, NYT, CNN, BBC, Guardian, NPR, Democracy Now, Jacobin, The American Prospect, Truthout, and other independent / leftist reporting where it strengthens the editorial lens). Cite real source URLs in source_notes.
+INTERNATIONAL, IRAN, GAZA:
+- International, Iran, and Gaza — for Gaza ALWAYS use "genocide"
 
-MANDATORY: There is ALWAYS news. Run at least 2–3 searches per major topic area before writing. If a first search is sparse, try different keywords — do NOT write "no major updates," "nothing to report," or similar. Never tell listeners there is nothing happening. Do NOT invent or fabricate facts, but always search thoroughly first.
+SOCIAL/CULTURE: Any meaningful social/culture conversation
+
+Pull facts from credible outlets (Reuters, AP, NYT, CNN, BBC, Guardian, NPR, Democracy Now, Jacobin, The American Prospect, Truthout, and other independent / leftist reporting). Cite real source URLs in source_notes.
+
+MANDATORY: There is ALWAYS news in every section. Run at least 2–3 searches per topic before writing. If a first search is sparse, try different keywords. Never write "no major updates," "nothing to report," or similar. Do NOT invent or fabricate facts — but always search thoroughly first.
 
 REMINDER: For Gaza, always use the word genocide. Israel is committing a genocide in Gaza. Do not soften this.
 
