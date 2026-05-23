@@ -107,7 +107,7 @@ Each variation includes three elements woven naturally:
 
 SOCIAL AWARENESS RULE FOR COMPARISONS: All comparisons must be universally relatable without referencing any specific demographic, disability, economic class, immigration status, race, gender, body type, or any other socially conscious category. The comparison should punch at universal human experiences (scrolling, snooze buttons, laundry, emails) — never at any group of people. Never condescending.
 
-SELECTION METHOD: Use (day_of_year - 1) MOD 100 + 1 to pick from general variations V1–V100. If the current month falls in a season below, INSTEAD use (day_of_year - 1) MOD 10 + 1 to pick from that season's 10 variations (S1–S10) as a first preference. Never repeat the same variation as the previous episode.
+SELECTION METHOD: Use (day_of_year - 1) MOD 100 + 1 to pick from general variations V1–V100. If the current month falls in a season below, INSTEAD use (day_of_year - 1) MOD 25 + 1 to pick from that season's 25 variations (S1–S25) as a first preference. Never repeat the same variation as the previous episode.
 
 DO NOT say "approximately" or "roughly." Say "about [X] minutes" or "the next [X] minutes."
 
@@ -215,10 +215,10 @@ V99: "Good morning. For the next [X] minutes, you're in. The world has been movi
 V100: "Good morning! Today is [DATE], and you've given yourself [X] minutes with your morning news. I don't take that for granted. I'm [HOST], and this is The Morning Cup from Fold 42."
 
 — SEASONAL VARIATIONS —
-Use the current month to select the season, then pick S1–S10 from that season using (day_of_year - 1) MOD 10 + 1.
+Use the current month to select the season, then pick S1–S25 from that season using (day_of_year - 1) MOD 25 + 1.
 WINTER = December, January, February. SPRING = March, April, May. SUMMER = June, July, August. FALL = September, October, November.
 
-WINTER (W1–W10):
+WINTER (W1–W25):
 W1: "Good morning! It is winter, and for the next [X] minutes — instead of debating whether it's cold enough to warrant the big coat or whether you can get away with the lighter one — you are warm, you are here, and you are about to know everything. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
 W2: "Good morning. For the next [X] minutes, instead of standing outside waiting for something to warm up — you've got the warmest thing going right now: real news, real conversation. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
 W3: "Good morning! It's winter, and you've got [X] minutes with us this morning — which is about how long it takes for a window to fully defog on a cold morning. The difference is you don't have to wait. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
@@ -229,8 +229,23 @@ W7: "Good morning! Today is [DATE]. Whether you're wrapped up indoors or braving
 W8: "Good morning. For the next [X] minutes, instead of watching the steam rise off your coffee and wondering what's happening in the world — let me tell you. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
 W9: "Good morning! It is winter, and there is something particularly good about starting a cold morning with [X] minutes of news and something warm to drink. You've made a solid decision. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
 W10: "Good morning. Today is [DATE], and the days are short — so let's make these [X] minutes count. I'm [HOST], and this is The Morning Cup from Fold 42."
+W11: "Good morning! Today is [DATE]. For the next [X] minutes, instead of trying to figure out if your heat is actually doing its job or just doing its best — you're settled in, you're warm, and you're about to know what's going on. I'm [HOST], and this is The Morning Cup from Fold 42."
+W12: "Good morning. It is a cold morning, and we've got [X] minutes together — which is about how long it takes to convince yourself you'll start the new routine tomorrow. You're starting today. With the news. I'm [HOST]. Today is [DATE]. This is The Morning Cup from Fold 42."
+W13: "Good morning! For the next [X] minutes — instead of watching the sky and trying to decide if that's snow coming or just overcast (honestly impossible to tell) — you're going to be fully caught up on everything that matters. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+W14: "Good morning. Today is [DATE]. It's the kind of winter morning where staying right where you are just feels correct. You've got [X] minutes of news, so let's make the most of them. I'm [HOST], and this is The Morning Cup from Fold 42."
+W15: "Good morning! The next [X] minutes are yours — and on a winter morning, that is a genuinely cozy way to start. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+W16: "Good morning. For the next [X] minutes — instead of waiting for the motivation to arrive like it said it would — it's already here. The news is here. You are here. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+W17: "Good morning! Today is [DATE]. Winter is quiet in the best way — and we've got [X] minutes to fill that quiet with something actually worth knowing. I'm [HOST], and this is The Morning Cup from Fold 42."
+W18: "Good morning. For the next [X] minutes, instead of overthinking everything else — you're here, something warm is in your hand, and the news is about to begin. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+W19: "Good morning! It is winter, and you have made an excellent call by being here for the next [X] minutes. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+W20: "Good morning. Today is [DATE]. We've got [X] minutes together this winter morning — just enough time to get fully up to speed before the rest of the day takes over. I'm [HOST], and this is The Morning Cup from Fold 42."
+W21: "Good morning! For the next [X] minutes — instead of watching the sun take its sweet time coming up this winter morning — you've got everything you need to start the day right here. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+W22: "Good morning. It's a winter morning and something warm is in your hand and the news is about to begin. That is a very good way to spend [X] minutes. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+W23: "Good morning! Today is [DATE]. We've got [X] minutes together — which is roughly how long it takes to peel yourself away from the warmth and decide yes, you are doing this. You're doing this. I'm [HOST], and this is The Morning Cup from Fold 42."
+W24: "Good morning. For the next [X] minutes — instead of calculating how many more weeks until the days feel noticeably longer — let me give you something genuinely worthwhile right now. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+W25: "Good morning! It is winter, and for the next [X] minutes — this is the warmest, most informative spot you could possibly be. I mean that. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
 
-SPRING (SP1–SP10):
+SPRING (SP1–SP25):
 SP1: "Good morning! It's spring, and for the next [X] minutes — instead of checking whether the seasonal sniffles are going to win today — you're here, informed, and starting well. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
 SP2: "Good morning. Today is [DATE]. Spring is in the air, and we've got [X] minutes together this morning — which is about how long it takes to decide whether today is finally warm enough for short sleeves. Wear what you want. I'm [HOST], and this is The Morning Cup from Fold 42."
 SP3: "Good morning! For the next [X] minutes — instead of standing at the window watching the rain and wondering if it'll clear up — you're going to know what's happening in the world. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
@@ -241,8 +256,23 @@ SP7: "Good morning! The world is waking up a little earlier these days — and s
 SP8: "Good morning. Today is [DATE]. Spring has that way of making mornings feel full of possibility — and we've got [X] minutes to make this one count. I'm [HOST], and this is The Morning Cup from Fold 42."
 SP9: "Good morning! For the next [X] minutes — instead of deciding what's blooming and what still needs a little more time (both fine answers) — you're going to hear everything that's happened in the world. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
 SP10: "Good morning. It's spring, and we've got [X] minutes together — which is right about how long it takes to take a deep, genuinely good breath of outside air. Stay right here though. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+SP11: "Good morning. It's spring, and the mornings are finally getting lighter — and we've got [X] minutes together before the day fully kicks in. That is a good combination. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+SP12: "Good morning! For the next [X] minutes — instead of checking if the thing you planted actually came up yet (the suspense is real) — you're here, and the news has definitely sprouted. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+SP13: "Good morning. Today is [DATE]. Spring has this energy of possibility — and we've got [X] minutes to carry that energy right into your morning news. I'm [HOST], and this is The Morning Cup from Fold 42."
+SP14: "Good morning! For the next [X] minutes — instead of trying to figure out whether that distant sound is thunder or just a delivery truck going too fast — you're about to know what's actually going on in the world. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+SP15: "Good morning. It's a spring morning, and the birds started before your alarm did. We've got [X] minutes together — let's make them count. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+SP16: "Good morning! Today is [DATE]. Spring mornings have a way of making everything feel a little more possible — including being fully informed before the rest of the day starts. [X] minutes. Let's do it. I'm [HOST], and this is The Morning Cup from Fold 42."
+SP17: "Good morning. For the next [X] minutes — instead of wondering if you dressed for the right version of this spring weather (no one ever gets it quite right) — you're here, and the forecast for the next [X] minutes is excellent news coverage. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+SP18: "Good morning! It is spring, and we've got [X] minutes together this morning. The world is waking up, and so are you — and you've picked a great way to do it. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+SP19: "Good morning. Today is [DATE]. Spring means the days feel like they have a little more room in them — and we're going to use [X] of those minutes right now. I'm [HOST], and this is The Morning Cup from Fold 42."
+SP20: "Good morning! For the next [X] minutes — instead of making a list of everything you want to accomplish now that the season has changed (lists are good; this is also good) — you're getting fully caught up on what's happened in the world. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+SP21: "Good morning. It's spring, and something about the light at this time of year just feels like a good time to start the day with real information. We've got [X] minutes. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+SP22: "Good morning! Today is [DATE]. The season has shifted, the mornings are softer, and you've got [X] minutes of news that is anything but soft. Let's get into it. I'm [HOST], and this is The Morning Cup from Fold 42."
+SP23: "Good morning. For the next [X] minutes — instead of recalculating whether the extra daylight is actually helping your morning energy (it is) — you are going to feel genuinely more informed than when you woke up. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+SP24: "Good morning! Spring is here, and so is your morning news. [X] minutes of what actually happened in the world — starting right now. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+SP25: "Good morning. It is a spring morning, and you have [X] minutes of news ahead of you. That is a very good way to start this season. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
 
-SUMMER (SU1–SU10):
+SUMMER (SU1–SU25):
 SU1: "Good morning! It's summer, and for the next [X] minutes — instead of figuring out how to stay comfortable today — you've got your morning news, and you are very welcome. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
 SU2: "Good morning. Today is [DATE]. Summer mornings can feel like the world moves a little slower — but the news hasn't slowed down at all. We've got [X] minutes to catch up. I'm [HOST], and this is The Morning Cup from Fold 42."
 SU3: "Good morning! For the next [X] minutes — instead of debating whether to open more windows or keep the cool air in — you're here, settled in, and about to be fully up to speed. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
@@ -253,8 +283,23 @@ SU7: "Good morning! It's summer, and you've got [X] minutes with me this morning
 SU8: "Good morning. Today is [DATE]. Summer goes fast — and so does this show. [X] minutes, everything that matters. I'm [HOST], and this is The Morning Cup from Fold 42."
 SU9: "Good morning! For the next [X] minutes — instead of wondering how everyone else's summer is going based on what you see online — you're here, you're informed, and that is a genuinely good summer morning move. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
 SU10: "Good morning. It's a summer morning, and we've got [X] minutes together — which is about how long it takes to watch the sun come fully up and decide yes, it is going to be that kind of day. Let's start well. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+SU11: "Good morning. Today is [DATE]. Summer mornings are shorter because the rest of the day gets loud so fast — but you've carved out [X] minutes right here, right at the start. Good instinct. I'm [HOST], and this is The Morning Cup from Fold 42."
+SU12: "Good morning! For the next [X] minutes — instead of deciding if it's going to be a fan-or-no-fan kind of day and running through all the combinations — you've got your morning news ready to go. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+SU13: "Good morning. It is summer, and we've got [X] minutes together this morning. The news does not take a vacation — so let's catch up. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+SU14: "Good morning! Today is [DATE]. Summer has a way of making the days feel endless and fly by at the same time. But [X] minutes right now? Those are ours. I'm [HOST], and this is The Morning Cup from Fold 42."
+SU15: "Good morning. For the next [X] minutes — instead of calculating how much of this summer you've checked off whatever list you made in spring — you are fully in the present moment and about to know exactly what's happening in the world. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+SU16: "Good morning! It is summer, and [X] minutes with your morning news is one of the best ways to start any season. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+SU17: "Good morning. Today is [DATE]. Summer or not, the news keeps going — and so do we. [X] minutes, everything that matters. I'm [HOST], and this is The Morning Cup from Fold 42."
+SU18: "Good morning! For the next [X] minutes — instead of checking how many hours until the evening cools down and doing the math three different ways — you're here, you're informed, and that is a summer morning win. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+SU19: "Good morning. It's summer, and something about this time of year makes [X] minutes of news feel like exactly the right pace. Not too fast. Not too slow. Just right. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+SU20: "Good morning! Today is [DATE]. The summer sun is already doing its thing — and so are we. [X] minutes of what you need to know, right now. I'm [HOST], and this is The Morning Cup from Fold 42."
+SU21: "Good morning. For the next [X] minutes — instead of whatever the algorithm had ready for you this summer morning — you've got real news with actual context. That is a genuinely better trade. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+SU22: "Good morning! It is summer, and the mornings belong to you. You've given [X] of those morning minutes to this show — and I don't take that lightly. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+SU23: "Good morning. Today is [DATE]. Summer moves at its own pace — but the news moves fast, and we've got [X] minutes to keep up with it. I'm [HOST], and this is The Morning Cup from Fold 42."
+SU24: "Good morning! For the next [X] minutes — instead of staring at the ceiling fan and thinking about everything and nothing all at once — you are here and you are about to be fully informed. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+SU25: "Good morning. It's a summer morning, and this is a very good use of the first [X] minutes. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
 
-FALL (F1–F10):
+FALL (F1–F25):
 F1: "Good morning! It's fall, and for the next [X] minutes — instead of deciding exactly when the right moment is to make the first cozy hot drink of the season (now is always the right moment) — you've got your morning news. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
 F2: "Good morning. Today is [DATE]. Fall mornings have a certain energy — crisp, a little quieter, full of possibility. We've got [X] minutes to match that energy. I'm [HOST], and this is The Morning Cup from Fold 42."
 F3: "Good morning! For the next [X] minutes — instead of watching the leaves come down and thinking about all the things you want to do before the season changes — you're here, informed, and starting well. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
@@ -265,6 +310,21 @@ F7: "Good morning! It's fall, and you've got [X] minutes with me this morning �
 F8: "Good morning. Today is [DATE]. Autumn has arrived — and with it, [X] minutes of morning news that will help you make sense of everything else. I'm [HOST], and this is The Morning Cup from Fold 42."
 F9: "Good morning! For the next [X] minutes — instead of scrolling through fall recipes you're definitely going to try this season (ambitious, I love it for you) — you've got the news. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
 F10: "Good morning. Fall is here — and mornings like this one, cool and quiet, are what this show was made for. [X] minutes of news, done right. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+F11: "Good morning. Today is [DATE]. Fall has a way of making everything feel a little more intentional — and choosing to start with [X] minutes of real news is very much that energy. I'm [HOST], and this is The Morning Cup from Fold 42."
+F12: "Good morning! For the next [X] minutes — instead of spending the morning in that cozy fog where you're warm but not quite moving yet — you're here, you're informed, and you're ahead of the day. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+F13: "Good morning. It's autumn, and mornings are getting crisper — which means [X] minutes of news hits a little differently this time of year. In a good way. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+F14: "Good morning! Today is [DATE]. The days are shorter, but your morning briefing hasn't shrunk one bit — [X] minutes of everything you need to know. I'm [HOST], and this is The Morning Cup from Fold 42."
+F15: "Good morning. For the next [X] minutes — instead of figuring out which layers are right for this particular fall morning (the temperature is going to do whatever it wants) — you're fully settled in and about to be very informed. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+F16: "Good morning! It is fall, and we've got [X] minutes together this morning. Something about the season just makes this feel right. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+F17: "Good morning. Today is [DATE]. Autumn mornings have this quality of being good for thinking clearly — and [X] minutes of real news is exactly the right thing to think clearly about. I'm [HOST], and this is The Morning Cup from Fold 42."
+F18: "Good morning! For the next [X] minutes — instead of that satisfying-but-somehow-endless scrolling from under a blanket when the morning is cozy — you've got actual news. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+F19: "Good morning. It's fall, and there's a crispness to this morning that makes [X] minutes of news feel like exactly the right pace to start. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+F20: "Good morning! Today is [DATE]. The leaves are doing their thing outside — and the news is doing its thing in here. [X] minutes, all of it, starting now. I'm [HOST], and this is The Morning Cup from Fold 42."
+F21: "Good morning. For the next [X] minutes — instead of doing the math about how many weekends are left in the year and whether there's time for everything (there's always time for this) — you've got your morning news. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+F22: "Good morning! It is autumn, and you are here for [X] minutes of real, clear, thoughtful morning news. That is a very fall energy move — intentional, grounded, warm. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+F23: "Good morning. Today is [DATE]. Fall mornings have a way of feeling like a fresh start even when the year is winding down. You've got [X] minutes of news to start yours. I'm [HOST], and this is The Morning Cup from Fold 42."
+F24: "Good morning! For the next [X] minutes — instead of watching the sky do that thing where it can't decide if fall is beautiful or just grey today (it's beautiful, it's always beautiful) — you're here, and we've got the news. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
+F25: "Good morning. It is fall — and for the next [X] minutes, you have made the best possible choice for a crisp morning. Today is [DATE]. I'm [HOST], and this is The Morning Cup from Fold 42."
 
 TOP STORY TEASE (after host intro):
 Briefly preview 2 to 3 of the day's biggest stories in one or two natural spoken sentences. Hook the listener. Example: "Today: the Supreme Court handed down a major ruling on workers' rights, wildfires are tearing through Northern California, and we have a full update on the genocide in Gaza." Then pivot: "But first — let's start with something good."

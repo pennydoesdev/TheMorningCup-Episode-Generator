@@ -13,6 +13,7 @@
 #     fetch [DATE]          R2 chunks + manifest only
 #     build [DATE]          ffmpeg assembly only (assumes chunks are local)
 #     transcribe [DATE]     Whisper transcript -> .vtt alongside the MP3
+#     audacity [DATE]       build multi-track Audacity .aup3 project for editing
 #     latest                open the most-recently-rendered MP3
 #     open [DATE]           open a specific date's MP3
 #
@@ -229,7 +230,7 @@ preflight() {
       fails=$((fails+1))
     fi
   done
-  for s in write-chapters.py transcribe-episode.py; do
+  for s in write-chapters.py transcribe-episode.py build-audacity.py test-chunk.py; do
     if [ -f "$SCRIPT_DIR/$s" ]; then
       ok "script: $s"
     else
@@ -378,6 +379,18 @@ cmd_make() {
       warn "transcription failed — run 'morning-cup.sh transcribe $DATE' to retry"
   else
     log "  transcript: skipped (add OPENAI_API_KEY to $ENV_FILE to enable auto-transcription)"
+  fi
+
+  # Auto-Audacity project: runs if build-audacity.py is present and numpy is available.
+  echo ""
+  if [ -f "$SCRIPT_DIR/build-audacity.py" ]; then
+    if python3 -c "import numpy, sqlite3" 2>/dev/null; then
+      step "step 6 (bonus): building Audacity multi-track project..."
+      python3 "$SCRIPT_DIR/build-audacity.py" "$DATE" || \
+        warn "Audacity project build failed — run 'morning-cup.sh audacity $DATE' to retry"
+    else
+      log "  audacity: skipped (numpy not installed — run: pip install --user numpy)"
+    fi
   fi
 
   echo ""
@@ -536,6 +549,22 @@ cmd_transcribe() {
   python3 "$SCRIPT_DIR/transcribe-episode.py" "$DATE"
 }
 
+cmd_audacity() {
+  local DATE
+  DATE="$(resolve_date "${1:-}")"
+  load_env
+  if ! command -v python3 >/dev/null 2>&1; then
+    die "python3 not found"
+  fi
+  if [ ! -f "$SCRIPT_DIR/build-audacity.py" ]; then
+    die "build-audacity.py not found in $SCRIPT_DIR"
+  fi
+  if ! python3 -c "import numpy, sqlite3" 2>/dev/null; then
+    die "numpy is required: pip install --user numpy"
+  fi
+  python3 "$SCRIPT_DIR/build-audacity.py" "$DATE"
+}
+
 cmd_latest() {
   local LATEST
   LATEST=$(ls -t "$EPISODES"/*.mp3 2>/dev/null | head -1 || true)
@@ -568,6 +597,7 @@ case "${1:-}" in
   fetch)      shift; cmd_fetch     "${1:-}" ;;
   build)      shift; cmd_build     "${1:-}" ;;
   transcribe) shift; cmd_transcribe "${1:-}" ;;
+  audacity)   shift; cmd_audacity  "${1:-}" ;;
   latest)     cmd_latest ;;
   open)       shift; cmd_open      "${1:-}" ;;
   -h|--help|"") usage ;;
