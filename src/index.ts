@@ -49,7 +49,8 @@ import {
   stripSpacerMarker,
 } from "./utils/text";
 
-const BASE_TITLE = "The Morning Cup";
+// Show title is configured via SHOW_TITLE in wrangler.toml.
+// For a new show, change that var — do not hardcode here.
 
 export default {
   async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -146,7 +147,7 @@ interface RunInputs {
 async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<void> {
   const { episodeIso, force } = inputs;
   const sourceIso = previousIsoDate(episodeIso);
-  const baseTitle = BASE_TITLE;
+  const baseTitle = config.showTitle;
 
   logger.info("run start", { episodeIso, sourceIso, force, trigger: inputs.trigger });
 
@@ -221,7 +222,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
 
     if (!validation.ok) {
       // Save rejected raw and email failure alert.
-      const rejectedKey = `Generators/Podcasts/TheMorningCup/rejected/${episodeIso}-${Date.now()}.json`;
+      const rejectedKey = `${config.r2KeyPrefix}/rejected/${episodeIso}-${Date.now()}.json`;
       await putJson(env, rejectedKey, {
         episode_iso: episodeIso,
         validation,
@@ -237,7 +238,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
     }
 
     // 4. Write TXT, HTML, JSON
-    const baseDir = `Generators/Podcasts/TheMorningCup/${episodeIso}/`;
+    const baseDir = `${config.r2KeyPrefix}/${episodeIso}/`;
     const txtKey = `${baseDir}${baseTitle} - ${episodeIso}.txt`;
     const htmlKey = `${baseDir}${baseTitle} - ${episodeIso}.html`;
     const jsonKey = `${baseDir}${baseTitle} - ${episodeIso}.json`;
@@ -269,6 +270,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       episodeTitles: copy.titles,
       episodeNumber: dayOfYear(episodeIso),
       season: Number(episodeIso.slice(0, 4)),
+      showTitle: config.showTitle,
       hostName: config.hostName,
       publisher: config.publisher,
       copyrightHolder: config.copyrightHolder,

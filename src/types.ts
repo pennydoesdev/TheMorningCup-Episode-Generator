@@ -33,6 +33,8 @@ export interface Env {
   COPYRIGHT_HOLDER?: string;
   PODCAST_GENRE?: string;
   HOST_NAME?: string;
+  SHOW_TITLE?: string;
+  R2_KEY_PREFIX?: string;
 
   VOICE_STABILITY?: string;
   VOICE_SIMILARITY_BOOST?: string;

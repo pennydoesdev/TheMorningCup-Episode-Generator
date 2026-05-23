@@ -83,8 +83,9 @@ export function validateEpisode(
     errors.push('Script must open with "Good morning, today is"');
   }
 
-  if (!/the morning cup/i.test(script)) {
-    errors.push('Script must include "The Morning Cup"');
+  // Show title check — configured via SHOW_TITLE in wrangler.toml.
+  if (config.showTitle && !new RegExp(escapeRegex(config.showTitle), "i").test(script)) {
+    errors.push(`Script must include the show title "${config.showTitle}"`);
   }
 
   // Host identity should appear in the script (opening + outro). One mention

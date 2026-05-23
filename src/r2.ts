@@ -62,8 +62,9 @@ export async function objectExists(env: Env, key: string): Promise<boolean> {
 export async function listEpisodeObjects(
   env: Env,
   episodeIso: string,
+  r2KeyPrefix: string,
 ): Promise<R2Object[]> {
-  const prefix = `Generators/Podcasts/TheMorningCup/${episodeIso}/`;
+  const prefix = `${r2KeyPrefix}/${episodeIso}/`;
   const out: R2Object[] = [];
   let cursor: string | undefined = undefined;
   for (let i = 0; i < 10; i++) {

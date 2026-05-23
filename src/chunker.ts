@@ -43,7 +43,7 @@ export function buildChunks(inputs: ChunkInputs): ChunkPiece[] {
     text = stripSpacerMarker(text).trim();
     if (text.length === 0) continue;
     const filename = `${baseTitle} - ${episodeIso} - ${pad3(order)}.mp3`;
-    const r2_key = `Generators/Podcasts/TheMorningCup/${episodeIso}/chunks/${filename}`;
+    const r2_key = `${config.r2KeyPrefix}/${episodeIso}/chunks/${filename}`;
     chunks.push({
       order,
       filename,
