@@ -1,8 +1,178 @@
-# The Morning Cup — Cloudflare Worker Episode Generator
+# The Morning Cup — Episode Generator
 
-A production-ready Cloudflare Worker that, every morning at 5:00 AM
-America/New_York, generates the daily news podcast script for **The Penny
-Tribune’s “The Morning Cup,”** validates and (if needed) repairs it, converts
+Automated daily podcast generator for *The Morning Cup* by Fold 42.
+Cloudflare Worker (TypeScript) + local assembly scripts (bash + Python).
+
+> **Your local project directory:** `~/Documents/The Morning Cup/`
+> This is both the git repo AND where your sounds, chunks, and episodes live.
+
+---
+
+## Prerequisites
+
+Install these once on your Mac:
+
+```bash
+brew install node ffmpeg
+pip3 install requests python-dotenv
+pip3 install --user numpy   # for build-audacity.py
+```
+
+---
+
+## Pull latest changes
+
+```bash
+cd ~/Documents/”The Morning Cup”
+git fetch origin claude/brave-gates-wbCkD
+git checkout claude/brave-gates-wbCkD
+git pull origin claude/brave-gates-wbCkD
+npm install
+```
+
+---
+
+## Deploy the worker
+
+```bash
+cd ~/Documents/”The Morning Cup”
+npx wrangler deploy
+```
+
+---
+
+## Daily use — generate an episode
+
+```bash
+cd ~/Documents/”The Morning Cup”
+./scripts/morning-cup.sh make
+```
+
+That one command does everything:
+1. Preflight checks (deps, secrets, sound files)
+2. Triggers the Cloudflare Worker to generate the script + TTS chunks
+3. Polls until complete
+4. Downloads chunks from R2
+5. Assembles final MP3 with ffmpeg (background music + loudnorm)
+6. *(bonus)* Generates Whisper transcript if `OPENAI_API_KEY` is in `.env`
+7. *(bonus)* Builds a multi-track Audacity `.aup3` project if numpy is installed
+
+---
+
+## Re-run from scratch (clear and regenerate)
+
+```bash
+cd ~/Documents/”The Morning Cup”
+
+# 1. Deploy latest code
+npx wrangler deploy
+
+# 2. Clear today’s KV run record
+npx wrangler kv key delete \
+  --binding MORNING_CUP_KV \
+  “morning-cup/$(date +%Y-%m-%d)/run.json”
+
+# 3. Run fresh
+./scripts/morning-cup.sh make --force
+```
+
+---
+
+## Subcommands
+
+```bash
+./scripts/morning-cup.sh preflight            # check all deps + assets
+./scripts/morning-cup.sh make [YYYY-MM-DD]    # full pipeline
+./scripts/morning-cup.sh make --force         # re-run even if already completed
+./scripts/morning-cup.sh monitor [DATE]       # live dashboard
+./scripts/morning-cup.sh status [DATE]        # one-shot JSON status
+./scripts/morning-cup.sh fetch [DATE]         # download chunks from R2 only
+./scripts/morning-cup.sh build [DATE]         # assemble MP3 only (chunks local)
+./scripts/morning-cup.sh transcribe [DATE]    # generate Whisper .vtt transcript
+./scripts/morning-cup.sh audacity [DATE]      # build multi-track Audacity .aup3
+./scripts/morning-cup.sh latest               # open most recent episode
+./scripts/morning-cup.sh open [DATE]          # open a specific date’s MP3
+```
+
+---
+
+## Test a TTS chunk
+
+```bash
+python3 scripts/test-chunk.py “Your script text here.”
+python3 scripts/test-chunk.py --file /path/to/excerpt.txt
+```
+
+Saves to `~/Documents/The Morning Cup/Chunks/test/` and auto-opens on Mac.
+
+---
+
+## Audacity multi-track editing
+
+```bash
+./scripts/morning-cup.sh audacity
+```
+
+Opens `Episodes/The Morning Cup - DATE.aup3`:
+- **GREEN** — Intro / Outro
+- **ORANGE** — Coffee Pour, Stings, Transitions
+- **BLUE** — TTS content chunks
+- **YELLOW** — Background Music
+- **Labels** — Chapter markers at exact timestamps
+
+---
+
+## Folder structure (inside `~/Documents/The Morning Cup/`)
+
+```
+Sounds/
+  Hello.mp3               ← intro music
+  Goodbye.mp3             ← outro music
+  Coffee Pour.wav         ← coffee pour sfx
+  intro-sting.wav         ← optional transition sting
+  transition.wav          ← optional section transition
+  Podcast Background.mp3  ← optional background music (mixed at 10%)
+Chunks/                   ← auto-created, TTS chunks downloaded here
+Episodes/                 ← final MP3s + .aup3 projects saved here
+.env                      ← local secrets (never committed)
+scripts/                  ← morning-cup.sh and all helper scripts
+src/                      ← Cloudflare Worker TypeScript source
+wrangler.toml             ← Worker config
+```
+
+## .env file
+
+```
+WORKER_URL=https://themorningcupgenerator.itsmiarosemathews.workers.dev
+RUN_SECRET=your-run-secret
+OPENAI_API_KEY=your-openai-key
+ELEVENLABS_API_KEY=your-elevenlabs-key
+ELEVENLABS_VOICE_ID=your-voice-id
+```
+
+Secrets are also set in Cloudflare via `npx wrangler secret put <NAME>`.
+
+---
+
+## Worker config
+
+Key variables in `wrangler.toml`:
+
+| Variable | Default | Description |
+|---|---|---|
+| `OPENAI_MODEL` | `o3` | Script generation model |
+| `MIN_SCRIPT_WORDS` | `2175` | Hard floor (15 min) |
+| `TARGET_SCRIPT_WORDS_MIN` | `2610` | Sweet spot (18 min) |
+| `TARGET_SCRIPT_WORDS_MAX` | `2900` | Sweet spot (20 min) |
+| `MAX_SCRIPT_WORDS` | `4350` | Hard ceiling (30 min) |
+| `VOICE_STABILITY` | `0.28` | ElevenLabs stability |
+| `VOICE_STYLE` | `0.45` | ElevenLabs style |
+| `HOST_NAME` | `Penelope Rose` | Host name |
+| `WORDPRESS_PODCAST_ID` | `2616` | WP parent post ID |
+
+---
+
+## A note on the original README content below
 it to ordered ElevenLabs MP3 chunks using your custom voice, stores everything
 in Cloudflare R2, and emails you the script, metadata, and chunk links.
 
