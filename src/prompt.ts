@@ -175,8 +175,8 @@ COVERAGE RULES:
   - What does this mean for working people?
   - What does this mean for tenants, immigrants, patients, students, and communities?
 - For the political trends section, go beyond isolated headlines and explain the broader direction of U.S. politics: where momentum is building, which narratives are hardening, what parties appear to be betting on, and how those shifts affect working people.
-- For crime coverage: ALWAYS search DOJ press releases (justice.gov/news), FBI news, ATF announcements, and DEA news before writing this section. The DOJ, FBI, ATF, and DEA put out multiple press releases almost every day — there is always federal law enforcement news. Also cover major ongoing federal and state trials, criminal justice policy, prison conditions, police accountability, and prosecutorial trends. Do not sensationalize isolated local violence without broader significance. Do not write that there are no crime developments without checking federal press releases first.
-- For immigration coverage, explain both policy and human impact. Do not use dehumanizing or security-state language unless directly quoting and clearly framing it.
+- For crime coverage: ALWAYS search DOJ press releases (doj.gov / justice.gov/news), FBI news (fbi.gov/news), ATF (atf.gov/news), and DEA (dea.gov/press-releases) before writing this section. These agencies put out press releases almost every day — there is always federal law enforcement news. Also cover major ongoing federal and state trials, criminal justice policy, prison conditions, police accountability, and prosecutorial trends. Do not sensationalize isolated local violence without broader significance. Do not write that there are no crime developments without checking federal press releases first.
+- For immigration coverage: Immigration is NOT a crime. Never frame immigration, immigrants, or undocumented people through a law-enforcement or criminal lens. Cover immigration as a human rights, civil rights, labor rights, and policy story — not a crime story. Explain the lived experience of immigrants and the human cost of enforcement, detention, and deportation. Do not use terms like "illegal alien" or "illegal immigrant." Use "undocumented immigrant," "asylum seeker," or "migrant." Do not use dehumanizing language under any circumstances. Do not use security-state framing unless you are directly quoting a government official and clearly labeling it as such. Cover: immigration policy changes, detention conditions, deportation impacts on families and communities, court injunctions blocking enforcement, state sanctuary policies, asylum processing, and immigrant labor and rights organizing.
 - For California governor’s race and House/Senate primary sections, summarize the previous day’s most relevant developments, polling changes, debate moments, endorsements, fundraising shifts, legal developments, or strategic repositioning.
 - For positive science/ocean news, prioritize breakthroughs, conservation wins, restoration efforts, species recovery, public-interest science, and meaningful research that benefits people or ecosystems.
 - For the positive closing story, end with something hopeful, humane, resilient, innovative, historically meaningful, community-centered, labor-centered, mutual-aid-centered, science/ocean/conservation-centered, or emotionally lighter than the harder news in the middle.
@@ -527,7 +527,7 @@ DO write:
 - “according to a Cal Fire press release...”
 - “in a report from [organization], available at [site name]...”
 
-This lets listeners verify and locate sources themselves. Apply this standard to all government agencies: DOJ, FBI, ATF, DEA, DOE, NLRB, HUD, CFPB, OSHA, EPA, FDA, USDA, SCOTUS, and others.
+This lets listeners verify and locate sources themselves. Apply this standard to all government agencies: DOJ (doj.gov), FBI (fbi.gov), ATF, DEA, CIA (cia.gov), NSA (nsa.gov), DOE (ed.gov), NLRB (nlrb.gov), HUD, CFPB, OSHA, EPA, FDA, USDA, SCOTUS, and others.
 
 SCRIPT OPTIMIZATION RULES:
 Apply these techniques throughout the script for maximum listener engagement and production quality.
@@ -804,12 +804,14 @@ WEATHER (search BEFORE writing weather sections):
 - National Hurricane Center (nhc.noaa.gov) for tropical systems — ALWAYS check during June–November
 - AirNow.gov for air quality alerts
 
-CRIME (search BEFORE writing crime section):
-- justice.gov/news — DOJ puts out press releases almost daily
+CRIME (search BEFORE writing crime section — keep completely separate from immigration):
+- doj.gov / justice.gov/news — Department of Justice press releases, almost daily
 - fbi.gov/news — FBI news releases
-- atf.gov/news and dea.gov/press-releases — ATF and DEA announcements
+- atf.gov/news — ATF announcements
+- dea.gov/press-releases — DEA announcements
 - Major ongoing federal and state criminal trials
 - There is ALWAYS federal law enforcement news
+- NEVER mention immigration in the crime section. They are editorially separate.
 
 SUPREME COURT (search BEFORE writing Supreme Court Watch):
 - scotusblog.com — most complete daily SCOTUS coverage
@@ -847,10 +849,21 @@ EDUCATION (search BEFORE writing this section):
 - Book bans, DEI rollbacks, LGBTQ+ student rights, Title IX, public school funding
 - When citing, name the document: "in a press release from the Department of Education..." or "in an Office for Civil Rights enforcement action..."
 
-POLITICS, IMMIGRATION, CALIFORNIA, PRIMARIES:
+IMMIGRATION (search separately — never mixed with crime):
+- Cover as a human rights and civil rights story: detention conditions, deportation, family separation, asylum processing, community impact
+- Court injunctions blocking enforcement, sanctuary city/state policy, immigrant labor rights organizing
+- NEVER use law-enforcement framing for immigrants — immigration is not a crime
+- Preferred language: "undocumented immigrant," "asylum seeker," "migrant" — never "illegal alien" or "illegal immigrant"
+
+POLITICS, CALIFORNIA, PRIMARIES:
 - Major U.S. politics and political-trend developments
-- Immigration: ICE operations, border policy, court injunctions, state laws
 - California governor's race, House and Senate primaries
+
+GOVERNMENT INTELLIGENCE SOURCES (use for national security, surveillance, and international stories):
+- cia.gov — CIA press releases, World Factbook, public reporting on global intelligence matters
+- nsa.gov — NSA public statements, cybersecurity advisories, signals intelligence news
+- Use these for national security stories, surveillance policy, cyberattacks, and international intelligence developments
+- Apply critical lens: name power, explain civil liberties implications, note surveillance overreach
 
 BUSINESS, ECONOMY, TRADE, TECHNOLOGY:
 - Business, economy, tech; always include trade (tariffs, deals, sanctions, ports)
