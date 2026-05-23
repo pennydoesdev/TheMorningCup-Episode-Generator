@@ -6,12 +6,12 @@ Most config lives in `wrangler.toml` under `[vars]` and is read in `src/config.t
 
 ## OpenAI model
 
-`OPENAI_MODEL` — currently `gpt-5-mini`.
+`OPENAI_MODEL` — currently `gpt-4.1`.
 
 | Model | Speed | Length-following | Cost (rough) | Notes |
 |-------|-------|------------------|--------------|-------|
 | `gpt-5` | slow (~2min) | excellent | $$ | Best quality, sometimes too thoughtful |
-| `gpt-5-mini` | fast (~1min) | good | $ | Current default — best speed/quality balance |
+| `gpt-4.1` | fast (~1min) | good | $ | Current default — best speed/quality balance |
 | `gpt-4.1` | fast | unreliable | $ | Tends to underwrite this prompt |
 | `gpt-4o` | fast | spotty on long outputs | $ | Older; works but no longer recommended |
 

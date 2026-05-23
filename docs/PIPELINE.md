@@ -259,7 +259,7 @@ flowchart TB
 
 | Variable | Type | Purpose |
 |----------|------|---------|
-| `OPENAI_MODEL` | var | Currently `gpt-5-mini` |
+| `OPENAI_MODEL` | var | Currently `gpt-4.1` |
 | `WORKER_TIMEZONE` | var | `America/New_York` |
 | `MIN_SCRIPT_WORDS` / `TARGET_*` | var | Validator thresholds |
 | `MAX_TTS_CHARS_PER_CHUNK` | var | ElevenLabs chunking limit |
@@ -347,7 +347,7 @@ Detailed troubleshooting matrix: [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
 
 | Line | Per run | Per month (daily) |
 |------|---------|-------------------|
-| OpenAI (gpt-5-mini, ~7k in / 6k out) | ~$0.05 | ~$1.50 |
+| OpenAI (gpt-4.1, ~7k in / 6k out) | ~$0.05 | ~$1.50 |
 | OpenAI web_search (8–15 calls) | ~$0.30–0.50 | ~$10–15 |
 | OpenAI body gen | ~$0.01 | ~$0.30 |
 | ElevenLabs TTS (~22k chars) | depends on plan | $22–99 base + overage |

@@ -204,7 +204,17 @@ async function readResponsesStream(body: ReadableStream<Uint8Array>): Promise<st
           t === "response.error" ||
           t === "error"
         ) {
-          failureMsg = evt.error?.message || evt.message || "stream error";
+          // OpenAI puts the error in different places depending on event type:
+          // - "error" events: evt.message or evt.code
+          // - "response.failed" events: evt.response.error.message
+          const r = (evt as Record<string, unknown>).response as Record<string, unknown> | undefined;
+          const rErr = r?.error as Record<string, unknown> | undefined;
+          failureMsg =
+            (evt.error?.message) ||
+            (evt.message) ||
+            (rErr?.message as string | undefined) ||
+            (rErr?.code as string | undefined) ||
+            JSON.stringify(evt).slice(0, 300);
         }
       }
     }
