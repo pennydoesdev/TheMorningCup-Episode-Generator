@@ -203,11 +203,34 @@ ffmpeg -y -loglevel error -f concat -safe 0 -i "$LIST" \
   -metadata disc="$YEAR" \
   "$OUTPUT"
 
+# --- background music mix (Podcast Background.mp3, optional) -----------------
+#
+# If Podcast Background.mp3 is present in the Sounds folder, mix it in at
+# 10% volume under the speech so it's subtle but occasionally noticed.
+# Uses -stream_loop -1 to loop the music for the full duration of the episode.
+# The amix filter blends it with the speech then drops once speech ends.
+
+BG_MUSIC="$SOUNDS/Podcast Background.mp3"
+BG_TMP="$TMPDIR/with-bg.mp3"
+if [ -f "$BG_MUSIC" ]; then
+  echo "Mixing background music at 10% volume..."
+  ffmpeg -y -loglevel error \
+    -i "$OUTPUT" \
+    -stream_loop -1 -i "$BG_MUSIC" \
+    -filter_complex "[1:a]volume=0.10[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=3[out]" \
+    -map "[out]" \
+    -ar 44100 -ac 2 -b:a 192k -codec:a libmp3lame \
+    "$BG_TMP" && mv "$BG_TMP" "$OUTPUT"
+  echo "  done — background music mixed in."
+else
+  echo "  (Podcast Background.mp3 not found in $SOUNDS — skipping background music)"
+fi
+
 # --- loudness normalization to -16 LUFS (EBU R128 podcast standard) ----------
 #
-# Re-encodes the assembled episode to correct loudness. Most podcast distributors
-# (Apple Podcasts, Spotify) normalize on their end, but this ensures the file
-# sounds correct everywhere — especially on direct downloads and smart speakers.
+# Re-encodes the assembled episode (including any background music) to the
+# standard podcast loudness target. Runs after mixing so the final output is
+# correctly normalized end-to-end.
 
 echo "Normalizing loudness to -16 LUFS..."
 LOUDNORM_TMP="$TMPDIR/loudnorm.mp3"

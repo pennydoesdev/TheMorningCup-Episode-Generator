@@ -64,9 +64,9 @@ AUDIO_CDN_BASE_URL_LEGACY = "https://cdn.vicinitynews.com/podcasts/morning-cup"
 #   The Auto-Episode block looks up (or creates) each name and passes the IDs
 #   as the top-level "categories" array in the REST API call.
 WORDPRESS_CATEGORIES = "News, The Morning Cup"
-VOICE_STABILITY = "0.35"
+VOICE_STABILITY = "0.28"
 VOICE_SIMILARITY_BOOST = "0.85"
-VOICE_STYLE = "0.7"
+VOICE_STYLE = "0.45"
 VOICE_USE_SPEAKER_BOOST = "true"
 
 # Secrets (set with wrangler secret put):

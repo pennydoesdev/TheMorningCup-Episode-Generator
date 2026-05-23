@@ -190,6 +190,141 @@ interface NewsApiArticle {
   source?: { name?: string };
 }
 
+// --- Real-time weather APIs --------------------------------------------------
+
+interface TomorrowIOValues {
+  temperature?: number;
+  temperatureApparent?: number;
+  windSpeed?: number;
+  precipitationProbability?: number;
+  weatherCode?: number;
+}
+
+interface TomorrowIOResponse {
+  data?: { values?: TomorrowIOValues };
+}
+
+function tomorrowWeatherDesc(code: number | undefined): string {
+  if (code === undefined) return "";
+  const MAP: Record<number, string> = {
+    1000: "clear", 1100: "mostly clear", 1101: "partly cloudy",
+    1102: "mostly cloudy", 1001: "cloudy", 2000: "foggy", 2100: "light fog",
+    4000: "drizzle", 4001: "rain", 4200: "light rain", 4201: "heavy rain",
+    5000: "snow", 5001: "flurries", 5100: "light snow", 5101: "heavy snow",
+    6000: "freezing drizzle", 6001: "freezing rain", 7000: "ice pellets",
+    8000: "thunderstorms",
+  };
+  return MAP[code] ?? "";
+}
+
+const WEATHER_METROS: { name: string; loc: string }[] = [
+  { name: "New York",    loc: "40.7128,-74.0060"   },
+  { name: "Boston",      loc: "42.3601,-71.0589"   },
+  { name: "Atlanta",     loc: "33.7490,-84.3880"   },
+  { name: "Miami",       loc: "25.7617,-80.1918"   },
+  { name: "Chicago",     loc: "41.8781,-87.6298"   },
+  { name: "Houston",     loc: "29.7604,-95.3698"   },
+  { name: "Los Angeles", loc: "34.0522,-118.2437"  },
+  { name: "Phoenix",     loc: "33.4484,-112.0740"  },
+  { name: "Seattle",     loc: "47.6062,-122.3321"  },
+  { name: "Denver",      loc: "39.7392,-104.9903"  },
+];
+
+async function fetchTomorrowIOMetro(
+  apiKey: string,
+  metro: { name: string; loc: string },
+  signal: AbortSignal,
+): Promise<string> {
+  try {
+    const url =
+      `https://api.tomorrow.io/v4/weather/realtime` +
+      `?location=${encodeURIComponent(metro.loc)}` +
+      `&units=imperial` +
+      `&apikey=${encodeURIComponent(apiKey)}`;
+    const res = await fetch(url, { signal, headers: { Accept: "application/json" } });
+    if (!res.ok) return "";
+    const json = (await res.json()) as TomorrowIOResponse;
+    const v = json.data?.values;
+    if (!v) return "";
+    const desc  = tomorrowWeatherDesc(v.weatherCode);
+    const temp  = v.temperature          !== undefined ? `${Math.round(v.temperature)}°F`          : "";
+    const feels = v.temperatureApparent  !== undefined ? `(feels ${Math.round(v.temperatureApparent)}°F)` : "";
+    const wind  = v.windSpeed            !== undefined ? `wind ${Math.round(v.windSpeed)} mph`      : "";
+    const precip = v.precipitationProbability !== undefined
+      ? `${Math.round(v.precipitationProbability)}% precip chance` : "";
+    const parts = [desc, temp, feels, wind, precip].filter(Boolean);
+    return `${metro.name}: ${parts.join(", ")}`;
+  } catch {
+    return "";
+  }
+}
+
+interface NWSAlertFeature {
+  properties?: { event?: string; areaDesc?: string; severity?: string };
+}
+
+async function fetchWeatherGovAlerts(signal: AbortSignal): Promise<string> {
+  try {
+    const url =
+      "https://api.weather.gov/alerts/active" +
+      "?status=actual&message_type=alert&urgency=Immediate,Expected&severity=Extreme,Severe";
+    const res = await fetch(url, {
+      signal,
+      headers: {
+        "User-Agent": "MorningCupBot/1.0 (hello@vicinitynews.com)",
+        Accept: "application/geo+json",
+      },
+    });
+    if (!res.ok) return "";
+    const json = (await res.json()) as { features?: NWSAlertFeature[] };
+    const features = (json.features ?? []).slice(0, 15);
+    if (features.length === 0) return "No active severe or extreme NWS alerts.";
+    const lines = features
+      .map((f) => {
+        const p = f.properties;
+        if (!p) return null;
+        return `  • ${p.event ?? "Alert"} (${p.severity ?? "?"}) — ${p.areaDesc ?? ""}`;
+      })
+      .filter(Boolean) as string[];
+    return `${features.length} active NWS alert(s):\n${lines.join("\n")}`;
+  } catch {
+    return "";
+  }
+}
+
+async function buildRealTimeWeather(env: Env, signal: AbortSignal): Promise<string> {
+  const sections: string[] = [];
+
+  if (env.TOMORROW_IO_API_KEY) {
+    const results = await Promise.allSettled(
+      WEATHER_METROS.map((m) => fetchTomorrowIOMetro(env.TOMORROW_IO_API_KEY!, m, signal)),
+    );
+    const lines = results
+      .map((r) => (r.status === "fulfilled" ? r.value : ""))
+      .filter(Boolean);
+    if (lines.length > 0) {
+      sections.push(
+        "=== REAL-TIME WEATHER — TODAY (tomorrow.io live API — use these as the AUTHORITATIVE current conditions, NOT yesterday's data) ===\n" +
+        lines.join("\n"),
+      );
+    }
+  }
+
+  // weather.gov active alerts — no API key required; always fetch
+  const alerts = await fetchWeatherGovAlerts(signal);
+  if (alerts) {
+    sections.push("=== NATIONAL WEATHER SERVICE ACTIVE ALERTS (weather.gov) ===\n" + alerts);
+  }
+
+  if (sections.length === 0) return "";
+  return (
+    sections.join("\n\n") +
+    "\n\n⚠️  CRITICAL: The weather data above is TODAY's live data. Never substitute yesterday's conditions. Use these exact readings when writing weather sections."
+  );
+}
+
+// ---------------------------------------------------------------------------
+
 async function fetchNewsApi(env: Env, signal: AbortSignal): Promise<FetchedItem[]> {
   if (!env.NEWSAPI_KEY) return [];
   const endpoint = env.NEWSAPI_ENDPOINT || "https://newsapi.org/v2/top-headlines";
@@ -286,12 +421,24 @@ export async function buildSourceDigest(
     }
 
     const total = Object.values(buckets).reduce((n, arr) => n + arr.length, 0);
+
+    // Fetch real-time weather (tomorrow.io + weather.gov) — runs concurrently
+    // with the RSS fetch above (both share the same AbortController).
+    let realTimeWeather: string | undefined;
+    try {
+      const weatherText = await buildRealTimeWeather(env, controller.signal);
+      if (weatherText) realTimeWeather = weatherText;
+    } catch (err) {
+      logger.warn("real-time weather fetch error", { err: String(err) });
+    }
+
     return {
       source_date: sourceIsoDate,
       generated_at: new Date().toISOString(),
       available: total > 0,
       categories: buckets,
       notes: total > 0 ? undefined : "No items matched any digest category.",
+      realTimeWeather,
     };
   } finally {
     clearTimeout(timeout);
@@ -300,10 +447,20 @@ export async function buildSourceDigest(
 
 // Render the structured digest into a readable block to inject into the prompt.
 export function renderDigestForPrompt(digest: SourceDigest): string {
-  if (!digest.available) {
-    return "(No source digest available — produce a generic structural draft only and set source_limited=true.)";
-  }
   const lines: string[] = [];
+
+  // Real-time weather always comes first so the model sees it before any
+  // RSS-sourced weather items, which may reflect yesterday's conditions.
+  if (digest.realTimeWeather) {
+    lines.push(digest.realTimeWeather);
+    lines.push("");
+  }
+
+  if (!digest.available) {
+    lines.push("(No news source digest available — produce a generic structural draft only and set source_limited=true.)");
+    return lines.join("\n");
+  }
+
   for (const cat of DIGEST_CATEGORIES) {
     const items = digest.categories[cat];
     if (!items || items.length === 0) continue;

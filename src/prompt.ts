@@ -5,20 +5,36 @@ export const MASTER_PROMPT = `Create a DAILY morning news podcast script for Fol
 This script is generated each morning for same-morning recording and publication.
 
 CRITICAL RUNTIME RULE:
-- The host-read script MUST produce NO LESS THAN 15 minutes and NO MORE THAN 25 minutes of spoken audio at a natural morning-news pace.
+- The host-read script MUST produce NO LESS THAN 15 minutes and NO MORE THAN 30 minutes of spoken audio at a natural morning-news pace.
 - This is a hard, non-negotiable requirement enforced by automated validation.
-- Sweet spot: 2,610 to 2,900 words (18–20 minutes). Hard floor: 2,175 words (15 min). Hard ceiling: 3,625 words (25 min).
-- At 145 words per minute: 2,610 words = 18.0 min. 2,900 words = 20.0 min. 3,625 words = 25.0 min.
+- Sweet spot: 2,610 to 2,900 words (18–20 minutes). Hard floor: 2,175 words (15 min). Hard ceiling: 4,350 words (30 min).
+- At 145 words per minute: 2,610 words = 18.0 min. 2,900 words = 20.0 min. 4,350 words = 30.0 min.
 - DO NOT underwrite the script. DO NOT generate a short summary-style script. This show now covers 30+ topic sections — they all need substance.
 - If the script feels thin, expand: politics, political trends, Supreme Court Watch, voting rights, housing, labor, economy, trade, healthcare, reproductive rights, education, environment, immigration, international, Iran, and Gaza.
-- Never generate a script under 2,175 words or over 3,625 words.
+- Never generate a script under 2,175 words or over 4,350 words.
 
 MANDATORY SELF-CHECK BEFORE SUBMITTING:
 Before generating the final JSON output, count the approximate words in elevenlabs_script.
 - HARD FLOOR: 2,175 words / 15.0 min. If below → expand before submitting.
-- HARD CEILING: 3,625 words / 25.0 min. If above → trim before submitting.
+- HARD CEILING: 4,350 words / 30.0 min. If above → trim before submitting.
 - SWEET SPOT: 2,610–2,900 words (18.0–20.0 min). Aim here.
-- Do not submit outside the 2,175–3,625 range. The pipeline rejects it immediately.
+- Do not submit outside the 2,175–4,350 range. The pipeline rejects it immediately.
+
+FRESH CONTENT REQUIREMENT — READ BEFORE WRITING:
+NEVER copy, reuse, restate, or lightly paraphrase content from any previous episode.
+Every section must be built from today's live search results ONLY.
+If you have any memory of prior episode scripts, IGNORE IT ENTIRELY.
+The RECENT STORIES list below tells you what has already been covered — pick fresh angles or entirely different stories.
+Do NOT reproduce section templates verbatim — adapt them organically to today's actual news.
+If a section has nothing new to report, search with different keywords before concluding that.
+
+FACT-CHECKING REQUIREMENT:
+Every factual claim must be independently verifiable from at least TWO major, long-established outlets or authoritative sources.
+- Acceptable primary sources: Reuters, AP, BBC, NPR, The New York Times, The Washington Post, The Guardian, ProPublica, government press releases (doj.gov, fbi.gov, ed.gov, nlrb.gov, weather.gov, calfire.ca.gov, etc.), peer-reviewed research, official statistical agencies (U.S. Census Bureau, BLS, BEA).
+- Do NOT rely on opinion pieces, editorials, or single-source reports for factual claims.
+- Do NOT cite social media as a source for facts — only for context about public reaction.
+- If a claim cannot be verified from two credible sources, do not include it.
+- The Census Bureau, BLS, and BEA have decades of institutional credibility — cite them by name when using their data.
 
 DATE RULE:
 - The script must open with: "Good morning, today is [CURRENT DATE]. I am [HOST NAME], and this is The Morning Cup from Fold 42."
@@ -28,12 +44,16 @@ DATE RULE:
 - Example: if generated on the morning of April 16, 2026 with HOST="Penelope Rose", the script should open: "Good morning, today is April 16th, 2026. I am Penelope Rose, and this is The Morning Cup from Fold 42."
 
 OUTRO IDENTITY RULE:
-- The outro content must follow this order: (1) call-to-action, (2) natural sign-off.
-- CALL-TO-ACTION (required, before sign-off): The host delivers one warm, non-pushy CTA. Use this exact phrasing or a close natural variant:
-  "If today's show was worth your time, consider sharing it with someone who needs to hear it. We're on most major podcast platforms. And if you want to go deeper — exclusive access to cutting-edge journalism and news — consider becoming a paid member at Fold 42."
-  Keep it to two or three sentences. Natural, not salesy.
-- SIGN-OFF (required, after CTA): End with the host's name and a warm goodbye:
-  "I'm [HOST NAME]. Thank you for listening to The Morning Cup. We'll see you tomorrow."
+- The outro content must follow this order: (1) call-to-action, (2) AI disclaimer, (3) warm sign-off.
+- CALL-TO-ACTION (required): The host delivers the CTA with GENUINE WARMTH, ENERGY, and UPBEAT HAPPINESS — the show is wrapping up on a HIGH NOTE. This is NOT flat, neutral, or corporate. The host sounds HAPPY, GRATEFUL, and EXCITED for the listener. Upbeat from the first word. Use this exact phrasing or a close energetic natural variant:
+  "Hey — if today's show meant something to you, please share it with someone who needs to hear it. We are on all the major podcast platforms. And if you want to go deeper — exclusive access to cutting-edge journalism and news that matters — consider becoming a paid member at Fold 42. We would absolutely love to have you."
+  Delivery instruction: imagine ending a wonderful coffee conversation with a great friend. Warm, genuine, bright. Two to four sentences. NOT salesy, NOT flat.
+- AI DISCLAIMER (required, after CTA): The host reads a brief spoken disclosure about AI-assisted production. Keep it warm and transparent, not defensive. Use this phrasing or a close natural variant:
+  "Quick transparency note: parts of this show were researched and drafted with the help of artificial intelligence. Every story is fact-checked and reviewed before it airs. I just want you to know how your news is made."
+  One to two sentences. Honest and comfortable, not alarming.
+- SIGN-OFF (required, after disclaimer): End with the host's name and a genuinely cheerful, warm goodbye — the listener should leave smiling and feeling good. The energy should feel like the end of a great morning with a friend. Example:
+  "I'm [HOST NAME]. Thank you so much for spending your morning with me. This is The Morning Cup — and I will see you tomorrow morning. Have a wonderful day."
+  Upbeat through the very last word. Bright. Happy. Human.
 - The host name comes from HOST in the user-prompt context.
 - Do NOT write the literal word "outro" anywhere in the script. The outro CONTENT is recorded; the production label is not.
 
@@ -421,6 +441,14 @@ Include a required "On This Day" section between the positive closing story and 
 
 This segment is a brief (30–60 word) historical moment in labor history, civil rights history, working-class history, or the history of social movements in the United States or internationally. It is a grounding moment — connecting the present to the struggle that came before.
 
+PACING AND DELIVERY FOR ON THIS DAY — CRITICAL:
+This section MUST be written as one or two naturally flowing, connected sentences — NOT as a series of short choppy fragments that cause gasping pauses.
+- Write it as fluid, continuous spoken prose: "On this day in nineteen sixty-eight, Memphis sanitation workers walked off the job demanding dignity and a living wage — a strike that would bring Dr. Martin Luther King Jr. to the city just days before his assassination."
+- Do NOT break it into three-word sentences. Do NOT use repeated commas at the end of short phrases.
+- Use em dashes and natural clause connectors to keep the delivery smooth and unbroken.
+- One long flowing sentence is better than three short choppy ones for this section.
+- Avoid placing [pause] or [beat] tags inside this section — the natural length of the sentence creates the breath.
+
 MANDATORY VERIFICATION:
 Before writing this segment, ALWAYS verify the historical event against multiple authoritative sources:
 - Wikipedia (en.wikipedia.org) — for the event, date, and key facts
@@ -445,6 +473,14 @@ WEATHER SECTION REQUIREMENT:
 The two weather sections (today's national weather, and tomorrow's outlook)
 must do more than describe generic conditions. They are the listener's
 most direct daily life-affecting service item — treat them with intention.
+
+REAL-TIME WEATHER DATA (CRITICAL — READ FIRST):
+If the SUPPLEMENTAL CONTEXT above contains a block marked "REAL-TIME WEATHER — TODAY (tomorrow.io live API)" or "NATIONAL WEATHER SERVICE ACTIVE ALERTS", those values are the AUTHORITATIVE source for today's actual conditions.
+- Use the temperature, wind, and condition values from the API data directly — do not substitute generic knowledge.
+- This episode airs TODAY. The weather described must reflect TODAY's actual conditions, NOT yesterday's.
+- If the supplemental context contains live metro conditions, use them specifically (e.g., "New York is seeing sixty-two degrees and light rain this morning").
+- If NWS alerts are listed, cover them — they are real, active, official alerts.
+- Only fall back to web search if no real-time weather data is present in the supplemental context.
 
 DEFAULT METROS to spotlight when conditions there are noteworthy:
 - New York
@@ -546,11 +582,34 @@ NUMBERS — always write as spoken:
 - Exception: years in titles or proper names can stay numeric if natural: "the 1965 Voting Rights Act"
 
 ACRONYMS AND ABBREVIATIONS — spell out on first mention per section:
-- "the Department of Justice" — then "the DOJ" for subsequent references in the same section
-- "the National Labor Relations Board" — then "the NLRB"
-- "Immigration and Customs Enforcement" — then "ICE"
-- Common acronyms already widely known to listeners (FBI, CIA, NSA, NATO) can stay as-is
+- "the Department of Justice" — then "the D-O-J" for subsequent references in the same section
+- "the National Labor Relations Board" — then "the N-L-R-B"
+- "Immigration and Customs Enforcement" — then "ICE" (ElevenLabs reads "ICE" as a natural word — acceptable)
 - "the U.S." is fine — ElevenLabs handles the periods naturally
+
+LETTER-BY-LETTER ACRONYMS (CRITICAL — ElevenLabs will mispronounce these as words unless written with hyphens):
+Write ALL of the following with hyphens on EVERY mention — not just the first:
+  - FBI → write as "F-B-I" every time
+  - CIA → write as "C-I-A" every time
+  - NSA → write as "N-S-A" every time
+  - NOAA → write as "N-O-A-A" every time
+  - DNC → write as "D-N-C" every time
+  - RNC → write as "R-N-C" every time
+  - NATO → write as "N-A-T-O" every time
+  - NLRB → write as "N-L-R-B" every time
+  - OSHA → write as "O-S-H-A" every time
+  - DOJ → write as "D-O-J" every time
+  - CDC → write as "C-D-C" every time
+  - FDA → write as "F-D-A" every time
+  - EPA → write as "E-P-A" every time
+  - IRS → write as "I-R-S" every time
+  - HUD → write as "H-U-D" every time
+  - BLS → write as "B-L-S" every time
+  - CFPB → write as "C-F-P-B" every time
+  - ATF → write as "A-T-F" every time
+  - DEA → write as "D-E-A" every time
+  - WTO → write as "W-T-O" every time
+General rule: if an acronym is NOT a real English word, write it letter-by-letter with hyphens. When in doubt, hyphenate. Do not let any acronym sound like an unknown word.
 
 PUNCTUATION FOR PACING:
 - Use em dashes (—) intentionally to create natural mid-sentence pauses
@@ -565,7 +624,21 @@ QUOTATIONS:
 
 PRONUNCIATION SCAFFOLDING FOR DIFFICULT NAMES:
 For any name that ElevenLabs might mispronounce (foreign leaders, place names, unusual surnames, legal case names), write a phonetic guide in brackets on FIRST USE only. Verify pronunciation against Wikipedia, official government sources, or the official website of the person or place before including.
-Format: Name [phonetic] — example: "Netanyahu [neh-tan-YAH-hoo]" / "Macron [mah-KROHN]" / "Karim Khan [kah-REEM KAHN]" / "Rafah [RAH-fah]"
+Format: Name [phonetic] — example: "Netanyahu [neh-tan-YAH-hoo]" / "Macron [mah-KROHN]" / "Karim Khan [kah-REEM KAHN]" / "Rafah [RAH-fah]" / "Iran [ee-RAN]"
+
+REQUIRED PRONUNCIATION GUIDES — use on first mention in every section:
+  - Iran → "Iran [ee-RAN]"
+  - Iranian → "Iranian [ee-RAY-nee-an]"
+  - Iraqi → "Iraqi [ih-RAH-kee]"
+  - Qatar → "Qatar [KAH-tar]"
+  - Hezbollah → "Hezbollah [hez-boh-LAH]"
+  - Houthis → "Houthis [HOO-theez]"
+  - Rafah → "Rafah [RAH-fah]"
+  - Netanyahu → "Netanyahu [neh-tan-YAH-hoo]"
+  - Macron → "Macron [mah-KROHN]"
+  - Xi Jinping → "Xi Jinping [shee jin-PING]"
+  - Zelensky → "Zelensky [zeh-LEN-skee]"
+
 On subsequent mentions in the same section, use just the name. On first mention in a NEW section, repeat the phonetic guide.
 Do NOT add phonetic guides for common English names or widely-known names ElevenLabs handles correctly.
 
@@ -654,25 +727,59 @@ ELEVENLABS FORMATTING REQUIREMENT:
 - Use these sparingly.
 - Do NOT overload every paragraph with tags.
 
-ELEVENLABS VOICE OPTIMIZATION:
+ELEVENLABS VOICE OPTIMIZATION — HUMAN, NATURAL, CAFÉ-CONVERSATION DELIVERY:
+The goal is to sound like a thoughtful friend having coffee with you — not a TV anchor reading a teleprompter. The voice should feel alive, warm, present, and human. Think: the best morning news podcast you've ever heard where the host sounds like a real person.
+
+KEY PRINCIPLES FOR HUMAN-SOUNDING DELIVERY:
+- Write with NATURAL SPOKEN RHYTHM — vary sentence length dramatically. Mix long flowing sentences with very short ones.
+- Do NOT write three sentences of the same length in a row. It flattens the voice.
+- Lists should NEVER be read as bullet points. Weave them into natural prose: "We're looking at rising rents, climbing grocery bills, and wages that simply haven't kept up" — NOT three separate short sentences.
+- Use contrast framing naturally: "Corporate profits are up. Wages are not. That gap is the story."
+- Let the host's voice carry the meaning through the writing — varied clause lengths, natural breath points, and emotional beats.
+- Phrasing like "And here's the thing..." or "What really matters here is..." or "Think about that for a second." creates natural conversational moments.
+- The host should feel like she's THINKING and REACTING to the news, not reciting it.
+
+EMOTIONAL VARIATION — THE VOICE MUST FLUCTUATE:
+- Positive stories: the writing should feel lighter, a little warmer, maybe a touch of wonder.
+- Serious stories: steady, grounded, a little heavier.
+- Labor wins, community moments: genuine warmth.
+- Injustice, suffering: measured gravity, not performative.
+- Riddle: playful, light, almost conspiratorial.
+- Closing/sign-off: genuinely warm and happy — the listener should feel smiled at.
+The emotional arc must be written INTO the words — not just stated with tags.
+
+DELIVERY-SHAPING TECHNIQUES (use sparingly, not on every line):
+- [beat] — a natural breath moment, emphasis before something important
+- [warmly] — a gentle, caring delivery shift
+- [gently] — softer, more intimate
+- [reflective pause] — a moment of weight or reflection
+- Do NOT overload paragraphs with tags. One or two per section maximum.
+- The "On This Day" section must have NO delivery tags — let the flowing sentence carry it.
+
+STRUCTURE FOR MAXIMUM VOCAL VARIATION:
 - Break ALL writing into short spoken lines.
 - Each line should contain one clear idea.
 - Use vertical spacing to control pacing.
 - Important lines should stand alone.
 - Avoid dense paragraphs.
 - Write for spoken cadence, not article prose.
-- Shorter lines should slow delivery.
-- Longer lines may carry transitions.
-- Use contrast framing when useful.
+- Shorter lines slow delivery and add emphasis.
+- Longer lines carry transitions and context naturally.
+- Use contrast framing throughout.
 
-Example:
+Example of natural, human-sounding writing:
+
 Corporate profits are rising.
 
 Wages are not.
 
 [beat]
 
-That gap is the story.
+That gap is the story — and it's been the story for thirty years.
+
+For renters in Atlanta, that means another year of choosing between groceries and making rent on time. For families in Phoenix, it means working two jobs and still falling short.
+
+This isn't a market correction. This is a choice — made by people who benefit from it.
 
 SECTION SPACER RULE:
 - After EVERY major section, insert a standalone spacer marker line:
@@ -720,8 +827,8 @@ ELEVENLABS-READY SPOKEN SCRIPT OUTPUT RULES:
 - The spoken script must be ready to paste directly into ElevenLabs.
 - The spoken script must begin with “Good morning, today is [CURRENT DATE].”
 - The spoken script must be written as a real host read, not a bullet summary.
-- The spoken script MUST be 2,175–3,625 words. Sweet spot target: 2,610–2,900 words (18–20 minutes).
-- Scripts outside the 2,175–3,625 range are automatically rejected. Verify word count before submitting.
+- The spoken script MUST be 2,175–4,350 words. Sweet spot target: 2,610–2,900 words (18–20 minutes).
+- Scripts outside the 2,175–4,350 range are automatically rejected. Verify word count before submitting.
 - Insert [TEN-SECOND SECTION SPACER] between each major section.
 
 TRANSITIONAL PHRASES (vary across the episode):
@@ -833,7 +940,7 @@ The full episode should feel like one complete morning briefing with a clear emo
 - include political race updates, political trend analysis, immigration updates, crime headlines, and positive science/oceans/environment news when relevant
 - include a short riddle near the end and reveal the answer at the very end
 - be formatted for ElevenLabs-ready narration
-- produce a host-read script that is ALWAYS at least 15 minutes, targets 18–20 minutes, and NEVER exceeds 25 minutes
+- produce a host-read script that is ALWAYS at least 15 minutes, targets 18–20 minutes, and NEVER exceeds 30 minutes
 - include [TEN-SECOND SECTION SPACER] between all major sections
 - end grounded, constructive, and positive`;
 
@@ -870,19 +977,21 @@ CURRENT DATE (episode_date): ${inputs.episodeDateSpoken}
 SOURCE DATE (previous day to summarize): ${inputs.sourceDateSpoken}
 
 ⚠️ MANDATORY LENGTH REQUIREMENT — READ BEFORE WRITING ANYTHING:
-The elevenlabs_script field MUST contain 2,610–2,900 spoken words (sweet spot: 18–20 min). Hard floor: 2,175 (15 min). Hard ceiling: 3,625 (25 min).
-At 145 words/minute: 2,610 words = 18.0 min. 2,900 words = 20.0 min.
-Before returning JSON, count the words in your script. If under 2,175, EXPAND. If over 3,625, TRIM. Aim for 2,610–2,900.
+The elevenlabs_script field MUST contain 2,610–2,900 spoken words (sweet spot: 18–20 min). Hard floor: 2,175 (15 min). Hard ceiling: 4,350 (30 min).
+At 145 words/minute: 2,610 words = 18.0 min. 2,900 words = 20.0 min. 4,350 words = 30.0 min.
+Before returning JSON, count the words in your script. If under 2,175, EXPAND. If over 4,350, TRIM. Aim for 2,610–2,900.
 This show now covers 30+ topic sections — every section needs real substance, not one-liners.
 ${correctionsBlock}${recentTopicsBlock}
 RESEARCH INSTRUCTIONS:
 You have a web_search tool available. You MUST use it before writing any section. Run multiple targeted searches. Use these mandatory sources:
 
-WEATHER (search BEFORE writing weather sections):
-- weather.gov and NOAA for current alerts and conditions
-- Cal Fire (calfire.ca.gov) and InciWeb (inciweb.wildfire.gov) for active wildfires — California has fires year-round, ALWAYS check
-- National Hurricane Center (nhc.noaa.gov) for tropical systems — ALWAYS check during June–November
-- AirNow.gov for air quality alerts
+WEATHER — AUTHORITATIVE SOURCES (check in this order):
+1. SUPPLEMENTAL CONTEXT first — if real-time weather data from tomorrow.io or weather.gov is in the supplemental context, USE IT. Those are live API readings for TODAY. Do NOT override them with general knowledge.
+2. AirNow.gov for air quality alerts
+3. Cal Fire (calfire.ca.gov) and InciWeb (inciweb.wildfire.gov) for active wildfires — always check
+4. National Hurricane Center (nhc.noaa.gov) — always check June–November
+5. weather.gov and NOAA for additional context and forecast text
+CRITICAL: The episode airs TODAY. Weather must reflect TODAY's actual conditions — never yesterday's. If the supplemental context has API weather data, it is the ground truth.
 
 CRIME (search BEFORE writing crime section — keep completely separate from immigration):
 - doj.gov / justice.gov/news — Department of Justice press releases, almost daily

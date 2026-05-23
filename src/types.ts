@@ -51,6 +51,9 @@ export interface Env {
   NEWS_RSS_FEEDS?: string;
   NEWSAPI_KEY?: string;
   NEWSAPI_ENDPOINT?: string;
+
+  // Real-time weather APIs
+  TOMORROW_IO_API_KEY?: string;  // Priority weather source — https://docs.tomorrow.io/reference/welcome
 }
 
 export interface SocialSectionPost {
@@ -190,6 +193,7 @@ export interface SourceDigest {
   available: boolean;
   categories: Record<string, SourceItem[]>;
   notes?: string;
+  realTimeWeather?: string; // injected from tomorrow.io + weather.gov — TODAY's live conditions
 }
 
 export interface SourceItem {

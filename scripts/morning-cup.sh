@@ -211,6 +211,11 @@ preflight() {
   else
     warn "sound: intro-sting.wav (optional, missing)"
   fi
+  if [ -f "$SOUNDS/Podcast Background.mp3" ]; then
+    ok "sound: Podcast Background.mp3 (background music)"
+  else
+    warn "sound: Podcast Background.mp3 (optional — add to $SOUNDS to enable background music)"
+  fi
 
   # Sister scripts
   for s in fetch-chunks.sh build-episode.sh; do
