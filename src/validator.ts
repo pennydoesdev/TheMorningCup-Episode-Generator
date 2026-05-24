@@ -79,8 +79,8 @@ export function validateEpisode(
     errors.push(`Estimated runtime ${runtime.toFixed(1)} min exceeds the ${runtimeCeil.toFixed(1)}-minute ceiling. Script must be shorter.`);
   }
 
-  if (!/^Good morning, today is\b/i.test(script.trimStart())) {
-    errors.push('Script must open with "Good morning, today is"');
+  if (!/^Good morning[,!.]/i.test(script.trimStart())) {
+    errors.push('Script must open with "Good morning"');
   }
 
   // Show title check — configured via SHOW_TITLE in wrangler.toml.
