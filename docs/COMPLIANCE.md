@@ -1,259 +1,235 @@
-# Compliance and Legal Guide
+# Compliance Guide
 
-This document covers legal, regulatory, and platform compliance requirements
-for all AI-assisted podcast productions at Fold 42.
-
-**This is not a substitute for legal counsel.** For material questions, consult
-Fold 42's legal team before proceeding.
+Covers AI content disclosure obligations, voice talent licensing, copyright, daily producer checks, periodic audits, incident response, and data privacy for The Morning Cup and all shows built on this infrastructure.
 
 ---
 
-## 1. Voice Talent Agreement
+## Table of Contents
 
-### Why it's required
-
-Every show using a cloned voice must have a signed Voice Talent Agreement on file
-before any ElevenLabs work begins. Without it:
-- The production has no license to use the voice
-- The voice actor has no documented consent
-- Revenue sharing obligations are undefined
-- Fold 42 is exposed to significant legal liability
-
-### What the agreement must cover
-
-A Fold 42 Voice Talent Agreement for AI productions must include at minimum:
-
-**Grant of rights**
-- Express written consent to create an AI voice clone using ElevenLabs (or named platform)
-- The scope of use: show name, publisher (Fold 42), platforms, territories, duration
-- Whether the license is exclusive or non-exclusive
-- What happens to the clone if the agreement ends
-
-**Compensation and revenue sharing**
-- The revenue sharing percentage or flat fee structure
-- Payment schedule and method
-- How revenue is defined and calculated
-- What counts as a qualifying episode
-
-**Quality and editorial control**
-- The talent's right to review and object to content
-- What objections can trigger episode removal
-- Whether the talent has approval rights over the master prompt
-- Process for raising concerns about how their voice is being used
-
-**Term and termination**
-- Duration of the agreement
-- Notice period for termination
-- What happens to existing episodes after termination
-- Whether the voice clone is destroyed upon termination
-
-**Representations and warranties**
-- That the talent owns the rights to their voice
-- That the talent is not under a conflicting agreement
-- Fold 42's obligations regarding data security and the voice model
-
-### Who approves the agreement
-
-Agreements must be reviewed by Fold 42 Legal before signing.
-Do not begin voice cloning work without a signed copy on file.
-
-### Storage
-
-Signed agreements are stored in Fold 42's secure document management system.
-The compliance reviewer and Legal must both have access.
+- [AI Content Disclosure](#ai-content-disclosure)
+- [Voice Talent Agreement](#voice-talent-agreement)
+- [Copyright](#copyright)
+- [Producer Compliance Checklist](#producer-compliance-checklist)
+- [Full Episode Audit](#full-episode-audit)
+- [Incident Response](#incident-response)
+- [Data Privacy](#data-privacy)
 
 ---
 
-## 2. Platform AI Disclosure Requirements
+## AI Content Disclosure
 
-### Spotify
+### Platform Requirements
 
-**Required:** Add "AI-generated voice" to your show description in Spotify for Podcasters.
+**Apple Podcasts**
+Apple requires that shows using AI-generated content declare this in the podcast feed using the `ai_generated` field. The show's RSS feed must include this declaration at the show level. Check the Apple Podcasts Connect dashboard to verify the declaration is present and up to date.
 
-Spotify's AI content policy requires disclosure when a synthetic or AI-generated
-voice narrates podcast content. Failure to disclose can result in content removal
-or account suspension.
+**Spotify**
+Spotify requires AI disclosure in show metadata. Update the show description in Spotify for Podcasters to include explicit language stating that the show uses AI-generated voice and content.
 
-**Where:** Your show's description page in Spotify for Podcasters dashboard.
-**What to add:** Use the "SPOTIFY" block from your Metadata.txt.
+**Other platforms (iHeart, Amazon Music, Overcast, Pocket Casts)**
+Each platform has its own disclosure policies, which are updated periodically. Review platform-specific guidelines quarterly and update show descriptions as required.
 
-### Apple Podcasts
+### How This Show Handles Disclosure
 
-**Required:** Disclosure in show description.
+- Every episode's `Metadata.txt` includes an `AI & VOICE DISCLOSURE` section, which is used to populate platform-specific copy
+- Every episode description published to podcast platforms ends with the required disclosure language
+- The host character, Penelope Rose, is a disclosed AI voice — not a real person's cloned voice
 
-Apple's guidelines prohibit misleading listeners. While Apple has not yet implemented
-a mandatory AI label system (as of this writing), the show description disclosure
-satisfies their requirements.
+If a generated episode's `Metadata.txt` is missing the AI disclosure section, the metadata generation step failed or fell back to a truncated output. This is a red flag requiring manual review of that episode.
 
-**Where:** Show description in Apple Podcasts Connect.
-**What to add:** Use the "APPLE PODCASTS / iHEART / AMAZON MUSIC" block from Metadata.txt.
-
-### YouTube
-
-**Required:** Check the "Altered or synthetic content" checkbox AND include
-disclosure text in the video description.
-
-YouTube requires creators to disclose realistic AI-generated voices under their
-Creator Responsibility guidelines. Non-disclosure can result in demonetization
-or content removal.
-
-**Where:** In YouTube Studio → Details → scroll to "Altered or synthetic content"
-for every upload.
-**What to add:** Use the "YOUTUBE AUDIOGRAM" block from Metadata.txt in the description.
-
-### iHeart / Amazon Music
-
-**Currently no mandatory label** (policy may change). The standard disclosure
-boilerplate in your show description satisfies current requirements.
-
-### RSS / other platforms
-
-Include the standard disclosure in your show description and episode descriptions
-across all platforms. This is generated automatically in every Metadata.txt.
+[↑ Back to top](#table-of-contents)
 
 ---
 
-## 3. Copyright
+## Voice Talent Agreement
 
-### Show content
+### ElevenLabs Terms
 
-- **Original script content:** Copyright belongs to Fold 42 from the moment of creation.
-  AI-generated content where a human directs the creation is protectable in most
-  jurisdictions, though the legal landscape is evolving. Consult Legal for current guidance.
-- **Source material:** Factual information is not copyrightable. Quoting from sources
-  requires fair use analysis. The pipeline cites sources by name and document — do not
-  reproduce verbatim text from third-party sources in the script.
-- **Music:** All sound assets (Hello.mp3, Goodbye.mp3, Topic Transition.mp3) must be
-  either owned by Fold 42, licensed for commercial use and podcast distribution, or
-  created for this purpose. Streaming licenses (Spotify for Artists, etc.) do not cover
-  podcast use. Verify the license terms for every sound asset before use.
+The voice used in this show is licensed under the ElevenLabs Terms of Service. Key points:
 
-### Voice clone
+- The voice is a created persona (Penelope Rose), not a clone of a real, identifiable person's voice without their consent
+- Commercial use rights must be confirmed under the active ElevenLabs subscription plan — verify this when renewing or upgrading plans
+- The voice model is associated with a specific ElevenLabs account; do not share account credentials or voice IDs with third parties
 
-The ElevenLabs-generated audio is a derivative work of the voice actor's training data.
-The voice talent agreement defines who owns this work. Ensure the agreement explicitly
-addresses ownership of generated audio.
+### Quarterly Voice Talent Verification
 
-### Episode metadata and descriptions
+Once per quarter, confirm:
 
-Copyright in original expression (descriptions, social copy) belongs to Fold 42.
+- [ ] The ElevenLabs subscription is active and covers commercial use
+- [ ] The voice clone is still active and associated with the correct account
+- [ ] There is no unauthorized use of the voice model outside this pipeline (check ElevenLabs usage logs)
+- [ ] If revenue sharing or any licensing arrangement is in place, payments are current (coordinate with Finance)
+
+[↑ Back to top](#table-of-contents)
 
 ---
 
-## 4. Data Privacy
+## Copyright
 
-### What data we collect and store
+### Show Content
 
-Every episode generates and stores:
-- The full episode script (text)
-- All audio chunks (MP3)
-- Episode metadata (titles, descriptions, chapter markers)
-- Source notes with URLs
-- Run logs (timestamps, word counts, validation results)
+News summaries and analysis produced by this pipeline constitute editorial commentary and synthesis. They are transformative works and fall within fair use principles applicable to commentary and news analysis. All cited sources retain their own copyright.
 
-All of this is stored in the Fold 42 R2 bucket (`vicinity`) under
-`Generators/Podcasts/[ShowSlug]/`.
+Key points:
 
-### What data we do NOT store
+- **Show copyright:** © Fold 42 (current year). The copyright string is built automatically as `Copyright {YEAR} - Fold 42` and written into ID3 tags by `build-episode.sh`.
+- **Source material:** All sources cited in the script must be real, verifiable sources. Cited content is summarized and analyzed, not reproduced verbatim.
+- **AI-generated content:** Under current U.S. copyright guidance, AI-generated content may have limited or no copyright protection on its own. Fold 42's editorial direction, curation, and selection of sources is the basis for the company's copyright claim over the finished episodes.
 
-- Listener data or analytics (not collected by this pipeline)
-- Personal information of listeners
-- The voice actor's raw training audio (stored in ElevenLabs, not in our R2)
+### Music and Sound Effects
 
-### Retention
+All music cues, intro/outro music, and section stings used in production must be licensed for commercial podcast use. This includes:
 
-Episode files in R2 are retained indefinitely unless explicitly deleted.
-Establish a retention policy and document it here if your show requires one.
+- Synchronization licensing if music is a recognizable composition
+- Master recording licensing for recorded performances
+- Mechanical licensing if applicable to your distribution model
 
-### Third-party data processing
+Verify that license coverage explicitly includes commercial podcast distribution before using any audio asset in production. Keep license documentation on file.
 
-| Processor | What data | Purpose |
-|-----------|-----------|---------|
-| OpenAI | Episode prompt, research context | Script generation |
-| ElevenLabs | Script text, voice clone | TTS audio generation |
-| Cloudflare | Episode files | Storage and Worker execution |
-| Resend | Completion notification | Email delivery |
-
-Review each processor's data processing agreements. OpenAI and ElevenLabs data
-processing addenda (DPAs) should be on file with Fold 42 Legal.
+[↑ Back to top](#table-of-contents)
 
 ---
 
-## 5. FCC and Broadcast Standards
+## Producer Compliance Checklist
 
-This infrastructure produces content for podcast distribution, not over-the-air
-broadcasting. FCC regulations governing traditional broadcast do not apply.
+A quick daily spot-check for every episode before it is approved for publish. This is not a full review — it is a sanity check that should take under five minutes.
 
-However, Fold 42's editorial standards for accuracy, defamation, and political
-content apply to all shows regardless of distribution channel.
+Open the episode's `Metadata.txt` and the `.txt` script from the Chunks folder.
 
----
+- [ ] Script does not include fabricated direct quotes attributed to real, named people
+- [ ] All factual claims in the script have corresponding source notes in the episode JSON (check `source_notes` field)
+- [ ] No music cues or production notes are present in the spoken script (e.g., `[music cue]`, `[production note]`, `[pause for effect]`)
+- [ ] Weather data appears to be from a live feed — it includes specific, current figures rather than generic seasonal language
+- [ ] Fact-check result in the sidecar JSON shows at least 2 out of 3 checks passing green
+- [ ] No initialisms are read as letters — agency and organization names are spelled out in full on first reference
+- [ ] Chemical, medical, and scientific terms are presented with correct context (not sensationalized) and include pronunciation guidance where needed
 
-## 6. Political and Advocacy Content
+### Red Flags Requiring Full Review Before Publish
 
-### Paid political content
+- Runtime more than 3 minutes outside the target range
+- Source notes section has fewer than 5 entries or contains placeholder text
+- Any title option references a topic that was not covered in the actual news
+- AI disclosure section missing from `Metadata.txt`
+- Completion notification not received by the expected publish time
 
-If any episode discusses candidates, ballot measures, or political parties in a
-way that constitutes advocacy, consult Legal before publication. Podcast advertising
-laws vary by jurisdiction. This pipeline does not produce advertising — but
-editorial advocacy may trigger disclosure requirements on some platforms.
-
-### Balance requirements
-
-Fold 42 does not maintain FCC-style fairness doctrine obligations (we are not
-a broadcast licensee), but our editorial standards require factual accuracy
-and appropriate sourcing for all political coverage. See BEST-PRACTICES.md
-for coverage rules.
+[↑ Back to top](#table-of-contents)
 
 ---
 
-## 7. Defamation and Accuracy
+## Full Episode Audit
 
-### Risk areas
+### Who Audits and How Often
 
-AI-generated content carries inherent hallucination risk. The pipeline mitigates
-this by:
-- Requiring named sources in every section
-- Requiring the model to cite documents by name
-- Storing source notes with URLs in every episode JSON
-- Quarterly source URL audits (see AUDIT.md)
+| Role | Frequency | Scope |
+|---|---|---|
+| Producer | Every episode | Daily spot-check (see above) |
+| Executive Producer | Weekly | Full episode review — script + audio |
+| Compliance reviewer | Quarterly | AI disclosure, source attribution, coverage rules |
+| Legal | On request / annually | Voice talent agreements, copyright, platform compliance |
 
-### Producer responsibility
+### Monthly Spot Audit
 
-Despite these mitigations, producers are responsible for the final content.
-A producer who becomes aware of a factual error must escalate immediately —
-not wait for the next automated episode. See AUDIT.md Part 4 for incident response.
+Download the sidecar JSON for 5 randomly selected episodes from the past month.
 
-### Never acceptable
+For each:
 
-- Falsely attributed quotes or statements
-- Claims that a specific named individual committed a crime without a conviction
-  or formal charge by an official body
-- Health or safety claims that contradict official guidance without expert sourcing
-- Content that sexualizes, demeans, or threatens any identified individual
+1. **Review fact-check pass/fail rates** — note which checks failed and whether the failure was addressed before publish
+2. **Verify source note URLs are valid** — visit each listed URL and confirm the source exists and the cited content matches what the episode described. Flag any 404s (possible hallucination) or significant factual mismatches
+3. **Check pronunciation flags** — review the episode's audio for any mispronounced proper nouns or place names that should be added to `data/pronunciation-dictionary.json`
+4. **Confirm AI disclosure** — verify the published episode description on all active platforms ends with the current disclosure language
+
+### Quarterly Compliance Audit
+
+Review a stratified random sample of 13 episodes (1 per week of the quarter), plus all episodes where a producer flagged a concern.
+
+**AI disclosure compliance:**
+- [ ] Every sampled episode's `Metadata.txt` contains the AI disclosure section
+- [ ] Episode descriptions published on all platforms end with current disclosure language
+- [ ] Spotify show description contains "AI-generated voice" label
+- [ ] Apple Podcasts Connect shows `ai_generated` declaration is current
+- [ ] YouTube uploads (if any) have the "Altered or synthetic content" checkbox checked
+
+**Source attribution audit (3 randomly selected episodes from the quarter):**
+- For each source note, visit the listed URL and verify it is real, the source exists, and the cited content matches what the episode described
+- Three or more unverifiable sources in the same episode is a material issue requiring EP escalation
+
+**Coverage rules compliance:**
+- [ ] Immigration covered separately from crime in every sampled episode
+- [ ] Immigration terminology follows show guidelines ("undocumented immigrant," "asylum seeker," "migrant" — never "illegal alien")
+- [ ] Climate coverage consistent with editorial policy
+- [ ] All required sections present in every sampled episode — any section missing from more than 20% of sampled episodes indicates a prompt compliance issue requiring developer review
+
+[↑ Back to top](#table-of-contents)
 
 ---
 
-## 8. Compliance Contacts
+## Incident Response
 
-| Issue | Contact |
-|-------|---------|
-| Voice talent agreement | Fold 42 Legal |
-| Platform policy question | Executive Producer + Legal |
-| Factual error / retraction | EP within 1 hour, Legal if material |
-| Copyright claim received | Legal immediately |
-| Data privacy question | Legal |
+### Factual Error Published
+
+**Severity: High**
+
+1. Note the episode date and the specific error — be precise about what was stated and what the accurate information is
+2. Inject an on-air correction for the next episode via KV:
+   ```bash
+   npx wrangler kv key put --remote \
+     --binding MORNING_CUP_KV \
+     pending_corrections \
+     "Correction: In yesterday's episode we reported [X]. The accurate information is [Y]."
+   ```
+   The next episode will read this correction before the story tease, then KV auto-clears it
+3. Update the published episode description on all podcast platforms with a written correction note
+4. Document in `CHANGELOG.md`: the error, which pipeline stage it originated in (source digest, OpenAI generation, or fact-check miss), the correction, and the date resolved
+
+### Episode Fails to Generate
+
+**Severity: Medium**
+
+1. Check worker status:
+   ```bash
+   curl -H "Authorization: Bearer $RUN_SECRET" \
+     "https://themorningcupgenerator.itsmiarosemathews.workers.dev/status?date=YYYY-MM-DD"
+   ```
+2. Check the rejected output at `{R2_KEY_PREFIX}/rejected/` in R2 via the Cloudflare dashboard — the raw JSON shows exactly what the model produced and why validation failed
+3. Review the `validation_errors` field in the status response
+4. If the failure is recoverable (word count low, repair pass failed), force a re-run:
+   ```bash
+   curl -X POST \
+     "https://themorningcupgenerator.itsmiarosemathews.workers.dev/run?date=YYYY-MM-DD&force=true" \
+     -H "Authorization: Bearer $RUN_SECRET"
+   ```
+5. If failures are persistent across multiple days, escalate to the developer for prompt review
+
+### Voice Quality Degradation
+
+**Severity: Medium**
+
+1. Document the episode date and describe the degradation specifically — is it mispronunciation, robotic delivery, unusual pauses, or drift from the baseline voice character?
+2. Compare to a baseline episode from 30+ days ago
+3. If degradation is consistent across 3 or more episodes, escalate to the developer
+4. Options: adjust `VOICE_STABILITY`, `VOICE_STYLE`, or `VOICE_SIMILARITY_BOOST` in `wrangler.toml`, or resubmit the voice clone with additional training audio in ElevenLabs
+
+### Unauthorized or Harmful Content in Episode
+
+**Severity: Critical**
+
+1. Pull the episode from all platforms immediately
+2. Preserve the raw JSON from R2 as evidence — do not delete it
+3. Escalate to EP and Legal within 1 hour
+4. Do not re-run or generate new episodes until root cause is identified and the prompt has been reviewed and corrected
+
+[↑ Back to top](#table-of-contents)
 
 ---
 
-## 9. Compliance Calendar
+## Data Privacy
 
-| Task | Frequency | Owner |
-|------|-----------|-------|
-| Voice talent agreement renewal review | Annual | EP + Legal |
-| Platform disclosure verification | Quarterly | Compliance reviewer |
-| Source URL audit (random sample) | Quarterly | Compliance reviewer |
-| Revenue sharing payment verification | Per payment schedule | Finance + EP |
-| Data processor DPA review | Annual | Legal |
-| ElevenLabs account review (active clones) | Quarterly | Developer |
-| Full compliance audit report | Annual | Compliance + Legal |
+**Listener data:** This system collects no listener data. There are no analytics calls, tracking pixels, or listener identification mechanisms in the generator pipeline.
+
+**OpenAI API:** Script generation calls send episode content — including the topic list, source digest, and any KV-stored corrections — to OpenAI's API. Review [OpenAI's data usage policy](https://openai.com/policies/api-data-usage-policies) to understand how API inputs are handled. By default, OpenAI does not use API inputs to train models, but confirm this applies to your account tier.
+
+**ElevenLabs API:** TTS calls send the full script text to ElevenLabs. Review [ElevenLabs' privacy policy](https://elevenlabs.io/privacy) to understand how submitted text is stored and processed. Confirm that your subscription tier covers commercial use and review data retention terms.
+
+**Cloudflare Workers KV:** Run records, approval records, and pending corrections are stored in KV. KV data persists until explicitly deleted. The run record for each episode includes the script content, approver details, and validation results. Treat KV data with appropriate access controls — limit who has access to the Cloudflare account and the `RUN_SECRET`.
+
+[↑ Back to top](#table-of-contents)

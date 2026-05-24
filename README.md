@@ -1,562 +1,896 @@
-# The Morning Cup — Episode Generator
+# ☕ The Morning Cup — Episode Generator
 
-Automated daily podcast generator for *The Morning Cup* by Fold 42.
-Cloudflare Worker (TypeScript) + local assembly scripts (bash + Python).
+> Automated daily podcast generator by **Fold 42** — powered by OpenAI gpt-5.5 + ElevenLabs TTS + Cloudflare Workers.
 
-> **Your local project (git repo):** `~/Documents/The Morning Cup/Generator/`
-> **Your local data folder (sounds, chunks, episodes, .env):** `~/Documents/The Morning Cup/`
-> These are two separate folders. Scripts always run from `Generator/`.
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org/)
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-orange)](https://workers.cloudflare.com/)
+[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)]()
 
 ---
 
-## Prerequisites
+## Table of Contents
 
-Install these once on your Mac:
+- [What Is This?](#what-is-this)
+- [How an Episode Is Created](#how-an-episode-is-created)
+- [Required Software](#required-software)
+- [Required Accounts](#required-accounts)
+- [First-Time Setup](#first-time-setup)
+  - [macOS](#macos)
+  - [Windows (WSL2)](#windows-wsl2)
+  - [Ubuntu / Debian](#ubuntu--debian)
+  - [CentOS / RHEL](#centos--rhel)
+  - [Raspberry Pi](#raspberry-pi)
+  - [Chrome OS (Crostini)](#chrome-os-crostini)
+  - [All Platforms — Clone & Configure](#all-platforms--clone--configure)
+- [Audacity Setup](#audacity-setup)
+- [Folder Structure](#folder-structure)
+- [Environment File (.env)](#environment-file-env)
+- [Deploy the Worker](#deploy-the-worker)
+- [Daily Workflow](#daily-workflow)
+- [Approval Workflow](#approval-workflow)
+- [WordPress / VNewsOS Integration](#wordpress--vnewsos-integration)
+- [All Generated Files](#all-generated-files)
+- [Worker Configuration Reference](#worker-configuration-reference)
+- [Sync & Update](#sync--update)
+- [Desktop Applet](#desktop-applet)
+- [Security & Access Control](#security--access-control)
+- [Troubleshooting](#troubleshooting)
+- [Documentation Index](#documentation-index)
 
-```bash
-brew install node ffmpeg
-pip3 install requests python-dotenv
-pip3 install --user numpy   # for build-audacity.py
+---
+
+## What Is This?
+
+The Morning Cup is a **fully automated daily news podcast** system. Every morning at 5:00 AM Eastern Time, a Cloudflare Worker:
+
+1. Pulls today's news from RSS feeds and the News API into a source digest
+2. Calls OpenAI **gpt-5.5** via the Responses API (with live web search) to write a ~20-minute episode script
+3. Validates structure, word count, and runtime — runs a repair pass if needed
+4. Fact-checks every claim with 3 independent verification passes (2/3 majority required)
+5. Generates a Serialized Script HTML review document with inline citations
+6. Pauses at `awaiting_approval` if the editorial gate is on, or continues to TTS if it's off
+7. Synthesizes the script into MP3 chunks via **ElevenLabs** (4 chunks in parallel)
+8. Stores everything in **Cloudflare R2** — chunks, manifest, script files, and metadata
+
+Your local machine then assembles the final MP3 using `ffmpeg`, adds ID3 chapter markers, generates a Whisper transcript, and builds a multi-track **Audacity** project. The WordPress / VNewsOS integration creates a podcast episode draft automatically from the `Metadata.txt` file.
+
+**Total daily human time: ~30 seconds.**
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+## How an Episode Is Created
+
+```
+5 AM ET — Cloudflare Worker wakes
+  │
+  ├─ 1. Build source digest (RSS feeds / News API)
+  ├─ 2. Generate script via OpenAI gpt-5.5 + web_search (~2,700 words)
+  ├─ 3. Validate (word count, spacer count, runtime, structure)
+  ├─ 4. Repair pass if validation failed (gpt-5-mini)
+  ├─ 5. Fact-check: 3 independent passes, 2/3 majority vote
+  ├─ 6. Pronunciation scan (flags unknown proper nouns to R2)
+  ├─ 7. Build Sidecar JSON (audit trail) + Serialized Script HTML (review doc)
+  ├─ 8. Write TXT / HTML / JSON / Metadata.txt → R2
+  │
+  ├─ [ENABLE_APPROVAL_GATE=true]  → Status: awaiting_approval
+  │      ↓ WordPress or CLI calls POST /approve
+  │
+  ├─ 9. ElevenLabs TTS — 4 chunks synthesized in parallel
+  ├─ 10. Build manifest.json + files.txt → R2
+  └─ Status: completed
+       │
+       ▼
+  morning-cup.sh make (your local machine)
+  ├─ Downloads all chunks from R2
+  ├─ Assembles final MP3 (ffmpeg: concat + loudnorm + ID3 + chapters)
+  ├─ Generates Whisper .vtt transcript (if OPENAI_API_KEY in .env)
+  └─ Builds multi-track Audacity .aup3 project (if numpy installed)
+       │
+       ▼
+  WordPress / VNewsOS
+  ├─ Reads Metadata.txt from R2
+  ├─ Creates draft vicinity_podcast episode (CPT import)
+  ├─ Populates audio URL, title, description, tags, categories
+  └─ Draft publishable only after editorial confirmation
 ```
 
+[↑ Back to top](#table-of-contents)
+
 ---
 
-## Pull latest changes
+## Required Software
+
+Install everything in this table before setup. Click the links for official downloads.
+
+| Tool | Version | Used For | Download |
+|------|---------|----------|----------|
+| **Node.js** | 20+ | Wrangler CLI, `npm install` | [nodejs.org](https://nodejs.org) |
+| **Wrangler** | 4.x | Cloudflare CLI (deploy, secrets, R2) | `npm install -g wrangler` |
+| **ffmpeg** | 6+ | Audio assembly, loudness normalization | [ffmpeg.org/download.html](https://ffmpeg.org/download.html) |
+| **Python** | 3.9+ | Local pipeline scripts | [python.org/downloads](https://www.python.org/downloads/) |
+| **Git** | 2.x | Code updates | [git-scm.com](https://git-scm.com) |
+| **Audacity** | 3.x | Multi-track editing (.aup3 projects) | [audacityteam.org/download](https://www.audacityteam.org/download/) |
+
+**Required Python packages:**
+```bash
+pip3 install mutagen requests
+pip3 install numpy          # for Audacity multi-track project builder
+```
+
+**Optional Python packages (for Google Drive + S3 publishing):**
+```bash
+pip3 install cryptography boto3
+```
+
+> **Audacity FFmpeg Library** — Required to export audio from Audacity projects.
+> Download from: [support.audacityteam.org/basics/installing-ffmpeg](https://support.audacityteam.org/basics/installing-ffmpeg)
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+## Required Accounts
+
+| Service | What It Provides | Sign Up |
+|---------|-----------------|---------|
+| **Cloudflare** | Worker hosting, R2 storage, KV database | [cloudflare.com](https://cloudflare.com) |
+| **OpenAI** | Script generation (gpt-5.5), fact-checking, metadata | [platform.openai.com](https://platform.openai.com) |
+| **ElevenLabs** | Text-to-speech synthesis (your custom voice) | [elevenlabs.io](https://elevenlabs.io) |
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+## First-Time Setup
+
+> The local folder must be named exactly **`The Morning Cup`** — Title Case with spaces, no leading or trailing spaces.
+> - macOS / Linux: `~/Documents/The Morning Cup/`
+> - Windows: `%USERPROFILE%\Documents\The Morning Cup\`
+
+### macOS
 
 ```bash
-cd ~/Documents/”The Morning Cup”/Generator
-git fetch origin claude/brave-gates-wbCkD
-git checkout claude/brave-gates-wbCkD
-git pull origin claude/brave-gates-wbCkD
+# 1. Install Homebrew (if not already installed)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# 2. Install tools
+brew install node ffmpeg git
+
+# 3. Install Python packages
+pip3 install --user --break-system-packages mutagen requests numpy
+
+# 4. Install Wrangler
+npm install -g wrangler
+
+# Verify
+ffmpeg -version && node --version && python3 -c "import mutagen, requests; print('OK')"
+```
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+### Windows (WSL2)
+
+Windows users must use **WSL2** (Windows Subsystem for Linux). PowerShell alone is not supported.
+
+```powershell
+# Run in PowerShell as Administrator
+wsl --install -d Ubuntu
+# Restart your computer, then open "Ubuntu" from Start Menu
+# Follow the Ubuntu/Debian instructions below inside WSL
+```
+
+> **Why WSL2?** The pipeline uses bash scripts, Python, and ffmpeg — all of which
+> work natively in WSL2. Windows paths are accessible at `/mnt/c/Users/YourName/`.
+> Your Documents folder: `/mnt/c/Users/YourName/Documents/`
+
+Inside WSL Ubuntu, follow the [Ubuntu / Debian](#ubuntu--debian) steps.
+
+For the folder path in WSL, use:
+```bash
+# Your Windows Documents folder in WSL
+export DOCS="/mnt/c/Users/$(cmd.exe /c "echo %USERNAME%" 2>/dev/null | tr -d '\r')/Documents"
+mkdir -p "$DOCS/The Morning Cup"
+```
+
+Or simply use the WSL home directory:
+```bash
+mkdir -p "$HOME/Documents/The Morning Cup"
+```
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+### Ubuntu / Debian
+
+```bash
+# Update package list
+sudo apt update
+
+# Install system packages
+sudo apt install -y ffmpeg git python3 python3-pip curl build-essential
+
+# Install Node.js 20
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Install Python packages
+pip3 install --user mutagen requests numpy
+
+# Install Wrangler
+npm install -g wrangler
+
+# Verify
+ffmpeg -version && node --version && python3 -c "import mutagen, requests; print('OK')"
+```
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+### CentOS / RHEL
+
+```bash
+# Enable EPEL for ffmpeg
+sudo dnf install -y epel-release
+sudo dnf install -y git python3 python3-pip ffmpeg
+
+# Install Node.js 20
+curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
+sudo dnf install -y nodejs
+
+# Install Python packages
+pip3 install --user mutagen requests numpy
+
+# Install Wrangler
+npm install -g wrangler
+
+# Verify
+ffmpeg -version && node --version && python3 -c "import mutagen, requests; print('OK')"
+```
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+### Raspberry Pi
+
+Tested on Raspberry Pi OS (Bookworm / Bullseye, 64-bit recommended).
+
+```bash
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install tools
+sudo apt install -y ffmpeg git python3 python3-pip
+
+# Install Node.js 20 (ARM build)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Install Python packages
+pip3 install --user mutagen requests numpy
+
+# Install Wrangler
+sudo npm install -g wrangler
+
+# Note: wrangler deploy from Pi is slow but works.
+# Consider deploying from a faster machine and using Pi only for local assembly.
+
+# Verify
+ffmpeg -version && node --version
+```
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+### Chrome OS (Crostini)
+
+Enable Linux in Chrome OS: **Settings → Advanced → Developers → Linux development environment → Turn on**
+
+Then in the Linux terminal:
+```bash
+sudo apt update
+sudo apt install -y ffmpeg git python3 python3-pip nodejs npm
+pip3 install --user mutagen requests numpy
+sudo npm install -g wrangler
+
+# Verify
+ffmpeg -version && node --version && python3 -c "import mutagen, requests; print('OK')"
+```
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+### All Platforms — Clone & Configure
+
+After installing the tools above, run these steps on every platform:
+
+```bash
+# 1. Create the base folder (exact name required)
+mkdir -p "$HOME/Documents/The Morning Cup"
+cd "$HOME/Documents/The Morning Cup"
+
+# 2. Clone the repository
+git clone https://github.com/pennydoesdev/TheMorningCup-Episode-Generator.git Generator
+cd Generator
+
+# 3. Install Node dependencies
 npm install
-```
 
----
+# 4. Authenticate with Cloudflare
+npx wrangler login
 
-## Deploy the worker
+# 5. Set Worker Secrets (you will be prompted for each value)
+npx wrangler secret put OPENAI_API_KEY
+npx wrangler secret put ELEVENLABS_API_KEY
+npx wrangler secret put ELEVENLABS_VOICE_ID
+npx wrangler secret put RUN_SECRET
 
-```bash
-cd ~/Documents/”The Morning Cup”/Generator
+# 6. Deploy the Worker
 npx wrangler deploy
-```
 
----
+# 7. Create your local .env file
+cp .env.example "$HOME/Documents/The Morning Cup/.env"
+# Edit the .env file and fill in WORKER_URL and RUN_SECRET
 
-## Daily use — generate an episode
+# 8. Run preflight check
+./scripts/morning-cup.sh preflight
 
-```bash
-cd ~/Documents/”The Morning Cup”/Generator
+# 9. Generate your first episode
 ./scripts/morning-cup.sh make
 ```
 
-That one command does everything:
-1. Preflight checks (deps, secrets, sound files)
-2. Triggers the Cloudflare Worker to generate the script + TTS chunks
-3. Polls until complete
-4. Downloads chunks from R2
-5. Assembles final MP3 with ffmpeg (background music + loudnorm)
-6. *(bonus)* Generates Whisper transcript if `OPENAI_API_KEY` is in `.env`
-7. *(bonus)* Builds a multi-track Audacity `.aup3` project if numpy is installed
+[↑ Back to top](#table-of-contents)
 
 ---
 
-## Re-run from scratch (clear and regenerate)
+## Audacity Setup
+
+Audacity is used for multi-track editing of episodes. The pipeline builds a ready-to-edit `.aup3` project automatically.
+
+**Step 1 — Download Audacity 3.x**
+→ [audacityteam.org/download](https://www.audacityteam.org/download/)
+
+> ⚠️ **Audacity 2.x is NOT compatible** with the `.aup3` format. You must use Audacity 3.x.
+
+**Step 2 — Install the FFmpeg Library for Audacity**
+This is required to export audio from Audacity in MP3/AAC format.
+→ [support.audacityteam.org/basics/installing-ffmpeg](https://support.audacityteam.org/basics/installing-ffmpeg)
+
+- macOS: Download `ffmpeg-mac-3.0.2.pkg` and run it
+- Windows: Download `ffmpeg-win-3.0.2.exe` and run it  
+- Linux: `sudo apt install libavcodec-dev` (Ubuntu/Debian)
+
+**Step 3 — Verify**
+Open Audacity → Edit → Preferences → Libraries. You should see "FFmpeg Library Version: F(55.33.100)..." or similar.
+
+**Step 4 — Generate your first Audacity project**
+```bash
+./scripts/morning-cup.sh audacity 2026-05-24
+```
+
+Opens `~/Documents/The Morning Cup/Episodes/The Morning Cup - 2026-05-24.aup3` with:
+- 🟢 **GREEN** — Intro / Outro music
+- 🟠 **ORANGE** — Coffee Pour, Stings, Transition sounds
+- 🔵 **BLUE** — TTS content chunks (one track per section)
+- 🟡 **YELLOW** — Background music (mixed at 10% volume)
+- 🏷️ **Labels** — Chapter markers at exact timestamps
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+## Folder Structure
+
+Your local machine needs this layout. The installer creates it automatically:
+
+```
+~/Documents/The Morning Cup/          ← base folder (EXACT name required)
+│
+├── .env                              ← your secrets (NEVER committed to git)
+│
+├── Generator/                        ← this git repository
+│   ├── scripts/                      ← morning-cup.sh and helpers
+│   ├── src/                          ← Cloudflare Worker TypeScript
+│   ├── wrangler.toml                 ← Worker configuration
+│   └── package.json
+│
+├── Sounds/                           ← audio assets (required)
+│   ├── Hello.mp3                     ← intro music (REQUIRED)
+│   ├── Coffee Pour.wav               ← pour SFX at opening (REQUIRED)
+│   ├── Topic Transition.mp3          ← section transition sting (REQUIRED)
+│   ├── Goodbye.mp3                   ← outro music (REQUIRED)
+│   ├── intro-sting.wav               ← "news begins" sting (optional)
+│   ├── morning-cup-sting.wav         ← alternate sting (optional)
+│   ├── Spark.mp3                     ← alternate sting (optional)
+│   └── Podcast Background.mp3        ← background music at 10% (optional)
+│
+├── Chunks/                           ← auto-created; TTS chunks land here
+│   └── YYYY-MM-DD/
+│       ├── The Morning Cup - YYYY-MM-DD - 001.mp3
+│       ├── The Morning Cup - YYYY-MM-DD - 002.mp3
+│       └── ...
+│
+└── Episodes/                         ← final rendered episodes
+    ├── The Morning Cup - YYYY-MM-DD.mp3
+    ├── The Morning Cup - YYYY-MM-DD.aup3
+    └── The Morning Cup - YYYY-MM-DD.vtt
+```
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+## Environment File (.env)
+
+Create this file at `~/Documents/The Morning Cup/.env` (never inside the `Generator/` folder):
 
 ```bash
-cd ~/Documents/”The Morning Cup”/Generator
+# Worker URL — from your Cloudflare dashboard or wrangler deploy output
+WORKER_URL=https://themorningcupgenerator.itsmiarosemathews.workers.dev
+
+# RUN_SECRET — Bearer token for /run, /approve, /reject endpoints
+# Set this BOTH here AND in Cloudflare via: npx wrangler secret put RUN_SECRET
+RUN_SECRET=your-run-secret-here
+
+# Optional: only needed if running local generation tools
+# These are already set as Cloudflare Worker Secrets — you don't need
+# them locally unless running scripts that call the APIs directly.
+# OPENAI_API_KEY=sk-proj-...
+# ELEVENLABS_API_KEY=...
+# ELEVENLABS_VOICE_ID=...
+```
+
+> **Security:** `.env` is in `.gitignore` and must NEVER be committed.
+> Team members only need `WORKER_URL` and `RUN_SECRET` in their `.env`.
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+## Deploy the Worker
+
+```bash
+cd ~/Documents/"The Morning Cup"/Generator
+
+# First time
+npx wrangler login
+npx wrangler deploy
+
+# After pulling code updates
+git pull origin claude/brave-gates-wbCkD
+npm install
+npx wrangler deploy
+```
+
+**Set all secrets** (do this once; values persist in Cloudflare):
+```bash
+npx wrangler secret put OPENAI_API_KEY
+npx wrangler secret put ELEVENLABS_API_KEY
+npx wrangler secret put ELEVENLABS_VOICE_ID
+npx wrangler secret put RUN_SECRET
+```
+
+**Verify secrets are set:**
+```bash
+npx wrangler secret list
+```
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+## Daily Workflow
+
+One command does everything:
+
+```bash
+cd ~/Documents/"The Morning Cup"/Generator
+./scripts/morning-cup.sh make
+```
+
+**What it does:**
+1. ✅ Preflight checks (tools, secrets, sound files)
+2. 🚀 Triggers the Worker (`POST /run`)
+3. 📊 Polls status every 20 seconds
+4. ⬇️ Downloads chunks from R2 when complete
+5. 🎙️ Assembles final MP3 (ffmpeg: concat + loudnorm −16 LUFS + ID3 + chapters)
+6. 📝 Generates Whisper transcript (if `OPENAI_API_KEY` in `.env`)
+7. 🎛️ Builds multi-track Audacity project (if `numpy` installed)
+
+### All Subcommands
+
+```bash
+./scripts/morning-cup.sh preflight              # check all deps + assets
+./scripts/morning-cup.sh make [YYYY-MM-DD]      # full pipeline
+./scripts/morning-cup.sh make --force           # re-run even if already done
+./scripts/morning-cup.sh approve [DATE]         # approve script, start TTS
+./scripts/morning-cup.sh reject [DATE] [reason] # reject script for re-gen
+./scripts/morning-cup.sh monitor [DATE]         # live dashboard
+./scripts/morning-cup.sh status [DATE]          # one-shot JSON status
+./scripts/morning-cup.sh fetch [DATE]           # download R2 chunks only
+./scripts/morning-cup.sh build [DATE]           # assemble MP3 (chunks local)
+./scripts/morning-cup.sh transcribe [DATE]      # Whisper .vtt transcript
+./scripts/morning-cup.sh audacity [DATE]        # multi-track Audacity project
+./scripts/morning-cup.sh latest                 # open most recent MP3
+./scripts/morning-cup.sh open [DATE]            # open specific date's MP3
+```
+
+### Re-run from scratch
+
+```bash
+cd ~/Documents/"The Morning Cup"/Generator
 
 # 1. Deploy latest code
 npx wrangler deploy
 
-# 2. Clear today’s KV run record (--remote is required)
+# 2. Clear the KV run record for this date
 npx wrangler kv key delete --remote \
   --binding MORNING_CUP_KV \
-  “morning-cup/$(date +%Y-%m-%d)/run.json”
+  "morning-cup/$(TZ=America/New_York date +%Y-%m-%d)/run.json"
 
-# 3. Run fresh
+# 3. Force re-generate
 ./scripts/morning-cup.sh make --force
 ```
 
+[↑ Back to top](#table-of-contents)
+
 ---
 
-## Subcommands
+## Approval Workflow
 
-All run from `~/Documents/"The Morning Cup"/Generator`:
+The editorial approval gate pauses the pipeline after script generation, before TTS.
+This lets you review the Serialized Script (with inline citations and fact-check results)
+before committing to audio synthesis.
 
-```bash
-./scripts/morning-cup.sh preflight            # check all deps + assets
-./scripts/morning-cup.sh make [YYYY-MM-DD]    # full pipeline
-./scripts/morning-cup.sh make --force         # re-run even if already completed
-./scripts/morning-cup.sh monitor [DATE]       # live dashboard
-./scripts/morning-cup.sh status [DATE]        # one-shot JSON status
-./scripts/morning-cup.sh fetch [DATE]         # download chunks from R2 only
-./scripts/morning-cup.sh build [DATE]         # assemble MP3 only (chunks local)
-./scripts/morning-cup.sh transcribe [DATE]    # generate Whisper .vtt transcript
-./scripts/morning-cup.sh audacity [DATE]      # build multi-track Audacity .aup3
-./scripts/morning-cup.sh latest               # open most recent episode
-./scripts/morning-cup.sh open [DATE]          # open a specific date’s MP3
+**Enable the gate** in `wrangler.toml`:
+```toml
+ENABLE_APPROVAL_GATE = "true"
 ```
 
+**When the gate is on:**
+
+1. `./scripts/morning-cup.sh make` runs the script phase and shows:
+   ```
+   --- Editorial Review Required ---
+   The script is ready and waiting for approval.
+
+   Serialized Script (R2 key):
+     Generators/Podcasts/TheMorningCup/2026-05-24/The Morning Cup - 2026-05-24 - Serialized Script-...html
+
+   Download to review:
+     npx wrangler r2 object get vicinity "..." --file review.html
+
+   To approve and start TTS:
+     ./scripts/morning-cup.sh approve 2026-05-24
+   ```
+
+2. **Review** the Serialized Script HTML (inline citations, fact-check, works cited, approval block)
+
+3. **Approve** from CLI:
+   ```bash
+   ./scripts/morning-cup.sh approve 2026-05-24
+
+   # With approver metadata (optional):
+   APPROVER_NAME="Jane" APPROVER_SERIAL="WP-2026-001" \
+     ./scripts/morning-cup.sh approve 2026-05-24
+   ```
+
+4. **Or approve from WordPress** — VNewsOS calls `POST /approve` via REST
+
+5. **Reject** if the script needs regeneration:
+   ```bash
+   ./scripts/morning-cup.sh reject 2026-05-24 "Weather section has wrong city"
+   # Then regenerate:
+   ./scripts/morning-cup.sh make --force 2026-05-24
+   ```
+
+**With the gate off (default):** the pipeline runs straight through — no human step.
+
+[↑ Back to top](#table-of-contents)
+
 ---
 
-## Test a TTS chunk
+## WordPress / VNewsOS Integration
 
-```bash
-cd ~/Documents/”The Morning Cup”/Generator
-python3 scripts/test-chunk.py “Your script text here.”
-python3 scripts/test-chunk.py --file /path/to/excerpt.txt
+### When does WordPress get the episode?
+
+After `status = completed`, the episode data is available in R2:
+
+1. **Metadata.txt** is written to R2 during Phase 1 (before approval/TTS)
+2. After TTS completes, `morning-cup.sh make` downloads everything locally
+3. VNewsOS reads Metadata.txt and creates a draft `vicinity_podcast` episode
+
+### Metadata.txt fields
+
+The Metadata.txt file in R2 contains everything VNewsOS needs:
+
+```
+Show-Title: The Morning Cup
+Episode-Date: 2026-05-24
+Episode-Number: 144
+Season: 2026
+Title-1: [primary episode title]
+Title-2: [alternate title]
+Title-3: [alternate title]
+Episode-Type: full
+Explicit: no
+Host: Penelope Rose
+Publisher: Fold 42
+Copyright: Fold 42
+Word-Count: 2847
+Estimated-Runtime-Minutes: 19.6
+Description: [400-500 word post body]
+SEO-Title: [SEO-optimized title]
+SEO-Description: [meta description]
+Tags: [comma-separated tags]
+WP-Podcast-ID: 2616
+Audio-URL: https://cdn.fold42.com/podcasts/morning-cup/2026-05-24.mp3
+Direct-Audio: https://cdn.vicinitynews.com/podcasts/morning-cup/2026-05-24.mp3
+Categories: News, The Morning Cup
 ```
 
-Saves to `~/Documents/The Morning Cup/Chunks/test/` and auto-opens on Mac.
+### Audio CDN resolution
+
+VNewsOS resolves audio in this order:
+1. `_vicinity_audio_url` → `Audio-URL` (new CDN: cdn.fold42.com)
+2. `_vnews_ep_audio_url` → `Direct-Audio` (legacy CDN: cdn.vicinitynews.com)
+
+The legacy URL stays as fallback until cdn.fold42.com is fully live.
+
+### Approval validation before WordPress publish
+
+If `ENABLE_APPROVAL_GATE=true`, VNewsOS can verify the script was approved before
+allowing the WordPress post to be published:
+
+```
+GET /status?date=YYYY-MM-DD
+Authorization: Bearer {RUN_SECRET}
+
+Response includes:
+  record.status          — must be "completed"
+  record.approved_at     — approval timestamp (populated only after /approve)
+  record.approver_name   — who approved
+  record.approver_serial — approval serial number
+```
+
+Only enable WordPress "Publish" when `approved_at` is populated.
+
+### WordPress REST API calls (for VNewsOS developers)
+
+```bash
+# Approve from WordPress (triggers TTS)
+POST /approve?date=YYYY-MM-DD
+Authorization: Bearer {RUN_SECRET}
+Content-Type: application/json
+{"approver_name": "Jane Smith", "approver_serial": "WP-2026-001-A", "approval_notes": "LGTM"}
+
+# Reject from WordPress
+POST /reject?date=YYYY-MM-DD
+Authorization: Bearer {RUN_SECRET}
+Content-Type: application/json
+{"reason": "Factual error in international section"}
+
+# Check status
+GET /status?date=YYYY-MM-DD
+Authorization: Bearer {RUN_SECRET}
+```
+
+[↑ Back to top](#table-of-contents)
 
 ---
 
-## Audacity multi-track editing
+## All Generated Files
+
+Every file the system creates, and where it lives:
+
+| File | Location | Phase | Description |
+|------|----------|-------|-------------|
+| `The Morning Cup - YYYY-MM-DD.txt` | R2 | Script | Clean script text (no pacing tags) |
+| `The Morning Cup - YYYY-MM-DD.html` | R2 | Script | HTML-formatted script |
+| `The Morning Cup - YYYY-MM-DD.json` | R2 | Script | Full episode JSON (script + chapters + social copy + source notes) |
+| `The Morning Cup - YYYY-MM-DD - Metadata.txt` | R2 | Script | WordPress CPT import fields + audio CDN URLs |
+| `The Morning Cup - YYYY-MM-DD - Serialized Script-{serial}-{YYYYMMDD}.html` | R2 | Script | Editorial review doc: inline citations, fact-check, works cited, approval block |
+| `The Morning Cup - YYYY-MM-DD - Sidecar.json` | R2 | Script | Audit trail: timing, fact-check results, source references |
+| `The Morning Cup - YYYY-MM-DD - Pronunciation-Flags.json` | R2 | Script | Unknown proper nouns flagged for pronunciation review |
+| `The Morning Cup - YYYY-MM-DD - manifest.json` | R2 | TTS | Chunk metadata for ID3 chapters and playback ordering |
+| `The Morning Cup - YYYY-MM-DD - files.txt` | R2 | TTS | ffmpeg concat list |
+| `The Morning Cup - YYYY-MM-DD - {NNN}.mp3` | R2 chunks/ | TTS | Individual ElevenLabs audio chunk |
+| `run.json` | R2 | Both | Pipeline status record (all stage timestamps, approver info, R2 keys) |
+| `The Morning Cup - YYYY-MM-DD.mp3` | Local Episodes/ | Local | Final assembled episode MP3 (−16 LUFS, chapters, ID3 tags) |
+| `The Morning Cup - YYYY-MM-DD.aup3` | Local Episodes/ | Local | Multi-track Audacity project |
+| `The Morning Cup - YYYY-MM-DD.vtt` | Local Episodes/ | Local | Whisper WebVTT transcript |
+
+**R2 key prefix:** `Generators/Podcasts/TheMorningCup/{YYYY-MM-DD}/`
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+## Worker Configuration Reference
+
+All in `wrangler.toml`. Secrets are set via `wrangler secret put`, never in this file.
+
+| Variable | Default | Safe to Change | Description |
+|---|---|---|---|
+| `OPENAI_MODEL` | `gpt-5.5` | ⚠️ No (needs 500K TPM) | Script generation model |
+| `ELEVENLABS_MODEL_ID` | `eleven_multilingual_v2` | ✅ Yes | TTS model |
+| `ELEVENLABS_OUTPUT_FORMAT` | `mp3_44100_128` | ✅ Yes | Audio output format |
+| `WORKER_TIMEZONE` | `America/New_York` | ✅ Yes | Cron reference timezone |
+| `MIN_SCRIPT_WORDS` | `2175` | ⚠️ Careful | Hard floor — below this = fail |
+| `TARGET_SCRIPT_WORDS_MIN` | `2610` | ✅ Yes | Target range lower bound |
+| `TARGET_SCRIPT_WORDS_MAX` | `2900` | ✅ Yes | Target range upper bound |
+| `MAX_SCRIPT_WORDS` | `4350` | ⚠️ Careful | Hard ceiling — above this = fail |
+| `WORDS_PER_MINUTE` | `145` | ✅ Yes | Runtime estimation |
+| `MAX_TTS_CHARS_PER_CHUNK` | `5000` | ✅ Yes | ElevenLabs chunk size limit |
+| `ENABLE_SOURCE_DIGEST` | `true` | ✅ Yes | Use RSS/news for context |
+| `ENABLE_REPAIR_PASS` | `true` | ✅ Yes | Auto-repair failed validation |
+| `ENABLE_APPROVAL_GATE` | `false` | ✅ Yes | Pause before TTS for editorial review |
+| `STRIP_PACING_TAGS_FOR_TTS` | `true` | ⛔ No | Strip [bracket] annotations before TTS |
+| `STATUS_PUBLIC` | `false` | ✅ Yes | Make /status endpoint public |
+| `HOST_NAME` | `Penelope Rose` | ✅ Yes | Host name used in script |
+| `SHOW_TITLE` | `The Morning Cup` | ⛔ No | Used in all file names |
+| `R2_KEY_PREFIX` | `Generators/Podcasts/TheMorningCup` | ⛔ No | R2 storage path |
+| `VOICE_STABILITY` | `0.28` | ✅ Yes (0.1–0.9) | ElevenLabs: lower = more natural |
+| `VOICE_SIMILARITY_BOOST` | `0.85` | ✅ Yes (0.5–1.0) | Voice identity lock |
+| `VOICE_STYLE` | `0.45` | ✅ Yes (0.0–1.0) | Expressiveness |
+| `VOICE_USE_SPEAKER_BOOST` | `true` | ✅ Yes | Clarity enhancement |
+| `WORDPRESS_PODCAST_ID` | `2616` | ✅ Yes | VNewsOS parent podcast post ID |
+| `AUDIO_CDN_BASE_URL` | `https://cdn.fold42.com/…` | ✅ Yes | New CDN (when live) |
+| `AUDIO_CDN_BASE_URL_LEGACY` | `https://cdn.vicinitynews.com/…` | ✅ Yes | Legacy CDN |
+| `WORDPRESS_CATEGORIES` | `News, The Morning Cup` | ✅ Yes | Default WP categories |
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+## Sync & Update
+
+### Pull latest code and redeploy
 
 ```bash
 cd ~/Documents/"The Morning Cup"/Generator
-./scripts/morning-cup.sh audacity
-```
-
-Opens `Episodes/The Morning Cup - DATE.aup3`:
-- **GREEN** — Intro / Outro
-- **ORANGE** — Coffee Pour, Stings, Transitions
-- **BLUE** — TTS content chunks
-- **YELLOW** — Background Music
-- **Labels** — Chapter markers at exact timestamps
-
----
-
-## Folder structure (inside `~/Documents/The Morning Cup/`)
-
-```
-Sounds/
-  Hello.mp3               ← intro music
-  Goodbye.mp3             ← outro music
-  Coffee Pour.wav         ← coffee pour sfx
-  intro-sting.wav         ← optional transition sting
-  transition.wav          ← optional section transition
-  Podcast Background.mp3  ← optional background music (mixed at 10%)
-Chunks/                   ← auto-created, TTS chunks downloaded here
-Episodes/                 ← final MP3s + .aup3 projects saved here
-.env                      ← local secrets (never committed)
-scripts/                  ← morning-cup.sh and all helper scripts
-src/                      ← Cloudflare Worker TypeScript source
-wrangler.toml             ← Worker config
-```
-
-## .env file
-
-```
-WORKER_URL=https://themorningcupgenerator.itsmiarosemathews.workers.dev
-RUN_SECRET=your-run-secret
-OPENAI_API_KEY=your-openai-key
-ELEVENLABS_API_KEY=your-elevenlabs-key
-ELEVENLABS_VOICE_ID=your-voice-id
-```
-
-Secrets are also set in Cloudflare via `npx wrangler secret put <NAME>`.
-
----
-
-## Worker config
-
-Key variables in `wrangler.toml`:
-
-| Variable | Default | Description |
-|---|---|---|
-| `OPENAI_MODEL` | `o3` | Script generation model |
-| `MIN_SCRIPT_WORDS` | `2175` | Hard floor (15 min) |
-| `TARGET_SCRIPT_WORDS_MIN` | `2610` | Sweet spot (18 min) |
-| `TARGET_SCRIPT_WORDS_MAX` | `2900` | Sweet spot (20 min) |
-| `MAX_SCRIPT_WORDS` | `4350` | Hard ceiling (30 min) |
-| `VOICE_STABILITY` | `0.28` | ElevenLabs stability |
-| `VOICE_STYLE` | `0.45` | ElevenLabs style |
-| `HOST_NAME` | `Penelope Rose` | Host name |
-| `WORDPRESS_PODCAST_ID` | `2616` | WP parent post ID |
-
----
-
-## A note on the original README content below
-it to ordered ElevenLabs MP3 chunks using your custom voice, stores everything
-in Cloudflare R2, and emails you the script, metadata, and chunk links.
-
-## Documentation
-
-| Doc | What's in it |
-|-----|--------------|
-| [docs/NEW-SHOW.md](./docs/NEW-SHOW.md) | **Launch a new Fold 42 podcast** — white-label setup, API keys, voice cloning, prompt writing, step-by-step from concept to first episode |
-| [docs/SHOW-PLANNER.md](./docs/SHOW-PLANNER.md) | **New show planning quiz** — answer every question before writing code; produces wrangler.toml inputs and a prompt brief |
-| [docs/BEST-PRACTICES.md](./docs/BEST-PRACTICES.md) | **What we learned** — prompt engineering, voice quality, infrastructure, editorial; what works and what to avoid |
-| [docs/AUDIT.md](./docs/AUDIT.md) | **Producer and compliance audit guide** — daily spot-checks, full episode review, quarterly compliance, incident response |
-| [docs/COMPLIANCE.md](./docs/COMPLIANCE.md) | **Legal and compliance** — voice talent agreements, platform AI disclosure requirements, copyright, data privacy |
-| [CONTRIBUTING.md](./CONTRIBUTING.md) | **Branch protection and access control** — who can merge, what's locked, PR process, forking policy |
-| [docs/QUICKSTART.md](./docs/QUICKSTART.md) | **First-time setup** — every command in a copy-paste block, zero to first episode |
-| [docs/PRODUCTION-WORKFLOW.md](./docs/PRODUCTION-WORKFLOW.md) | **Daily morning routine** — pull, build, upload, review, publish |
-| [docs/PIPELINE.md](./docs/PIPELINE.md) | Full pipeline diagram + every component, end-to-end |
-| [docs/SETUP.md](./docs/SETUP.md) | Original first-time setup notes (superseded by QUICKSTART) |
-| [docs/WALKTHROUGH.md](./docs/WALKTHROUGH.md) | Worked example: generate one full episode end-to-end (with chapters) |
-| [docs/DAILY-WORKFLOW.md](./docs/DAILY-WORKFLOW.md) | The two commands you run each morning |
-| [docs/EDITING.md](./docs/EDITING.md) | How `build-episode.sh` (and the optional Resolve script) assembles the final MP3 |
-| [docs/CHAPTERS.md](./docs/CHAPTERS.md) | How MP3 chapter markers work + which podcast platforms read them |
-| [docs/TRANSCRIPTS.md](./docs/TRANSCRIPTS.md) | Where the script lives, how to fetch + search the .txt / .html / .json transcripts |
-| [docs/APPLE-SHORTCUTS.md](./docs/APPLE-SHORTCUTS.md) | Run the pipeline from the menu bar / Spotlight / hotkey via Apple Shortcuts |
-| [docs/TEAM-SHARING.md](./docs/TEAM-SHARING.md) | One-command onboarding, asset distribution, secret management, offboarding |
-| [docs/PUBLISHING.md](./docs/PUBLISHING.md) | Auto-publish to Google Drive + create a WordPress draft after each run |
-| [docs/PROMPTS.md](./docs/PROMPTS.md) | ElevenLabs prompts that have worked (stings, voice lines) |
-| [docs/TUNING.md](./docs/TUNING.md) | All the config knobs and what's safe to change |
-| [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) | Real issues we hit + the fixes that worked |
-| [docs/CHANGELOG.md](./docs/CHANGELOG.md) | What's changed in the pipeline since initial deployment |
-
----
-
-## 1. Overview
-
-Every morning the Worker:
-
-1. Determines the episode date in `America/New_York` and the previous-day
-   source date.
-2. Builds a categorized **source digest** from configured RSS feeds (or a
-   News API endpoint).
-3. Generates the full episode JSON via the **OpenAI Responses API** using a
-   strict JSON schema.
-4. **Validates** runtime (≥ 20 min, ≤ 25 min, target 22–25), spacer count,
-   forbidden patterns, required sections, and required fields.
-5. If validation fails and `ENABLE_REPAIR_PASS=true`, runs **one** repair
-   pass.
-6. **Chunks** the ElevenLabs script (split on `[TEN-SECOND SECTION SPACER]`,
-   merged short pieces, hard-capped at `MAX_TTS_CHARS_PER_CHUNK`).
-7. Sends each chunk to **ElevenLabs** with your voice and saves an ordered
-   MP3 to R2.
-8. Writes a **manifest.json** and an ffmpeg-compatible **files.txt**.
-9. Sends a **completion email** via Resend with all links and chunk URLs.
-10. Records the run status in KV (and a durable copy in R2) for idempotency.
-
-## 2. Architecture
-
-```
-                         Cloudflare cron (hourly, 09–11 UTC)
-                                    │
-                                    ▼
-                  ┌────────── scheduled() ───────────┐
-                  │ check America/New_York hour == 5  │
-                  │ check KV / R2 idempotency lock    │
-                  └──────────────┬───────────────────┘
-                                 ▼
-                       ┌──── runEpisode() ────┐
-                       │ source digest         │  ← RSS / News API
-                       │ OpenAI Responses API  │  ← strict JSON schema
-                       │ validate + repair     │
-                       │ TXT / HTML / JSON     │ ─→ R2
-                       │ chunker (spacer split)│
-                       │ ElevenLabs TTS        │ ─→ R2  (chunks/*.mp3)
-                       │ manifest + files.txt  │ ─→ R2
-                       │ Resend email          │ ─→ EMAIL_TO
-                       │ run status            │ ─→ KV + R2
-                       └───────────────────────┘
-```
-
-Manual HTTP routes:
-
-```
-GET  /health
-GET  /status?date=YYYY-MM-DD                       (auth optional)
-POST /run                                           (Bearer RUN_SECRET)
-POST /run?date=YYYY-MM-DD&force=true                (Bearer RUN_SECRET)
-```
-
-## 3. Why the Worker doesn’t stitch with ffmpeg
-
-Cloudflare Workers cannot run ffmpeg or any other native binary, and they
-don’t have a filesystem or `child_process`. We side-step this by:
-
-- Generating one MP3 per **section spacer** (with hard cap at
-  `MAX_TTS_CHARS_PER_CHUNK` chars, default 2,500).
-- Storing chunks in R2 in playback order.
-- Writing a `manifest.json` and a `files.txt` ffmpeg concat list.
-- Letting you stitch the final episode externally with ffmpeg whenever and
-  wherever you want (locally, GitHub Actions, a server, etc.).
-
-An optional GitHub Actions workflow (`.github/workflows/stitch.yml`) is
-included that downloads chunks via a public R2 URL and stitches them on a
-runner.
-
-## 4. Chunk naming
-
-```
-chunks/The Morning Cup - YYYY-MM-DD - 001.mp3
-chunks/The Morning Cup - YYYY-MM-DD - 002.mp3
-chunks/The Morning Cup - YYYY-MM-DD - 003.mp3
-...
-```
-
-3-digit zero-padded numbering, no skips. Order is the playback order.
-
-## 5. Deploy
-
-**First-time deploy:**
-
-```bash
-npm install
-npm run typecheck
-wrangler login        # one time
-wrangler deploy
-```
-
-**Updating an existing deployment** (do this every time you pull new code):
-
-```bash
-cd /path/to/your/Generator/clone
-git fetch origin
 git pull origin claude/brave-gates-wbCkD
-
-# Regenerate the lock file — REQUIRED before pushing or the
-# Cloudflare dashboard CI will fail with npm ci mismatch errors.
 npm install
-
-wrangler deploy
+npx wrangler deploy
 ```
 
-**Then copy updated scripts to your local Scripts/ folder:**
+### Startup sync (automatic)
+
+Add to your shell profile to auto-sync when opening a terminal:
 
 ```bash
-cp scripts/build-episode.sh \
-   scripts/write-chapters.py \
-   scripts/fetch-chunks.sh \
-   scripts/generate-transcript.py \
-   "$HOME/Documents/The Morning Cup/Scripts/"
+# macOS / Linux — add to ~/.zshrc or ~/.bashrc:
+echo 'cd ~/Documents/"The Morning Cup"/Generator && bash scripts/sync.sh && cd - > /dev/null' >> ~/.zshrc
+source ~/.zshrc
 ```
 
-## 6. Create the R2 bucket
+The `sync.sh` script:
+- Checks for git updates and pulls if available
+- Runs `npm install` if `package.json` changed
+- Prints: `[sync] ✓ Up to date` or `[sync] ↓ Pulled 3 commits — run: npx wrangler deploy`
 
-```bash
-wrangler r2 bucket create morning-cup
-```
-
-(Optional) Make a small range of the bucket publicly readable through a
-**custom domain** or `r2.dev` so chunk links work in email.
-
-## 7. Bind R2 (and KV) in `wrangler.toml`
-
-```toml
-name = "morning-cup-generator"
-main = "src/index.ts"
-compatibility_date = "2026-04-30"
-
-[triggers]
-crons = ["0 9-11 * * *"]   # hourly UTC; code only runs once at 5 AM ET
-
-[[r2_buckets]]
-binding = "MORNING_CUP_BUCKET"
-bucket_name = "morning-cup"
-
-[[kv_namespaces]]
-binding = "MORNING_CUP_KV"
-id = "REPLACE_ME"
-```
-
-Create the KV namespace:
-
-```bash
-wrangler kv namespace create MORNING_CUP_KV
-# Paste the returned id into wrangler.toml.
-```
-
-> The cron is hourly (09–11 UTC) so we can detect 5 AM **America/New_York**
-> across daylight-saving changes from inside the Worker. If the local hour is
-> not 5, the scheduled handler returns immediately. A KV/R2 lock at
-> `morning-cup/YYYY-MM-DD/run.json` prevents double-runs.
-
-## 8. Set secrets
-
-```bash
-wrangler secret put OPENAI_API_KEY
-wrangler secret put ELEVENLABS_API_KEY
-wrangler secret put ELEVENLABS_VOICE_ID
-wrangler secret put RESEND_API_KEY
-wrangler secret put RUN_SECRET
-```
-
-`RUN_SECRET` is the bearer token required by `POST /run`. Choose a long random
-string.
-
-## 9. Configure email
-
-- **EMAIL_FROM** must be a verified Resend sender (e.g.
-  `Fold 42 <morningcup@yourdomain.com>`).
-- **EMAIL_TO** is your inbox.
-- Disable email entirely with `ENABLE_EMAIL=false` (the Worker will still run
-  and write everything to R2).
-
-## 10. Trigger manually
-
-```bash
-# Default to today's episode (in WORKER_TIMEZONE)
-curl -X POST https://YOUR-WORKER.workers.dev/run \
-  -H "Authorization: Bearer YOUR_RUN_SECRET"
-
-# Specific date
-curl -X POST "https://YOUR-WORKER.workers.dev/run?date=2026-05-01" \
-  -H "Authorization: Bearer YOUR_RUN_SECRET"
-
-# Force re-run an already-completed date
-curl -X POST "https://YOUR-WORKER.workers.dev/run?date=2026-05-01&force=true" \
-  -H "Authorization: Bearer YOUR_RUN_SECRET"
-```
-
-The Worker accepts the request immediately and runs in the background via
-`ctx.waitUntil`. Check progress via `/status`.
-
-## 11. Check status
-
-```bash
-curl -H "Authorization: Bearer YOUR_RUN_SECRET" \
-  "https://YOUR-WORKER.workers.dev/status?date=2026-05-01"
-```
-
-Response includes status (`pending` → `generating` → `validating` → `tts` →
-`completed`/`failed`), word count, runtime, chunk count, and R2 keys.
-
-Set `STATUS_PUBLIC=true` if you want `/status` to be public (auth still
-optional otherwise). `/health` is always public.
-
-## 12. Download chunks
-
-If `R2_PUBLIC_BASE_URL` is set, every email includes ordered chunk URLs.
-Otherwise, list R2 with the included keys:
-
-```bash
-wrangler r2 object get morning-cup/2026-05-01/chunks/"The Morning Cup - 2026-05-01 - 001.mp3" --file 001.mp3
-```
-
-## 13. Stitch chunks locally with ffmpeg
-
-```bash
-# from a directory containing the .mp3 chunks and files.txt
-ffmpeg -f concat -safe 0 -i "The Morning Cup - 2026-05-01 - files.txt" \
-  -c copy "The Morning Cup - 2026-05-01.mp3"
-```
-
-## 14. Re-encode stitch (if `-c copy` fails)
-
-```bash
-ffmpeg -f concat -safe 0 -i "The Morning Cup - 2026-05-01 - files.txt" \
-  -acodec libmp3lame -b:a 128k "The Morning Cup - 2026-05-01.mp3"
-```
-
-The optional `.github/workflows/stitch.yml` runs this in CI given the episode
-date and the public R2 base URL.
-
-## 15. Troubleshooting validation failures
-
-If validation fails after the repair pass, the Worker:
-
-- saves the rejected JSON to `morning-cup/rejected/YYYY-MM-DD-<ts>.json`
-- emails a `FAILED:` alert with the validation error list
-- marks the run `failed` (you can re-run with `force=true`)
-
-Common causes:
-
-- **Word count too low** → expand politics / international / Iran / Gaza
-  sections; check the source digest is producing items.
-- **Missing spacers** → the master prompt requires `[TEN-SECOND SECTION
-  SPACER]` after every major section; a low spacer count almost always means
-  the model truncated. Increase `max_output_tokens` in `src/openai.ts` if
-  you’ve customized the prompt.
-- **Forbidden patterns** ("music cue", "production note", "voice
-  description") → bug in the model’s adherence; re-run usually fixes it.
-- **JSON parse failure** → raw response is saved under `morning-cup/rejected/`
-  for inspection.
-
-## 16. Troubleshooting ElevenLabs limits
-
-- **429** is automatically retried with exponential backoff and honors
-  `retry-after`.
-- The default `MAX_TTS_CHARS_PER_CHUNK=2500` is below ElevenLabs free-tier
-  limits; raise it to use longer chunks if your plan allows.
-- If a chunk repeatedly fails, the Worker saves partial progress, marks the
-  run failed, and emails a failure alert. Re-running with `force=true`
-  re-generates the script and re-renders all chunks.
-
-## 17. Cost notes
-
-- **OpenAI** — one `o3` Responses call per day for the script (~3,500 words
-  output) plus one `gpt-4o-mini` call for SEO/metadata, plus an optional
-  repair pass. Roughly $0.10–0.20/episode at current pricing.
-- **ElevenLabs** — each chunk is one TTS call. A 3,500-word episode produces
-  roughly 8–14 chunks; cost depends on your plan and per-character rate.
-- **Cloudflare** — Workers (cron + small fetch handler), R2 storage (an
-  episode is ~10–25 MB), and KV ops. Far below the free tier for a daily
-  show.
-- **Resend** — one transactional email per successful run plus any failure
-  alerts.
-
-## 18. Security notes
-
-- **No secrets in `wrangler.toml`** — only Workers Secrets via
-  `wrangler secret put`.
-- `POST /run` requires `Authorization: Bearer ${RUN_SECRET}`. The Worker
-  rejects 401 if the secret is missing or wrong.
-- `/health` is public.
-- `/status` is gated by `STATUS_PUBLIC` (default `false`, requires the same
-  bearer).
-- `R2_PUBLIC_BASE_URL` is opt-in. If you don’t set it, no public links are
-  generated and emails reference R2 keys only.
-- The Worker never executes user-provided code, never calls `fs` /
-  `child_process` (neither exists in Workers), and never scrapes ChatGPT or
-  uses stored ChatGPT credentials.
-- The OpenAI call uses the **Responses API with strict JSON schema** so
-  malformed output is rejected at the API boundary.
+[↑ Back to top](#table-of-contents)
 
 ---
 
-## Repository layout
+## Desktop Applet
 
-```
-package.json
-wrangler.toml
-tsconfig.json
-README.md
-.env.example
-.github/workflows/stitch.yml      # optional ffmpeg stitching workflow
-src/
-  index.ts          # fetch + scheduled handlers
-  config.ts         # env/var loader
-  types.ts          # shared TypeScript types
-  prompt.ts         # master prompt (do not modify)
-  schema.ts         # OpenAI Responses JSON schema
-  openai.ts         # Responses API client + repair
-  sourceDigest.ts   # RSS/News API source digest builder
-  validator.ts      # runtime/format validation rules
-  repair.ts         # one-shot repair orchestration
-  chunker.ts        # spacer split + sentence-boundary chunking
-  elevenlabs.ts     # TTS client with retry + 429 handling
-  r2.ts             # R2 helpers (text/json/buffer/list/url)
-  email.ts          # Resend completion + failure emails
-  html.ts           # clean HTML script renderer
-  manifest.ts       # manifest.json + files.txt builders
-  locks.ts          # KV/R2 idempotency + status records
-  logger.ts         # JSON line logger
-  utils/
-    date.ts         # tz-aware Intl date helpers
-    text.ts         # word count, spacer count, escapes, pad3
+The desktop applet gives you a clickable command panel that opens directly in your terminal.
+
+**Create the desktop shortcut:**
+```bash
+cd ~/Documents/"The Morning Cup"/Generator
+bash scripts/create-desktop-shortcut.sh
 ```
 
-## R2 layout
+**What it creates:**
+- **macOS:** `~/Desktop/The Morning Cup.command` — double-click opens Terminal + applet
+- **Linux:** `~/.local/share/applications/morning-cup.desktop` + `~/Desktop/` icon
+- **Windows (WSL):** Instructions printed for creating a `.bat` shortcut on Windows Desktop
 
+**What the applet does:**
+- Shows all available commands in a left panel
+- Navigate with arrow keys, press Enter to run, or type the number
+- Remembers your preferred terminal (saved to `~/.morning-cup-prefs.json`)
+- Injects the selected command into the terminal
+
+```bash
+# Run directly at any time:
+python3 scripts/applet.py
+
+# No-TUI mode (plain numbered menu):
+python3 scripts/applet.py --no-tui
 ```
-morning-cup/
-  YYYY-MM-DD/
-    The Morning Cup - YYYY-MM-DD.txt
-    The Morning Cup - YYYY-MM-DD.html
-    The Morning Cup - YYYY-MM-DD.json
-    The Morning Cup - YYYY-MM-DD - manifest.json
-    The Morning Cup - YYYY-MM-DD - files.txt
-    run.json                                  # idempotency / status record
-    chunks/
-      The Morning Cup - YYYY-MM-DD - 001.mp3
-      The Morning Cup - YYYY-MM-DD - 002.mp3
-      ...
-  rejected/
-    YYYY-MM-DD-<timestamp>.json               # failed runs land here
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+## Security & Access Control
+
+### The rules
+
+- **Secrets are NEVER committed to git** — they live in Cloudflare Worker Secrets only
+- **Only @pennydoesdev** can delete KV records, modify secrets, or approve merges
+- **RUN_SECRET** is required for all `/run`, `/approve`, `/reject` endpoints
+- **`.env` is in `.gitignore`** and must never be pushed
+
+### Who can do what
+
+| Action | Who |
+|--------|-----|
+| Merge PRs | `@pennydoesdev` only |
+| Rotate secrets | `@pennydoesdev` only |
+| Delete KV run records | `@pennydoesdev` only |
+| Generate episodes | Anyone with `RUN_SECRET` |
+| Approve scripts | Anyone with `RUN_SECRET` |
+| View status | Anyone (if `STATUS_PUBLIC=true`) or `RUN_SECRET` bearer |
+
+### Rotate a secret
+
+```bash
+# Generate a new secret, then:
+npx wrangler secret put RUN_SECRET
+# Update ~/Documents/"The Morning Cup"/.env with the new value
+# Notify team members of the new RUN_SECRET
 ```
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full access control policy and team onboarding guide.
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| **Validation fails — word count too low** | Re-run with `--force`; check source digest is producing news items |
+| **ElevenLabs 429 rate limit** | Wait and retry; check quota at elevenlabs.io dashboard |
+| **Worker times out** | Re-run with `--force`; partial chunks are saved |
+| **`wrangler: command not found`** | Run `npm install -g wrangler` or use `npx wrangler` |
+| **`ffmpeg: command not found`** | Install ffmpeg — see [Required Software](#required-software) |
+| **Preflight fails: missing sounds** | Add required .mp3/.wav files to `Sounds/` — see [Folder Structure](#folder-structure) |
+| **`RUN_SECRET not set`** | Add `RUN_SECRET=...` to `~/Documents/The Morning Cup/.env` |
+| **Stuck at `awaiting_approval`** | Run `./scripts/morning-cup.sh approve 2026-05-24` |
+| **TypeScript errors** | Run `npx tsc --noEmit` to see details; check you ran `npm install` |
+| **KV namespace not found** | Verify `wrangler.toml` KV namespace ID matches Cloudflare account |
+| **Audacity won't open .aup3** | You need Audacity 3.x (not 2.x) — [download here](https://www.audacityteam.org/download/) |
+| **Audacity FFmpeg error** | Install the [FFmpeg library for Audacity](https://support.audacityteam.org/basics/installing-ffmpeg) |
+| **Pronunciation issues** | Add entry to `data/pronunciation-dictionary.json` — plain phonetic with spaces, no hyphens |
+
+For advanced troubleshooting and configuration tuning, see [docs/OPERATIONS.md](./docs/OPERATIONS.md).
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+## Documentation Index
+
+| Document | Description |
+|----------|-------------|
+| [docs/GETTING-STARTED.md](./docs/GETTING-STARTED.md) | Complete first-time setup walkthrough with worked example |
+| [docs/PIPELINE.md](./docs/PIPELINE.md) | Architecture diagrams, component breakdown, API endpoints |
+| [docs/OPERATIONS.md](./docs/OPERATIONS.md) | Configuration tuning, voice tuning, best practices, advanced troubleshooting |
+| [docs/PUBLISHING.md](./docs/PUBLISHING.md) | WordPress integration, Metadata.txt format, CDN migration, Google Drive |
+| [docs/COMPLIANCE.md](./docs/COMPLIANCE.md) | AI disclosure requirements, copyright, compliance checklists, incident response |
+| [docs/NEW-SHOW.md](./docs/NEW-SHOW.md) | Launch a new Fold 42 podcast (white-label setup guide) |
+| [docs/SHOW-PLANNER.md](./docs/SHOW-PLANNER.md) | Pre-coding questionnaire — answer before writing any code |
+| [docs/APPLE-SHORTCUTS.md](./docs/APPLE-SHORTCUTS.md) | Run the pipeline from the macOS menu bar / Spotlight / hotkey |
+| [docs/CHANGELOG.md](./docs/CHANGELOG.md) | Version history and change log |
+| [docs/PROMPTS.md](./docs/PROMPTS.md) | ElevenLabs voice prompts library |
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | Branch protection, PR process, team onboarding, offboarding, secret management |
+
+[↑ Back to top](#table-of-contents)
+
+---
+
+*Built with ☕ by [Fold 42](https://fold42.com) · Host: Penelope Rose · © Fold 42*

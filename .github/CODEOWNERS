@@ -1,24 +1,82 @@
-# CODEOWNERS — Fold 42 Podcast Infrastructure
-# All PRs require infrastructure review. Prompt and validator changes
-# also require editorial (EP) sign-off. Legal docs require compliance team.
+# CODEOWNERS — The Morning Cup / Fold 42 Podcast Infrastructure
+#
+# Only @pennydoesdev can approve and merge any change in this repository.
+# No other user may delete KV records, modify secrets, or merge to any
+# production branch without explicit sign-off from @pennydoesdev.
+#
+# Branch protection rules (apply in GitHub → Settings → Branches):
+#   - Require pull request before merging: enabled
+#   - Required approvals: 1 (must be @pennydoesdev)
+#   - Dismiss stale reviews on new commits: enabled
+#   - Require review from Code Owners: enabled
+#   - Allow force pushes: NEVER
+#   - Allow deletions: NEVER
 
-# Default: all changes require infrastructure review
-*                           @pennydoesdev
+# ─── Default ─────────────────────────────────────────────────────────────────
+# Every file in the repository requires @pennydoesdev review and approval.
+*                                   @pennydoesdev
 
-# Prompt and validator changes require EP sign-off too
-src/prompt.ts               @pennydoesdev
-src/validator.ts            @pennydoesdev
+# ─── Core Worker Pipeline ─────────────────────────────────────────────────────
+# The Worker entrypoint, AI clients, TTS pipeline, and R2/KV helpers are
+# infrastructure-critical. Only @pennydoesdev may merge changes here.
+src/index.ts                        @pennydoesdev
+src/config.ts                       @pennydoesdev
+src/types.ts                        @pennydoesdev
+src/openai.ts                       @pennydoesdev
+src/chunker.ts                      @pennydoesdev
+src/elevenlabs.ts                   @pennydoesdev
+src/tts.ts                          @pennydoesdev
+src/r2.ts                           @pennydoesdev
+src/locks.ts                        @pennydoesdev
+src/description.ts                  @pennydoesdev
+src/manifest.ts                     @pennydoesdev
+src/factcheck.ts                    @pennydoesdev
+src/repair.ts                       @pennydoesdev
+src/serializedScript.ts             @pennydoesdev
+src/sidecar.ts                      @pennydoesdev
+src/sourceDigest.ts                 @pennydoesdev
+src/topics.ts                       @pennydoesdev
+src/pronunciationScanner.ts         @pennydoesdev
+src/validator.ts                    @pennydoesdev
+src/schema.ts                       @pennydoesdev
+src/html.ts                         @pennydoesdev
+src/logger.ts                       @pennydoesdev
+src/utils/date.ts                   @pennydoesdev
+src/utils/text.ts                   @pennydoesdev
 
-# Core pipeline — infrastructure team only
-src/chunker.ts              @pennydoesdev
-src/elevenlabs.ts           @pennydoesdev
-src/index.ts                @pennydoesdev
-src/openai.ts               @pennydoesdev
-src/config.ts               @pennydoesdev
-src/types.ts                @pennydoesdev
-src/r2.ts                   @pennydoesdev
-src/description.ts          @pennydoesdev
+# ─── Prompt (content policy) ─────────────────────────────────────────────────
+# The master prompt defines editorial policy, AI disclosures, pronunciation
+# rules, and full-name enforcement. Requires @pennydoesdev sign-off.
+src/prompt.ts                       @pennydoesdev
 
-# Compliance and legal docs
-docs/COMPLIANCE.md          @pennydoesdev
-docs/AUDIT.md               @pennydoesdev
+# ─── Worker Configuration ─────────────────────────────────────────────────────
+# wrangler.toml changes affect the live production worker.
+# Secrets are never stored here, but bindings, KV IDs, and vars are.
+wrangler.toml                       @pennydoesdev
+
+# ─── Pipeline Scripts ─────────────────────────────────────────────────────────
+# Scripts that run on local machines and access R2/KV via wrangler.
+scripts/                            @pennydoesdev
+scripts/morning-cup.sh              @pennydoesdev
+scripts/build-episode.sh            @pennydoesdev
+scripts/fetch-chunks.sh             @pennydoesdev
+scripts/install.sh                  @pennydoesdev
+scripts/sync.sh                     @pennydoesdev
+scripts/applet.py                   @pennydoesdev
+scripts/create-desktop-shortcut.sh  @pennydoesdev
+scripts/team-setup.sh               @pennydoesdev
+
+# ─── Security & Access Control ────────────────────────────────────────────────
+# These files define who can do what. Only @pennydoesdev may change them.
+.github/CODEOWNERS                  @pennydoesdev
+.github/workflows/                  @pennydoesdev
+.gitignore                          @pennydoesdev
+.env.example                        @pennydoesdev
+
+# ─── Compliance & Legal ───────────────────────────────────────────────────────
+docs/COMPLIANCE.md                  @pennydoesdev
+CONTRIBUTING.md                     @pennydoesdev
+
+# ─── Pronunciation Dictionary ─────────────────────────────────────────────────
+# Changes to pronunciation affect every future episode's TTS output.
+data/pronunciation-dictionary.json  @pennydoesdev
