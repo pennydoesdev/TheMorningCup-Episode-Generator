@@ -366,7 +366,7 @@ ${JSON.stringify(prior)}`;
     userInput: repairInput,
     temperature: 0.3,
     maxOutputTokens: 16000,
-    modelOverride: "gpt-4.1-mini",
+    modelOverride: "gpt-5-mini",
   });
   const json = safeParseEpisodeJson(raw);
   if (!json) {
@@ -430,7 +430,7 @@ ${JSON.stringify(prior)}`;
     userInput: extendInput,
     temperature: 0.4,
     maxOutputTokens: 16000,
-    modelOverride: "gpt-4.1-mini",
+    modelOverride: "gpt-5-mini",
   });
   const json = safeParseEpisodeJson(raw);
   if (!json) {
