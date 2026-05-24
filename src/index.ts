@@ -45,6 +45,7 @@ import {
 } from "./locks";
 import {
   normalizeWhitespace,
+  stripInlineAnnotations,
   stripPacingTags,
   stripSpacerMarker,
 } from "./utils/text";
@@ -277,7 +278,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
     const metadataKey = `${baseDir}${baseTitle} - ${episodeIso} - Metadata.txt`;
 
     const cleanForTxt = normalizeWhitespace(
-      stripSpacerMarker(stripPacingTags(episode.elevenlabs_script)),
+      stripInlineAnnotations(stripSpacerMarker(stripPacingTags(episode.elevenlabs_script))),
     );
     await putText(env, txtKey, cleanForTxt);
 

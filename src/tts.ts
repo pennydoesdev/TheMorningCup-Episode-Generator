@@ -15,6 +15,7 @@ import type { Env } from "./types";
 import type { Config } from "./config";
 import { synthesizeChunk, type TtsResult, type VoiceOverride } from "./elevenlabs";
 import { logger } from "./logger";
+import { stripInlineAnnotations } from "./utils/text";
 
 // ---------------------------------------------------------------------------
 // Pronunciation dictionary — hardcoded from data/pronunciation-dictionary.json.
@@ -217,7 +218,10 @@ export async function synthesizeText(
 
     // Send non-empty text parts to ElevenLabs with pronunciation preprocessing.
     if (part.length > 0) {
-      const processed = applyPronunciationDictionary(part);
+      // Strip inline phonetic annotations the model sometimes writes, e.g.
+      // "Iran [ee-RAN]" — brackets are read literally by ElevenLabs.
+      const annotationStripped = stripInlineAnnotations(part);
+      const processed = applyPronunciationDictionary(annotationStripped);
       logger.info("tts synthesize chunk", {
         partIndex: i,
         originalLength: part.length,
