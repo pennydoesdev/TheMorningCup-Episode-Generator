@@ -67,7 +67,7 @@ export function loadConfig(env: Env): Config {
   return {
     openaiModel: str(env.OPENAI_MODEL, "gpt-4.1"),
     elevenLabsModelId: str(env.ELEVENLABS_MODEL_ID, "eleven_multilingual_v2"),
-    elevenLabsOutputFormat: str(env.ELEVENLABS_OUTPUT_FORMAT, "mp3_44100_128"),
+    elevenLabsOutputFormat: str(env.ELEVENLABS_OUTPUT_FORMAT, "mp3_44100_192"),
     workerTimezone: str(env.WORKER_TIMEZONE, "America/New_York"),
 
     minScriptWords: num(env.MIN_SCRIPT_WORDS, 2175),
