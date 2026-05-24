@@ -1,19 +1,41 @@
-# ☕ The Morning Cup — Episode Generator
+# The Morning Cup — Episode Generator
 
-> Automated daily podcast generator by **Fold 42** — powered by OpenAI gpt-5.5 + ElevenLabs TTS + Cloudflare Workers.
+**Cloudflare Worker + local pipeline that writes, fact-checks, voices, and assembles a daily news podcast episode — fully automated, with an optional editorial approval gate.**
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org/)
-[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-orange)](https://workers.cloudflare.com/)
-[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)]()
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6?logo=typescript&logoColor=white)
+![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-f38020?logo=cloudflare&logoColor=white)
 
 ---
 
 ## Table of Contents
 
-- [What Is This?](#what-is-this)
-- [How an Episode Is Created](#how-an-episode-is-created)
-- [Required Software](#required-software)
-- [Required Accounts](#required-accounts)
+1. [What Is This?](#what-is-this)
+2. [How an Episode Is Created — Pipeline Overview](#how-an-episode-is-created--pipeline-overview)
+3. [Required Software](#required-software)
+4. [Required Accounts](#required-accounts)
+5. [First-Time Setup](#first-time-setup)
+   - [macOS](#macos)
+   - [Windows (WSL)](#windows-wsl)
+   - [Ubuntu / Debian](#ubuntu--debian)
+   - [CentOS / RHEL](#centos--rhel)
+   - [Raspberry Pi](#raspberry-pi)
+   - [Chrome OS (Crostini)](#chrome-os-crostini)
+   - [All Platforms — Clone & Install](#all-platforms--clone--install)
+6. [Audacity Setup](#audacity-setup)
+7. [Folder Structure](#folder-structure)
+8. [Environment File (.env)](#environment-file-env)
+9. [Deploying the Worker](#deploying-the-worker)
+10. [Daily Workflow](#daily-workflow)
+11. [Approval Workflow](#approval-workflow)
+12. [WordPress / VNewsOS Integration](#wordpress--vnewsos-integration)
+13. [All Generated Files](#all-generated-files)
+14. [Worker Configuration Reference](#worker-configuration-reference)
+15. [Sync & Update](#sync--update)
+16. [Desktop Applet](#desktop-applet)
+17. [Security & Access Control](#security--access-control)
+18. [Troubleshooting](#troubleshooting)
+19. [Documentation Index](#documentation-index)
+20. [License / Credits](#license--credits)
 - [First-Time Setup](#first-time-setup)
   - [macOS](#macos)
   - [Windows (WSL2)](#windows-wsl2)

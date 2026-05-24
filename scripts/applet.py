@@ -237,14 +237,13 @@ def run_plain_menu(generator_dir: Path, has_secret: bool) -> None:
     print("  ║  Episode Generator                    ║")
     print("  ╠═══════════════════════════════════════╣")
     for i, (cmd, desc) in enumerate(COMMANDS):
-        num = str(i) if i < 10 else str(i - 10)
-        num_display = num if i < len(COMMANDS) else "0"
-        # Use 1-based but wrap 10 as 0
         display_num = str(i + 1) if i < 9 else ("0" if i == 9 else str(i - 9))
-        print(f"  ║  [{display_num}] {cmd:<13} {desc:<22} ║")
+        # Inner box width is 37; row template "  [N] CCCCCCCCCCCCC DDDDDDDDDDDDD " = 2+3+1+13+1+13+1 = 34 + borders
+        line = f"  [{display_num}] {cmd:<13} {desc:<13}"
+        print(f"  ║{line:<37}║")
     print("  ╠═══════════════════════════════════════╣")
-    print(f"  ║  Date:   {today:<29} ║")
-    print(f"  ║  Secret: {secret_status:<29} ║")
+    print(f"  ║  Date:   {today:<27}  ║")
+    print(f"  ║  Secret: {secret_status:<27}  ║")
     print("  ╠═══════════════════════════════════════╣")
     print("  ║  Enter number to run  |  q to quit   ║")
     print("  ╚═══════════════════════════════════════╝")
