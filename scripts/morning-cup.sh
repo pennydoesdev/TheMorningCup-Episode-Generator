@@ -8,6 +8,8 @@
 # Subcommands:
 #     preflight             check every dependency + asset + secret
 #     make [DATE]           full pipeline: preflight -> run -> poll -> fetch -> build
+#     approve [DATE]        approve the script and trigger TTS (when approval gate is on)
+#     reject [DATE]         reject the script so it can be regenerated with --force
 #     monitor [DATE]        live dashboard — auto-exits when completed or failed
 #     status [DATE]         one-shot JSON status snapshot
 #     fetch [DATE]          R2 chunks + manifest only
@@ -264,8 +266,9 @@ worker_status() {
     "$WORKER_URL/status?date=$DATE"
 }
 
-# Returns "completed" | "failed" | "pending" | "generating" | "validating" |
-# "tts" | "absent" | "unknown" on stdout.
+# Returns the raw status string on stdout:
+#   completed | failed | pending | generating | validating |
+#   awaiting_approval | approved | tts | absent | unknown
 parse_status() {
   python3 -c "
 import json, sys
@@ -279,6 +282,20 @@ record = d.get('record')
 if not record:
     print('absent'); sys.exit(0)
 print(record.get('status', 'unknown'))
+"
+}
+
+# Extract the serialized_script_key from a status JSON blob on stdin.
+parse_script_key() {
+  python3 -c "
+import json, sys
+try:
+    d = json.loads(sys.stdin.read())
+except Exception:
+    sys.exit(0)
+r = d.get('record') or {}
+k = r.get('serialized_script_key', '')
+if k: print(k)
 "
 }
 
@@ -335,27 +352,60 @@ cmd_make() {
   fi
 
   if [ "$STATUS" != "completed" ]; then
-    step "step 2/4: polling /status every 20s (max 30 min)..."
+    step "step 2/4: polling /status every 20s (max 30 min for script, then waits for approval)..."
     log "  tip: open a second terminal and run 'morning-cup.sh monitor' for a live dashboard"
     local DEADLINE=$(( $(date +%s) + 1800 ))
-    local STAGE_LABELS="pending=queued  generating=writing-script  validating=checking  tts=rendering-audio  completed=done"
+    local APPROVAL_NOTIFIED=0
     while [ "$STATUS" != "completed" ] && [ "$STATUS" != "failed" ]; do
-      if [ "$(date +%s)" -ge "$DEADLINE" ]; then
-        die "timed out after 30 minutes. Last status: $STATUS"
+      # Hard timeout applies only while the script is still generating.
+      # Once awaiting_approval we wait indefinitely (human-in-the-loop).
+      if [ "$STATUS" != "awaiting_approval" ] && [ "$STATUS" != "approved" ]; then
+        if [ "$(date +%s)" -ge "$DEADLINE" ]; then
+          die "timed out after 30 minutes. Last status: $STATUS"
+        fi
       fi
       sleep 20
-      STATUS=$(worker_status "$DATE" | parse_status)
+      local STATUS_JSON
+      STATUS_JSON=$(worker_status "$DATE")
+      STATUS=$(echo "$STATUS_JSON" | parse_status)
       local LABEL
       case "$STATUS" in
-        pending)    LABEL="queued, waiting to start" ;;
-        generating) LABEL="OpenAI writing script..." ;;
-        validating) LABEL="checking word count + structure..." ;;
-        tts)        LABEL="ElevenLabs rendering chunks..." ;;
-        completed)  LABEL="done!" ;;
-        failed)     LABEL="FAILED" ;;
-        *)          LABEL="$STATUS" ;;
+        pending)            LABEL="queued, waiting to start" ;;
+        generating)         LABEL="OpenAI writing script..." ;;
+        validating)         LABEL="checking word count + structure..." ;;
+        awaiting_approval)  LABEL="script ready — waiting for editorial approval" ;;
+        approved)           LABEL="approved — ElevenLabs rendering starting..." ;;
+        tts)                LABEL="ElevenLabs rendering chunks..." ;;
+        completed)          LABEL="done!" ;;
+        failed)             LABEL="FAILED" ;;
+        *)                  LABEL="$STATUS" ;;
       esac
-      printf "[mc]   %s  %-12s  %s\n" "$(date +%H:%M:%S)" "$STATUS" "$LABEL"
+      printf "[mc]   %s  %-20s  %s\n" "$(date +%H:%M:%S)" "$STATUS" "$LABEL"
+
+      # On first detection of awaiting_approval, print the review doc location
+      # and instructions for approving.
+      if [ "$STATUS" = "awaiting_approval" ] && [ "$APPROVAL_NOTIFIED" = "0" ]; then
+        APPROVAL_NOTIFIED=1
+        local SCRIPT_KEY
+        SCRIPT_KEY=$(echo "$STATUS_JSON" | parse_script_key)
+        echo ""
+        printf "  ${C_BOLD}--- Editorial Review Required ---${C_RESET}\n"
+        printf "  The script is ready and waiting for approval.\n\n"
+        if [ -n "$SCRIPT_KEY" ]; then
+          printf "  Serialized Script (R2 key):\n"
+          printf "    ${C_DIM}%s${C_RESET}\n\n" "$SCRIPT_KEY"
+          printf "  Download to review:\n"
+          printf "    ${C_DIM}npx wrangler r2 object get vicinity \"%s\" --file review.html${C_RESET}\n\n" "$SCRIPT_KEY"
+        fi
+        printf "  To approve and start TTS:\n"
+        printf "    ${C_DIM}./scripts/morning-cup.sh approve %s${C_RESET}\n\n" "$DATE"
+        printf "  To reject and regenerate:\n"
+        printf "    ${C_DIM}./scripts/morning-cup.sh reject %s${C_RESET}\n"
+        printf "    ${C_DIM}./scripts/morning-cup.sh make --force %s${C_RESET}\n"
+        echo ""
+        printf "  Polling continues every 20s — approve in WordPress or via the command above.\n"
+        echo ""
+      fi
     done
   fi
 
@@ -396,6 +446,98 @@ cmd_make() {
   echo ""
   step "make: done."
   log "  $EPISODES/The Morning Cup - $DATE.mp3"
+}
+
+cmd_approve() {
+  load_env
+  [ -n "${RUN_SECRET:-}" ] || die "RUN_SECRET not set."
+  local DATE
+  DATE="$(resolve_date "${1:-}")"
+
+  # Optional: read approver name and notes from stdin or env.
+  local APPROVER_NAME="${APPROVER_NAME:-}"
+  local APPROVER_SERIAL="${APPROVER_SERIAL:-}"
+  local APPROVAL_NOTES="${APPROVAL_NOTES:-}"
+
+  local BODY="{}"
+  if [ -n "$APPROVER_NAME" ] || [ -n "$APPROVER_SERIAL" ] || [ -n "$APPROVAL_NOTES" ]; then
+    BODY=$(python3 -c "
+import json, sys
+d = {}
+name   = '$(echo "$APPROVER_NAME"   | sed "s/'/'\\\\''/g")'
+serial = '$(echo "$APPROVER_SERIAL" | sed "s/'/'\\\\''/g")'
+notes  = '$(echo "$APPROVAL_NOTES"  | sed "s/'/'\\\\''/g")'
+if name:   d['approver_name']   = name
+if serial: d['approver_serial'] = serial
+if notes:  d['approval_notes']  = notes
+print(json.dumps(d))
+")
+  fi
+
+  step "approve: sending approval for $DATE..."
+  if [ "$DRY_RUN" = "1" ]; then
+    log "(dry-run) would: POST $WORKER_URL/approve?date=$DATE"
+    log "(dry-run) body: $BODY"
+    return 0
+  fi
+
+  local RESP HTTP_CODE
+  RESP=$(curl -sS --max-time 900 -w "\n%{http_code}" -X POST \
+    -H "Authorization: Bearer $RUN_SECRET" \
+    -H "Content-Type: application/json" \
+    -d "$BODY" \
+    "$WORKER_URL/approve?date=$DATE")
+  HTTP_CODE=$(echo "$RESP" | tail -1)
+  local BODY_OUT
+  BODY_OUT=$(echo "$RESP" | head -n -1)
+
+  if [ "$HTTP_CODE" = "200" ]; then
+    ok "approved — TTS has started. Poll with:"
+    log "  morning-cup.sh monitor $DATE"
+  else
+    fail "approval request returned HTTP $HTTP_CODE"
+    echo "$BODY_OUT" | python3 -m json.tool >&2 || echo "$BODY_OUT" >&2
+    die "approval failed."
+  fi
+}
+
+cmd_reject() {
+  load_env
+  [ -n "${RUN_SECRET:-}" ] || die "RUN_SECRET not set."
+  local DATE
+  DATE="$(resolve_date "${1:-}")"
+  local REASON="${2:-}"
+
+  local BODY="{}"
+  if [ -n "$REASON" ]; then
+    BODY=$(python3 -c "import json; print(json.dumps({'reason': '$(echo "$REASON" | sed "s/'/'\\\\''/g")'}))")
+  fi
+
+  step "reject: rejecting script for $DATE..."
+  if [ "$DRY_RUN" = "1" ]; then
+    log "(dry-run) would: POST $WORKER_URL/reject?date=$DATE"
+    log "(dry-run) body: $BODY"
+    return 0
+  fi
+
+  local RESP HTTP_CODE
+  RESP=$(curl -sS --max-time 30 -w "\n%{http_code}" -X POST \
+    -H "Authorization: Bearer $RUN_SECRET" \
+    -H "Content-Type: application/json" \
+    -d "$BODY" \
+    "$WORKER_URL/reject?date=$DATE")
+  HTTP_CODE=$(echo "$RESP" | tail -1)
+  local BODY_OUT
+  BODY_OUT=$(echo "$RESP" | head -n -1)
+
+  if [ "$HTTP_CODE" = "200" ]; then
+    ok "script rejected for $DATE. Regenerate with:"
+    log "  morning-cup.sh make --force $DATE"
+  else
+    fail "reject request returned HTTP $HTTP_CODE"
+    echo "$BODY_OUT" | python3 -m json.tool >&2 || echo "$BODY_OUT" >&2
+    die "rejection failed."
+  fi
 }
 
 cmd_status() {
@@ -441,17 +583,21 @@ cmd_monitor() {
 import json, sys
 tmpfile, C_OK, C_ERR, C_DIM, C_RESET = sys.argv[1:]
 
-STAGE_ORDER = ['pending','generating','validating','tts','completed']
+STAGE_ORDER = ['pending','generating','validating','awaiting_approval','approved','tts','completed']
 STAGE_LABEL = {
-  'pending':    'Pending      — queued, about to start',
-  'generating': 'Generating   — OpenAI writing the script...',
-  'validating': 'Validating   — checking word count + structure...',
-  'tts':        'TTS          — ElevenLabs rendering MP3 chunks...',
-  'completed':  'Completed',
-  'failed':     'Failed',
-  'absent':     'Not started yet',
-  'unknown':    'Unknown',
+  'pending':           'Pending           — queued, about to start',
+  'generating':        'Generating        — OpenAI writing the script...',
+  'validating':        'Validating        — checking word count + structure...',
+  'awaiting_approval': 'Awaiting Approval — script ready, waiting for editor sign-off',
+  'approved':          'Approved          — editor approved, TTS starting...',
+  'tts':               'TTS               — ElevenLabs rendering MP3 chunks...',
+  'completed':         'Completed',
+  'failed':            'Failed',
+  'absent':            'Not started yet',
+  'unknown':           'Unknown',
 }
+
+C_WARN = '\033[0;33m'  # yellow for awaiting_approval
 
 try:
     with open(tmpfile) as f:
@@ -466,7 +612,14 @@ if not r:
     sys.exit(0)
 
 status = r.get('status', 'unknown')
-color  = C_OK if status == 'completed' else (C_ERR if status == 'failed' else '')
+if status == 'completed':
+    color = C_OK
+elif status == 'failed':
+    color = C_ERR
+elif status == 'awaiting_approval':
+    color = C_WARN
+else:
+    color = ''
 label  = STAGE_LABEL.get(status, status)
 print(f"  status:   {color}{label}{C_RESET}")
 
@@ -478,13 +631,18 @@ if status in STAGE_ORDER:
     print(f"\n  {C_DIM}{labs}{C_RESET}")
     print(f"  {bar}\n")
 
-for key, label in [
-    ('started_at',                'started: '),
-    ('updated_at',                'updated: '),
+for key, lbl in [
+    ('started_at',  'started:  '),
+    ('updated_at',  'updated:  '),
+    ('approved_at', 'approved: '),
 ]:
     if r.get(key):
-        print(f"  {label}{r[key]}")
+        print(f"  {lbl}{r[key]}")
 
+if r.get('approver_name'):
+    print(f"  approver: {r['approver_name']}")
+if r.get('episode_title'):
+    print(f"  title:    {r['episode_title']}")
 if r.get('word_count') and int(r.get('word_count', 0)) > 0:
     print(f"  words:    {r['word_count']}")
 if r.get('estimated_runtime_minutes') and float(r.get('estimated_runtime_minutes', 0)) > 0:
@@ -493,6 +651,12 @@ if r.get('estimated_runtime_minutes') and float(r.get('estimated_runtime_minutes
     print(f"  runtime:  ~{m}m {s:02d}s")
 if r.get('chunk_count') and int(r.get('chunk_count', 0)) > 0:
     print(f"  chunks:   {r['chunk_count']}")
+if status == 'awaiting_approval':
+    sk = r.get('serialized_script_key', '')
+    if sk:
+        print(f"\n  review:   {C_DIM}{sk}{C_RESET}")
+    print(f"  approve:  morning-cup.sh approve {r.get('episode_date', '')}")
+    print(f"  reject:   morning-cup.sh reject  {r.get('episode_date', '')}")
 if r.get('error'):
     print(f"\n  {C_ERR}error:{C_RESET}    {r['error']}")
 PYEOF
@@ -521,6 +685,8 @@ except:
       printf "  morning-cup.sh make --force %s\n\n" "$DATE"
       break
     fi
+    # awaiting_approval and approved are shown in the dashboard above;
+    # keep polling — no exit here.
 
     sleep 15
   done
@@ -592,6 +758,8 @@ usage() {
 case "${1:-}" in
   preflight)  shift; cmd_preflight ;;
   make)       shift; cmd_make      "${1:-}" ;;
+  approve)    shift; cmd_approve   "${1:-}" "${2:-}" ;;
+  reject)     shift; cmd_reject    "${1:-}" "${2:-}" ;;
   monitor)    shift; cmd_monitor   "${1:-}" ;;
   status)     shift; cmd_status    "${1:-}" ;;
   fetch)      shift; cmd_fetch     "${1:-}" ;;

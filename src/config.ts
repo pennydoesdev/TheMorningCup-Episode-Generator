@@ -32,6 +32,7 @@ export interface Config {
 
   enableSourceDigest: boolean;
   enableRepairPass: boolean;
+  enableApprovalGate: boolean;      // pause before TTS and wait for WP editorial approval
   stripPacingTagsForTts: boolean;
   statusPublic: boolean;
 
@@ -74,6 +75,7 @@ export function loadConfig(env: Env): Config {
 
     enableSourceDigest: bool(env.ENABLE_SOURCE_DIGEST, true),
     enableRepairPass: bool(env.ENABLE_REPAIR_PASS, true),
+    enableApprovalGate: bool(env.ENABLE_APPROVAL_GATE, false),
     stripPacingTagsForTts: bool(env.STRIP_PACING_TAGS_FOR_TTS, true),
     statusPublic: bool(env.STATUS_PUBLIC, false),
 

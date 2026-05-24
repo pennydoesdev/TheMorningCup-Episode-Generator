@@ -32,6 +32,9 @@ WORDS_PER_MINUTE = "145"
 MAX_TTS_CHARS_PER_CHUNK = "5000"
 ENABLE_SOURCE_DIGEST = "true"
 ENABLE_REPAIR_PASS = "true"
+# Set to "true" to pause before TTS and wait for WordPress editorial approval.
+# When enabled, /run stops at awaiting_approval; WordPress calls /approve to continue.
+ENABLE_APPROVAL_GATE = "false"
 STRIP_PACING_TAGS_FOR_TTS = "true"
 STATUS_PUBLIC = "false"
 R2_PUBLIC_BASE_URL = ""

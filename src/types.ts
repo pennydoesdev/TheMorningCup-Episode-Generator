@@ -24,6 +24,7 @@ export interface Env {
   MAX_TTS_CHARS_PER_CHUNK?: string;
   ENABLE_SOURCE_DIGEST?: string;
   ENABLE_REPAIR_PASS?: string;
+  ENABLE_APPROVAL_GATE?: string;
   STRIP_PACING_TAGS_FOR_TTS?: string;
   STATUS_PUBLIC?: string;
 
@@ -161,6 +162,8 @@ export type RunStage =
   | "pending"
   | "generating"
   | "validating"
+  | "awaiting_approval"   // script ready, waiting for editorial sign-off
+  | "approved"            // editor approved — TTS will start
   | "tts"
   | "completed"
   | "failed";
@@ -176,6 +179,7 @@ export interface RunRecord {
   chunk_count?: number;
   word_count?: number;
   estimated_runtime_minutes?: number;
+  episode_title?: string;           // primary title from generateEpisodeCopy
   manifest_key?: string;
   files_txt_key?: string;
   txt_key?: string;
@@ -184,6 +188,13 @@ export interface RunRecord {
   metadata_key?: string;
   sidecar_key?: string;
   serialized_script_key?: string;
+  // Approval gate fields
+  approved_at?: string;
+  approver_name?: string;
+  approver_serial?: string;         // DocuSign-style approval serial from WP
+  approval_notes?: string;
+  rejected_at?: string;
+  rejection_reason?: string;
 }
 
 export interface SourceDigest {
