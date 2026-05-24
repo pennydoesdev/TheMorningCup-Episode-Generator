@@ -22,70 +22,46 @@ import { logger } from "./logger";
 // copy for the Cloudflare Worker (Workers cannot read files at runtime).
 // ---------------------------------------------------------------------------
 
-// Entries where the key is a proper noun or acronym (case-sensitive match)
+// Entries where the key is a proper noun or acronym (case-sensitive match).
+//
+// IMPORTANT — ElevenLabs is a neural TTS engine, NOT a phoneme synthesizer.
+// It reads text as written. Rules for substitutions:
+//   ✅ Use plain phonetic respellings ElevenLabs can read as one natural word
+//   ✅ Use spaces to separate syllables that need a beat between them
+//   ❌ NEVER use hyphens — ElevenLabs renders them as audible pauses/breaks
+//   ❌ NEVER use ALL-CAPS stress markers — ElevenLabs may read them as acronyms
+//   ❌ Don't add an entry for words ElevenLabs already pronounces correctly
+//
+// Trim this list aggressively. Most international proper nouns (Iran, Qatar,
+// Hamas, Netanyahu, Zelensky, Macron, Beijing, etc.) are already in
+// ElevenLabs' training data and pronounced correctly. Only add entries for
+// words that have been confirmed broken in a real episode.
 const CASE_SENSITIVE_SUBSTITUTIONS: Record<string, string> = {
-  "pennydoesnews": "penny-does-news",
-  "Fold 42": "Fold forty-two",
-  "Qatar": "KAH-tar",
-  "Qatari": "kah-TAR-ee",
-  "Iran": "ee-RAN",
-  "Iranian": "ee-RAY-nee-an",
-  "Iraq": "ih-RAK",
-  "Iraqi": "ih-RAH-kee",
-  "Hezbollah": "hez-boh-LAH",
-  "Hamas": "hah-MAHS",
-  "Netanyahu": "neh-tahn-YAH-hoo",
-  "Zelensky": "zeh-LEN-skee",
-  "Macron": "mah-KROHN",
-  "Riyadh": "ree-YAHD",
-  "Dubai": "doo-BY",
-  "Beijing": "bay-JING",
-  "Xinjiang": "shin-jee-AHNG",
-  "Navalny": "nah-VAHL-nee",
-  "Guantanamo": "gwahn-TAH-nah-moh",
-  "LGBTQ+": "L-G-B-T-Q plus",
+  // Show-specific terms ElevenLabs has no training data for
+  "pennydoesnews": "penny does news",
+  "Fold 42": "Fold forty two",
+
+  // Acronyms / initialisms — spell them out with spaces so each letter is read
+  "LGBTQ+": "L G B T Q plus",
   "COVID-19": "COVID nineteen",
-  "COVID": "KOH-vid",
-  "Omicron": "OH-mih-kron",
-  "Xi Jinping": "Shee Jin-ping",
-  "Kamala": "KAH-mah-lah",
-  "Buttigieg": "BOO-tuh-jej",
-  "Boebert": "BOH-bert",
-  "DeSantis": "deh-SAN-tis",
-  "Gavin Newsom": "GAV-in NOO-sum",
-  "Fetterman": "FEH-ter-man",
-  "Warnock": "WAR-nok",
-  "Ossoff": "AH-soff",
-  "Manchin": "MAN-chin",
-  "Sinema": "SIN-eh-mah",
-  "Tuberville": "TOO-ber-vil",
-  "Ocasio-Cortez": "oh-KAH-see-oh KOR-tez",
-  "AOC": "A-O-C",
-  "MAGA": "MAY-gah",
-  "NATO": "NAY-toh",
-  "OPEC": "OH-pek",
-  "UNESCO": "yoo-NES-koh",
-  "UNICEF": "YOO-nih-sef",
-  "Pfizer": "FY-zer",
-  "Moderna": "moh-DER-nah",
-  "AstraZeneca": "AS-trah-ZEH-neh-kah",
-  "Elon": "EE-lon",
-  "Tesla": "TES-lah",
-  "SpaceX": "SPACE-ex",
-  "Neuralink": "NYUR-ah-link",
-  "TikTok": "TIK-tok",
-  "Lyft": "LIFT",
-  "Waymo": "WAY-moh",
-  "Nvidia": "en-VID-ee-ah",
-  "TSMC": "T-S-M-C",
-  "GPT": "G-P-T",
-  "ChatGPT": "Chat G-P-T",
-  "OpenAI": "Open A-I",
+  "AOC": "A O C",
+  "TSMC": "T S M C",
+  "GPT": "G P T",
+  "ChatGPT": "Chat G P T",
+  "OpenAI": "Open A I",
+
+  // Words ElevenLabs consistently gets wrong — confirmed from real episodes.
+  // Add entries here only after hearing the mispronunciation in a generated MP3.
+  // Use plain respelling without hyphens, e.g. "Buttigieg": "Boota jej"
+  "Buttigieg": "Boota jej",
+  "Xinjiang": "Shin jyang",
+  "Guantanamo": "Gwahn tahnamo",
 };
 
-// Entries for common words that should match case-insensitively
+// Entries for common words/acronyms — case-insensitive match.
+// Same rules: plain respelling, no hyphens, no ALL-CAPS stress markers.
 const CASE_INSENSITIVE_SUBSTITUTIONS: Record<string, string> = {
-  "GIF": "JIF",
+  // Add confirmed mispronunciations from real episodes here.
 };
 
 const PAUSE_MARKER = "[5-SECOND PAUSE]";
