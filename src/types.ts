@@ -78,7 +78,6 @@ export interface SelfValidation {
   word_count_estimate: number;
   all_sections_present: boolean;
   has_spacers: boolean;
-  riddle_answer_at_end: boolean;
   no_music_cues: boolean;
   no_production_notes: boolean;
 }
@@ -93,8 +92,6 @@ export interface EpisodeJson {
   source_date: string;
   estimated_runtime: string;
   elevenlabs_script: string;
-  riddle_question: string;
-  riddle_answer: string;
   social_copy: SocialCopy;
   source_notes: SourceNote[];
   self_validation: SelfValidation;

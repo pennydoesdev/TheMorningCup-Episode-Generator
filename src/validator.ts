@@ -19,7 +19,7 @@ const FORBIDDEN_PATTERNS: { name: string; regex: RegExp }[] = [
   {
     name: "section heading line",
     regex:
-      /^\s*(closing summary|power map|cost of living check|what comes next|positive opening|positive closing|riddle answer|section spacer)\s*[:.]?\s*$/im,
+      /^\s*(closing summary|power map|cost of living check|what comes next|positive opening|positive closing|section spacer)\s*[:.]?\s*$/im,
   },
 ];
 
@@ -100,27 +100,6 @@ export function validateEpisode(
     errors.push(`Found only ${spacerCount} spacer markers; need at least 23 (one between each major section, including On This Day)`);
   }
 
-  // Riddle section before outro, riddle answer at end.
-  const lower = script.toLowerCase();
-  const riddleIdx = lower.indexOf("riddle");
-  const outroIdx = lower.indexOf("outro");
-  if (riddleIdx === -1) {
-    errors.push("Script does not include a riddle section");
-  } else if (outroIdx !== -1 && riddleIdx > outroIdx + 200 && lower.indexOf("riddle", outroIdx) === -1) {
-    // Best-effort: riddle question should appear before the outro proper.
-    warnings.push("Riddle section appears after outro");
-  }
-
-  // Riddle answer at very end.
-  const tail = script.slice(-Math.min(800, script.length)).toLowerCase();
-  if (!tail.includes("riddle answer") && !tail.includes("the answer")) {
-    if (!episode.riddle_answer || episode.riddle_answer.trim().length === 0) {
-      errors.push("Riddle answer not present at end of script");
-    } else {
-      warnings.push("Riddle answer present in JSON but not clearly tagged at end of script");
-    }
-  }
-
   for (const f of FORBIDDEN_PATTERNS) {
     if (f.regex.test(script)) errors.push(`Spoken script contains "${f.name}"`);
   }
@@ -138,8 +117,6 @@ export function validateEpisode(
   if (!episode.episode_date) errors.push("episode_date is missing");
   if (!episode.source_date) errors.push("source_date is missing");
   if (!episode.estimated_runtime) errors.push("estimated_runtime is missing");
-  if (!episode.riddle_question) errors.push("riddle_question is missing");
-  if (!episode.riddle_answer) errors.push("riddle_answer is missing");
   if (!episode.social_copy?.main_post) errors.push("social_copy.main_post is missing");
   if (!Array.isArray(episode.social_copy?.section_posts)) {
     errors.push("social_copy.section_posts must be an array");

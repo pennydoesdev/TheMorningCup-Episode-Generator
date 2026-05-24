@@ -88,7 +88,7 @@ function mergeShortSegments(
       last &&
       last.text.length < minChars &&
       !last.isFinal &&
-      // Never merge into the final riddle answer segment.
+      // Never merge into the final outro/sign-off segment.
       !seg.isFinal
     ) {
       last.text = `${last.text}\n\n${seg.text}`;

@@ -80,12 +80,6 @@ ${main}
 </main>
 
 <section>
-  <h2>Riddle</h2>
-  <p><strong>Q:</strong> ${escapeHtml(episode.riddle_question || "")}</p>
-  <p><strong>A:</strong> ${escapeHtml(episode.riddle_answer || "")}</p>
-</section>
-
-<section>
   <h2>Social copy</h2>
   <p><strong>Main:</strong> ${escapeHtml(episode.social_copy?.main_post || "")}</p>
   <ul>

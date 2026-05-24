@@ -27,7 +27,7 @@ import { generateEpisode } from "./openai";
 import { validateEpisode } from "./validator";
 import { maybeRepair } from "./repair";
 import { buildChunks } from "./chunker";
-import { synthesizeChunk } from "./elevenlabs";
+import { synthesizeText } from "./tts";
 import {
   getPublicUrl,
   putArrayBuffer,
@@ -334,15 +334,53 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
               ? (episode.chapters[chapterIdx]?.title)
               : undefined;
             const voiceOverride = getVoicePreset(chapterTitle);
-            const tts = await synthesizeChunk(env, config, { text: chunk.text, voiceOverride });
-            await putArrayBuffer(env, chunk.r2_key, tts.audio, {
-              contentType: tts.contentType || "audio/mpeg",
-              metadata: {
-                episode: episodeIso,
-                order: String(chunk.order),
-                characters: String(chunk.character_count),
-              },
-            });
+
+            // synthesizeText applies the pronunciation dictionary and handles
+            // [5-SECOND PAUSE] markers, returning one or more audio segments.
+            // If there is only one segment (no pause markers), behaviour is
+            // identical to the previous synthesizeChunk call.
+            const ttsSegments = await synthesizeText(
+              env,
+              config,
+              chunk.text,
+              voiceOverride,
+            );
+
+            if (ttsSegments.length === 1) {
+              // Simple case: one audio segment, upload directly to the chunk key.
+              const seg = ttsSegments[0];
+              await putArrayBuffer(env, chunk.r2_key, seg.audio, {
+                contentType: seg.contentType || "audio/mpeg",
+                metadata: {
+                  episode: episodeIso,
+                  order: String(chunk.order),
+                  characters: String(chunk.character_count),
+                },
+              });
+            } else {
+              // Multiple segments from a [5-SECOND PAUSE] split.
+              // Concatenate all segment ArrayBuffers and upload as one file.
+              // (The build-episode.sh pipeline assembles these as a single chunk.)
+              const totalLength = ttsSegments.reduce(
+                (sum, s) => sum + s.audio.byteLength, 0,
+              );
+              const combined = new Uint8Array(totalLength);
+              let offset = 0;
+              for (const seg of ttsSegments) {
+                combined.set(new Uint8Array(seg.audio), offset);
+                offset += seg.audio.byteLength;
+              }
+              await putArrayBuffer(env, chunk.r2_key, combined.buffer, {
+                contentType: "audio/mpeg",
+                metadata: {
+                  episode: episodeIso,
+                  order: String(chunk.order),
+                  characters: String(chunk.character_count),
+                  has_silence_pause: "true",
+                },
+              });
+            }
+
             const publicUrl = getPublicUrl(config, chunk.r2_key);
             slots[i] = { ...chunk, public_url: publicUrl };
           } catch (err) {
@@ -434,8 +472,8 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
 function getVoicePreset(chapterTitle: string | undefined): { stability: number; style: number } | undefined {
   if (!chapterTitle) return undefined;
   const t = chapterTitle.toLowerCase();
-  // Warm and expressive: show opening, closing story, riddle, historical moment, sign-off
-  if (/opening|closing story|closing summary|riddle|on this day|what comes next/.test(t)) {
+  // Warm and expressive: show opening, closing story, historical moment, sign-off
+  if (/opening|closing story|closing summary|on this day|what comes next/.test(t)) {
     return { stability: 0.28, style: 0.80 };
   }
   // Authoritative and steady: hard news and serious analysis
