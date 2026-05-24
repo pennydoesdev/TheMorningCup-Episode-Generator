@@ -8,3 +8,6 @@ dist/
 *.log
 __pycache__/
 *.pyc
+# Standalone plugin directory — integration is handled by the VNewsOS team
+# using docs/WORDPRESS-INTEGRATION.md; no plugin ships in this repo.
+wordpress-plugin/
