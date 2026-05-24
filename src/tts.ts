@@ -50,6 +50,10 @@ const CASE_SENSITIVE_SUBSTITUTIONS: Record<string, string> = {
   "GPT": "G P T",
   "ChatGPT": "Chat G P T",
   "OpenAI": "Open A I",
+  "PFAS": "P faas",
+  "PFOA": "P F O A",
+  "PFOS": "P F O S",
+  "PCBs": "P C Bs",
 
   // Words ElevenLabs consistently gets wrong — confirmed from real episodes.
   // Add entries here only after hearing the mispronunciation in a generated MP3.
@@ -57,10 +61,84 @@ const CASE_SENSITIVE_SUBSTITUTIONS: Record<string, string> = {
   "Buttigieg": "Boota jej",
   "Xinjiang": "Shin jyang",
   "Guantanamo": "Gwahn tahnamo",
+
+  // World leaders / politicians — Arabic and Persian names
+  "Khamenei": "Kha meh nay ee",
+  "Rouhani": "Roo hah nee",
+  "Zarif": "Zah reef",
+  "Raisi": "Rah ee see",
+  "Nasrallah": "Nas rah lah",
+  "Sinwar": "Sin war",
+  "Haniyeh": "Hah nee yeh",
+  "Mahmoud Khalil": "Mahmood Kahleel",
+
+  // World leaders / politicians — Slavic names
+  "Zelenskyy": "Zeh LEN skee",
+  "Zelensky": "Zeh LEN skee",
+  "Lukashenko": "Loo kah SHEN koh",
+  "Medvedev": "Med VEH dev",
+  "Lavrov": "Lah vrof",
+  "Shoigu": "Shoy goo",
+  "Volodymyr": "Vohlohdimeer",
+
+  // World leaders / politicians — Turkish names
+  "Erdogan": "Airdohahn",
+
+  // East Asian names
+  "Xi Jinping": "Shee Jin ping",
+
+  // Key names from recent news
+  "Alejandro Mayorkas": "Alehhandro MyORkahs",
+  "Ilhan Omar": "Ilhan Ohmar",
+  "Rashida Tlaib": "Rahsheedah Tlayib",
+  "Jamal Khashoggi": "Jahmal Kahshohgee",
+
+  // Geography — places ElevenLabs mispronounces
+  "Kyiv": "Keev",
+  "Qatar": "Kutter",
+  "Riyadh": "Ree yahd",
+  "Tehran": "Tehrahn",
+  "Kabul": "Kahbool",
+  "Rafah": "Rahfah",
+  "Tigray": "Tih gray",
+  "Sahel": "Sahell",
+  "Mogadishu": "Mohgadishoo",
+  "Houthis": "Hootheez",
+
+  // Medications — phonetic aliases for names that appear in news coverage
+  "mifepristone": "my feh pris tone",
+  "semaglutide": "sema glootide",
+  "tirzepatide": "tur zeh pah tide",
+  "pembrolizumab": "pem broh liz oo mab",
+  "nivolumab": "ny vol yoo mab",
+  "adalimumab": "adalihmyoomab",
+  "empagliflozin": "empagliflohzin",
+  "dapagliflozin": "dapagliflohzin",
+  "buprenorphine": "byooprehnorfeen",
+  "naloxone": "naloxohn",
+  "hydroxychloroquine": "hy droxy chloro kwin",
+  "ivermectin": "eyevermektin",
+  "remdesivir": "remdehsiveer",
+  "molnupiravir": "molnoopeeraveer",
+  "nirmatrelvir": "nirmahtrelveer",
+  "fentanyl": "fentanil",
+  "naltrexone": "naltrexohn",
+  "methotrexate": "methohtreksate",
+  "trastuzumab": "trastooozoomab",
+  "bevacizumab": "behvahsizyoomab",
+  "atezolizumab": "atezohlizooomab",
+  "cabozantinib": "kabohzantinib",
+
+  // Chemical names that appear in news
+  "trichloroethylene": "triklohrohethileen",
+  "perchloroethylene": "perklohrohethileen",
+  "polychlorinated biphenyls": "polykhlorinayted bifeehnilz",
+  "hexavalent chromium": "hexavaylent krohmeeuhm",
 };
 
 // Entries for common words/acronyms — case-insensitive match.
 // Same rules: plain respelling, no hyphens, no ALL-CAPS stress markers.
+// Covers medical and chemical terms that may appear in various casing in scripts.
 const CASE_INSENSITIVE_SUBSTITUTIONS: Record<string, string> = {
   // Add confirmed mispronunciations from real episodes here.
 };

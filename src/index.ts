@@ -52,6 +52,7 @@ import {
 import { runFactCheck } from "./factcheck";
 import { buildSidecar, uploadSidecar } from "./sidecar";
 import { scanAndFlagProperNouns } from "./pronunciationScanner";
+import { buildSerializedScriptHtml, getSerializedScriptKey } from "./serializedScript";
 
 // Show title is configured via SHOW_TITLE in wrangler.toml.
 // For a new show, change that var — do not hardcode here.
@@ -268,6 +269,27 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
     );
     const sidecarKey = await uploadSidecar(sidecar, env, config.r2KeyPrefix, episodeIso);
 
+    // 4d. Build and upload serialized script HTML (editorial review document).
+    const generatedAt = new Date().toISOString();
+    const serializedScriptHtml = buildSerializedScriptHtml(
+      checkedEpisode,
+      episodeIso,
+      config,
+      factCheckReport,
+      sidecar.episodeId,
+      generatedAt,
+    );
+    const serializedScriptKey = getSerializedScriptKey(
+      config.r2KeyPrefix,
+      episodeIso,
+      sidecar.episodeId,
+      config.showTitle,
+    );
+    await putText(env, serializedScriptKey, serializedScriptHtml, {
+      contentType: "text/html; charset=utf-8",
+    });
+    logger.info("serialized script uploaded", { serializedScriptKey });
+
     // 4. Write TXT, HTML, JSON
     const baseDir = `${config.r2KeyPrefix}/${episodeIso}/`;
     const txtKey = `${baseDir}${baseTitle} - ${episodeIso}.txt`;
@@ -476,6 +498,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       json_key: jsonKey,
       metadata_key: metadataKey,
       sidecar_key: sidecarKey,
+      serialized_script_key: serializedScriptKey,
     });
 
     // Clear any pending correction from KV now that it has been used.
