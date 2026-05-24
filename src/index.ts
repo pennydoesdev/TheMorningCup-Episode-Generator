@@ -48,6 +48,9 @@ import {
   stripPacingTags,
   stripSpacerMarker,
 } from "./utils/text";
+import { runFactCheck } from "./factcheck";
+import { buildSidecar, uploadSidecar } from "./sidecar";
+import { scanAndFlagProperNouns } from "./pronunciationScanner";
 
 // Show title is configured via SHOW_TITLE in wrangler.toml.
 // For a new show, change that var — do not hardcode here.
@@ -236,6 +239,33 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       });
       return;
     }
+
+    // 4a. Fact-check pass (runs after validation, before TTS)
+    const { episode: checkedEpisode, report: factCheckReport } = await runFactCheck(
+      env,
+      config,
+      episode,
+      episodeIso,
+    );
+    episode = checkedEpisode;
+
+    // 4b. Pronunciation scan — flags unknown proper nouns to R2 for review.
+    await scanAndFlagProperNouns(
+      checkedEpisode.elevenlabs_script,
+      episodeIso,
+      env,
+      config.r2KeyPrefix,
+    );
+
+    // 4c. Build and upload sidecar audit trail.
+    const sidecar = buildSidecar(
+      checkedEpisode,
+      episodeIso,
+      config,
+      factCheckReport,
+      config.r2KeyPrefix,
+    );
+    const sidecarKey = await uploadSidecar(sidecar, env, config.r2KeyPrefix, episodeIso);
 
     // 4. Write TXT, HTML, JSON
     const baseDir = `${config.r2KeyPrefix}/${episodeIso}/`;
@@ -444,6 +474,7 @@ async function runEpisode(env: Env, config: Config, inputs: RunInputs): Promise<
       html_key: htmlKey,
       json_key: jsonKey,
       metadata_key: metadataKey,
+      sidecar_key: sidecarKey,
     });
 
     // Clear any pending correction from KV now that it has been used.

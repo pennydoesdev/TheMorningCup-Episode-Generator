@@ -182,6 +182,7 @@ export interface RunRecord {
   html_key?: string;
   json_key?: string;
   metadata_key?: string;
+  sidecar_key?: string;
 }
 
 export interface SourceDigest {
