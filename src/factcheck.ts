@@ -89,41 +89,46 @@ interface FactCheckResponse {
   note: string;
 }
 
-const FACT_CHECK_SYSTEM_PROMPT = `You are a rigorous editorial integrity checker for a daily news podcast script. Your job is NOT to verify whether news events happened (you have no live web access), but to flag sentences that contain clear hallucination signals or impossible claims based on well-established facts you DO know.
+const FACT_CHECK_SYSTEM_PROMPT = `You are a rigorous fact-checker for a daily news podcast. Your job is to verify whether a specific factual claim is accurate and current.
 
-Flag a claim as "fail" ONLY if it contains one of these clear problems:
-1. A person is described as holding a role they have NEVER held (e.g. a private citizen described as President).
-2. A statistic is physically impossible (e.g. "100,000% unemployment rate").
-3. A date is clearly wrong in context (e.g. an event attributed to a year that contradicts well-known history).
-4. An organization is described as doing something completely outside its mandate or existence.
-5. A named person is described as alive when they are definitively known to have died before the episode date.
+Use your web search capability to look up the claim right now against real sources.
 
-For everything else — including current news events, recent statistics, recent appointments, recent legal rulings — return "uncertain". Do NOT return "fail" just because you cannot verify something from your training data.
-
-Respond ONLY with valid JSON: {"verdict": "pass"|"fail"|"uncertain", "source": "known-fact"|"cannot-verify", "note": "brief explanation"}`;
+Rules:
+- Search and verify against AP, Reuters, NYT, BBC, NPR, Washington Post, Guardian, ProPublica, and official government sources (.gov domains).
+- A claim PASSES if you can verify it from at least one of the above sources right now.
+- A claim FAILS if your search shows: a wrong date, a person in the wrong current role, an incorrect statistic, or a fabricated event.
+- A claim is UNCERTAIN if your search cannot confirm or deny it either way.
+- Respond ONLY with valid JSON: {"verdict": "pass"|"fail"|"uncertain", "source": "url or source name found", "note": "brief explanation of what you found"}`;
 
 async function checkClaimOnce(
   env: Env,
   claim: string,
   episodeDate: string,
 ): Promise<FactCheckResponse> {
-  const userMessage = `Verify this claim: "${claim}". Today's date is ${episodeDate}.`;
+  const userMessage = `Search and verify this claim right now: "${claim}". Today's date is ${episodeDate}. Search for this specific claim and report what you find.`;
 
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+  // Use the Responses API with web_search — same endpoint as script generation
+  // but with gpt-4o-mini for cost efficiency.
+  const res = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${env.OPENAI_API_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: FACT_CHECK_SYSTEM_PROMPT },
-        { role: "user", content: userMessage },
+      model: "gpt-4o-mini-search-preview",
+      tools: [{ type: "web_search_preview" }],
+      input: [
+        {
+          role: "system",
+          content: [{ type: "input_text", text: FACT_CHECK_SYSTEM_PROMPT }],
+        },
+        {
+          role: "user",
+          content: [{ type: "input_text", text: userMessage }],
+        },
       ],
-      temperature: 0.1,
-      max_tokens: 256,
-      response_format: { type: "json_object" },
+      max_output_tokens: 512,
     }),
   });
 
@@ -134,11 +139,34 @@ async function checkClaimOnce(
     return { verdict: "uncertain", source: "api-error", note: `HTTP ${res.status}` };
   }
 
+  // Responses API shape: { output: [ { type: "message", content: [ { type: "output_text", text: "..." } ] } ] }
   const data = (await res.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
+    output?: Array<{
+      type?: string;
+      content?: Array<{ type?: string; text?: string }>;
+    }>;
   };
 
-  const content = data.choices?.[0]?.message?.content ?? "{}";
+  // Extract text from the first message output item.
+  let content = "{}";
+  for (const item of data.output ?? []) {
+    if (item.type === "message") {
+      for (const c of item.content ?? []) {
+        if (c.type === "output_text" && c.text) {
+          content = c.text.trim();
+          break;
+        }
+      }
+      break;
+    }
+  }
+
+  // The model may wrap the JSON in markdown — strip it.
+  content = content.replace(/^```json\s*/i, "").replace(/\s*```$/, "").trim();
+  // Extract the first JSON object if the model added surrounding text.
+  const jsonMatch = content.match(/\{[\s\S]*\}/);
+  if (jsonMatch) content = jsonMatch[0];
+
   try {
     const parsed = JSON.parse(content) as Partial<FactCheckResponse>;
     const verdict: FactVerdict =
@@ -244,7 +272,7 @@ export async function runFactCheck(
   episodeDate: string,
 ): Promise<{ episode: EpisodeJson; report: FactCheckReport }> {
   const checkedAt = new Date().toISOString();
-  const modelUsed = "gpt-4o-mini";
+  const modelUsed = "gpt-4o-mini-search-preview";
 
   const script = episode.elevenlabs_script;
   const claims = extractClaims(script);
