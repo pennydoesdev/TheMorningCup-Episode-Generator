@@ -59,6 +59,19 @@ function isReasoningModel(model: string): boolean {
   );
 }
 
+/**
+ * Returns the correct web-search tool type for the given model.
+ * o-series models use "web_search"; gpt-4o and gpt-5 family models use
+ * "web_search_preview" (the hosted tool available via the Responses API).
+ */
+function webSearchToolType(model: string): string {
+  if (model.startsWith("o1") || model.startsWith("o3") || model.startsWith("o4")) {
+    return "web_search";
+  }
+  // gpt-4o, gpt-5, and all *-search-preview models use web_search_preview.
+  return "web_search_preview";
+}
+
 async function callResponses(
   env: Env,
   config: Config,
@@ -95,7 +108,9 @@ async function callResponses(
     // Built-in web search lets the model research yesterday's actual news
     // instead of relying on an RSS-derived digest. The model decides when to
     // search based on the prompt instructions.
-    tools: [{ type: "web_search" }],
+    // Tool type varies by model family: o-series → "web_search",
+    // gpt-4o/gpt-5 family → "web_search_preview".
+    tools: [{ type: webSearchToolType(model) }],
     stream: true,
   };
 
