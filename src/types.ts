@@ -55,6 +55,14 @@ export interface Env {
 
   // Real-time weather APIs
   TOMORROW_IO_API_KEY?: string;  // Priority weather source — https://docs.tomorrow.io/reference/welcome
+
+  // WordPress / VNewsOS approval desk integration
+  // WORDPRESS_SITE_URL and WORDPRESS_APP_USER are wrangler.toml vars.
+  // WORDPRESS_APP_PASSWORD is a Cloudflare secret (wrangler secret put WORDPRESS_APP_PASSWORD).
+  WORDPRESS_SITE_URL?: string;     // e.g. https://thefold42.com — no trailing slash
+  WORDPRESS_APP_USER?: string;     // WP username that owns the Application Password
+  WORDPRESS_APP_PASSWORD?: string; // Application Password — secret, never in wrangler.toml
+  WORKER_PUBLIC_URL?: string;      // e.g. https://themorningcupgenerator.itsmiarosemathews.workers.dev
 }
 
 export interface SocialSectionPost {

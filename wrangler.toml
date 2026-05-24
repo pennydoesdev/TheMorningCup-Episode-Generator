@@ -72,8 +72,24 @@ VOICE_SIMILARITY_BOOST = "0.85"
 VOICE_STYLE = "0.45"
 VOICE_USE_SPEAKER_BOOST = "true"
 
+# WordPress / VNewsOS Approval Desk integration
+# These vars enable the worker to notify the WordPress editorial approval desk
+# when a script is ready for review (notify) and when TTS is complete (notify-generated).
+# Set ENABLE_APPROVAL_GATE = "true" to pause before TTS until WordPress calls /approve.
+#
+# WORDPRESS_SITE_URL   — your WP site root, no trailing slash (e.g. https://thefold42.com)
+# WORDPRESS_APP_USER   — WP username that owns the Application Password
+# WORKER_PUBLIC_URL    — this worker's public URL (sent to WP so it can call /approve or /reject)
+#
+# Application Password is a secret — set it with:
+#   npx wrangler secret put WORDPRESS_APP_PASSWORD
+WORDPRESS_SITE_URL = "https://thefold42.com"
+WORDPRESS_APP_USER = "systems"
+WORKER_PUBLIC_URL = "https://themorningcupgenerator.itsmiarosemathews.workers.dev"
+
 # Secrets (set with wrangler secret put):
 #   OPENAI_API_KEY
 #   ELEVENLABS_API_KEY
 #   ELEVENLABS_VOICE_ID
 #   RUN_SECRET
+#   WORDPRESS_APP_PASSWORD  ← Application Password for the wp-app-user above

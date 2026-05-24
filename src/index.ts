@@ -77,6 +77,59 @@ export default {
       return json({ date, record });
     }
 
+    // -------------------------------------------------------------------------
+    // GET /script?date=YYYY-MM-DD
+    // Returns the Serialized Script HTML from R2 so the WordPress approval desk
+    // can embed it without needing direct R2 access.
+    // -------------------------------------------------------------------------
+    if (req.method === "GET" && url.pathname === "/script") {
+      const auth = checkAuth(req, env);
+      if (!auth.ok) return auth.response;
+
+      const date = url.searchParams.get("date") ?? defaultEpisodeIso(config);
+      if (!isValidIsoDate(date)) return json({ error: "invalid date" }, 400);
+
+      const record = await readRunRecord(env, date);
+      if (!record) return json({ error: "no run record found" }, 404);
+      const key = record.serialized_script_key;
+      if (!key) return json({ error: "serialized script not yet generated" }, 404);
+
+      const obj = await env.MORNING_CUP_BUCKET.get(key);
+      if (!obj) return json({ error: "serialized script not found in R2" }, 404);
+
+      const html = await obj.text();
+      return new Response(html, {
+        headers: {
+          "content-type": "text/html; charset=utf-8",
+          "x-episode-date": date,
+          "x-r2-key": key,
+        },
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // GET /sidecar?date=YYYY-MM-DD
+    // Returns the sidecar audit JSON for the WordPress approval desk fact-check panel.
+    // -------------------------------------------------------------------------
+    if (req.method === "GET" && url.pathname === "/sidecar") {
+      const auth = checkAuth(req, env);
+      if (!auth.ok) return auth.response;
+
+      const date = url.searchParams.get("date") ?? defaultEpisodeIso(config);
+      if (!isValidIsoDate(date)) return json({ error: "invalid date" }, 400);
+
+      const record = await readRunRecord(env, date);
+      if (!record) return json({ error: "no run record found" }, 404);
+      const key = record.sidecar_key;
+      if (!key) return json({ error: "sidecar not yet generated" }, 404);
+
+      const obj = await env.MORNING_CUP_BUCKET.get(key);
+      if (!obj) return json({ error: "sidecar not found in R2" }, 404);
+
+      const sidecarJson = await obj.json();
+      return json(sidecarJson);
+    }
+
     if (req.method === "POST" && url.pathname === "/run") {
       const auth = checkAuth(req, env);
       if (!auth.ok) return auth.response;
@@ -444,6 +497,22 @@ async function generateScriptPhase(env: Env, config: Config, inputs: RunInputs):
       await env.MORNING_CUP_KV.delete("pending_corrections").catch(() => {});
     }
 
+    // Notify WordPress approval desk that the script is ready for review.
+    // Best-effort — a failure here does not fail the run.
+    await notifyWordPressScriptReady(env, config, {
+      episodeDate: episodeIso,
+      episodeTitle: primaryTitle,
+      wordCount: validation.word_count,
+      estimatedRuntimeMinutes: validation.estimated_runtime_minutes,
+      serializedScriptKey,
+      jsonKey,
+      txtKey,
+      metadataKey,
+      sidecarKey,
+    }).catch((err) =>
+      logger.warn("WP script-ready notification failed", { err: String(err), episodeIso }),
+    );
+
     logger.info("script phase complete", {
       episodeIso,
       wordCount: validation.word_count,
@@ -614,6 +683,17 @@ async function runTtsPhase(env: Env, config: Config, episodeIso: string): Promis
     files_txt_key: filesTxtKey,
   });
 
+  // Notify WordPress that TTS is complete and the episode is ready for publishing.
+  // Best-effort — does not affect completion status.
+  await notifyWordPressTtsComplete(env, config, {
+    episodeDate: episodeIso,
+    chunkCount: completedChunks.length,
+    manifestKey,
+    filesTxtKey,
+  }).catch((err) =>
+    logger.warn("WP TTS-complete notification failed", { err: String(err), episodeIso }),
+  );
+
   logger.info("TTS phase complete", {
     episodeIso,
     chunkCount: completedChunks.length,
@@ -621,6 +701,106 @@ async function runTtsPhase(env: Env, config: Config, episodeIso: string): Promis
   });
 }
 
+// ---------------------------------------------------------------------------
+// WordPress / VNewsOS Approval Desk notifications.
+// All calls are best-effort — the caller wraps each in .catch() so failures
+// here never break the pipeline.
+// ---------------------------------------------------------------------------
+
+interface WpScriptReadyPayload {
+  episodeDate: string;
+  episodeTitle: string;
+  wordCount: number;
+  estimatedRuntimeMinutes: number;
+  serializedScriptKey: string;
+  jsonKey: string;
+  txtKey: string;
+  metadataKey: string;
+  sidecarKey: string;
+}
+
+async function notifyWordPressScriptReady(
+  env: Env,
+  config: Config,
+  payload: WpScriptReadyPayload,
+): Promise<void> {
+  if (!config.wpSiteUrl || !config.wpAppUser || !env.WORDPRESS_APP_PASSWORD) {
+    logger.info("WP script-ready notification skipped — not configured", {
+      episodeDate: payload.episodeDate,
+    });
+    return;
+  }
+  const credentials = btoa(`${config.wpAppUser}:${env.WORDPRESS_APP_PASSWORD}`);
+  const body = {
+    episode_date: payload.episodeDate,
+    episode_title: payload.episodeTitle,
+    word_count: payload.wordCount,
+    estimated_runtime_minutes: payload.estimatedRuntimeMinutes,
+    serialized_script_key: payload.serializedScriptKey,
+    json_key: payload.jsonKey,
+    txt_key: payload.txtKey,
+    metadata_key: payload.metadataKey,
+    sidecar_key: payload.sidecarKey,
+    worker_url: config.workerPublicUrl,
+  };
+  const res = await fetch(`${config.wpSiteUrl}/wp-json/mc-approval/v1/notify`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Basic ${credentials}`,
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    throw new Error(
+      `WP notify returned ${res.status} ${res.statusText} for episode ${payload.episodeDate}`,
+    );
+  }
+  logger.info("WP script-ready notification sent", { episodeDate: payload.episodeDate });
+}
+
+interface WpTtsCompletePayload {
+  episodeDate: string;
+  chunkCount: number;
+  manifestKey: string;
+  filesTxtKey: string;
+}
+
+async function notifyWordPressTtsComplete(
+  env: Env,
+  config: Config,
+  payload: WpTtsCompletePayload,
+): Promise<void> {
+  if (!config.wpSiteUrl || !config.wpAppUser || !env.WORDPRESS_APP_PASSWORD) {
+    logger.info("WP TTS-complete notification skipped — not configured", {
+      episodeDate: payload.episodeDate,
+    });
+    return;
+  }
+  const credentials = btoa(`${config.wpAppUser}:${env.WORDPRESS_APP_PASSWORD}`);
+  const body = {
+    episode_date: payload.episodeDate,
+    chunk_count: payload.chunkCount,
+    manifest_key: payload.manifestKey,
+    files_txt_key: payload.filesTxtKey,
+  };
+  const res = await fetch(`${config.wpSiteUrl}/wp-json/mc-approval/v1/notify-generated`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Basic ${credentials}`,
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    throw new Error(
+      `WP notify-generated returned ${res.status} ${res.statusText} for episode ${payload.episodeDate}`,
+    );
+  }
+  logger.info("WP TTS-complete notification sent", { episodeDate: payload.episodeDate });
+}
+
+// ---------------------------------------------------------------------------
 // Returns per-section voice tuning based on chapter title. Similarity boost
 // and speaker boost stay at config values — they define voice identity.
 // Stability: higher = more monotone/authoritative. Lower = more natural/warm.

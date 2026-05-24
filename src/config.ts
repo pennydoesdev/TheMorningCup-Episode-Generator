@@ -56,6 +56,11 @@ export interface Config {
     style: number;
     useSpeakerBoost: boolean;
   };
+
+  // WordPress / VNewsOS approval desk — optional integration
+  wpSiteUrl: string;       // WP site root URL (no trailing slash); empty = notifications disabled
+  wpAppUser: string;       // WP username that owns the Application Password
+  workerPublicUrl: string; // Worker's own public URL (sent to WP so it can call back)
 }
 
 export function loadConfig(env: Env): Config {
@@ -99,5 +104,9 @@ export function loadConfig(env: Env): Config {
       style: num(env.VOICE_STYLE, 0.7),
       useSpeakerBoost: bool(env.VOICE_USE_SPEAKER_BOOST, true),
     },
+
+    wpSiteUrl: str(env.WORDPRESS_SITE_URL, ""),
+    wpAppUser: str(env.WORDPRESS_APP_USER, ""),
+    workerPublicUrl: str(env.WORKER_PUBLIC_URL, ""),
   };
 }
